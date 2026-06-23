@@ -1,0 +1,678 @@
+﻿/* Add Material Icons font */
+@import url('https://fonts.googleapis.com/icon?family=Material+Icons');
+
+/* Tax Invoice Dashboard */
+.taxinvoice-dashboard {
+  background: var(--page-bg, #F8FAFC);
+  padding: 1rem;
+  min-height: 100vh;
+}
+
+.taxinvoice-header-panel {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding: 0 1rem;
+}
+
+.taxinvoice-header-panel h2 {
+  color: var(--theme-text, #1E293B);
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.taxinvoice-history-btn {
+  background: #5B4FF7;
+  border: none;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
+}
+
+.taxinvoice-history-btn:hover {
+  background: #5B4FF7;
+  transform: translateY(-2px);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
+}
+
+.taxinvoice-btn-icon {
+  font-size: 1.1rem;
+}
+
+/* Tax Invoice Form Wrapper */
+.taxinvoice-form-wrapper {
+  background: var(--card-bg, #FFFFFF);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+}
+
+.taxinvoice-form-card {
+  padding: 1.5rem;
+}
+
+.taxinvoice-form-card h3 {
+  margin: 0 0 1.5rem 0;
+  color: var(--theme-text, #1E293B);
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+/* Form Styles */
+.taxinvoice-input-form {
+  padding: 0;
+}
+
+.taxinvoice-field-group {
+  border: 1px solid var(--theme-border, #E2E8F0);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  background: #f7fafc;
+}
+
+.taxinvoice-field-group legend {
+  font-weight: 600;
+  color: var(--theme-text-muted, #64748B);
+  padding: 0 0.5rem;
+  font-size: 1.1rem;
+}
+
+.taxinvoice-form-grid-four {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.taxinvoice-form-grid-two {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.taxinvoice-input-group {
+  margin-bottom: 1rem;
+}
+
+.taxinvoice-input-group label {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-weight: 500;
+  color: var(--theme-text-muted, #64748B);
+  font-size: 0.85rem;
+}
+
+.taxinvoice-input-group input,
+.taxinvoice-input-group textarea,
+.taxinvoice-input-group select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--theme-border, #E2E8F0);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  transition: border-color 0.3s ease;
+}
+
+.taxinvoice-input-group textarea {
+  resize: vertical;
+  min-height: 70px;
+}
+
+.taxinvoice-input-group input:focus,
+.taxinvoice-input-group textarea:focus,
+.taxinvoice-input-group select:focus {
+  outline: none;
+  border-color: #8a87c9;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05);
+}
+
+.taxinvoice-readonly-field {
+  background-color: #f7fafc;
+  color: var(--theme-text-muted, #64748B);
+  cursor: not-allowed;
+}
+
+/* Table Styles */
+.taxinvoice-items-grid,
+.taxinvoice-gst-grid {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+  background: var(--card-bg, #FFFFFF);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.taxinvoice-items-grid th,
+.taxinvoice-gst-grid th {
+  background: var(--table-header-bg, #F8FAFC);
+  padding: 1rem;
+  font-weight: 600;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  color: var(--theme-text, #1E293B);
+  font-size: 0.9rem;
+  white-space: nowrap;
+  text-align: left;
+}
+
+.taxinvoice-items-grid td,
+.taxinvoice-gst-grid td {
+  padding: 0.75rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  background: var(--card-bg, #FFFFFF);
+  color: var(--theme-text, #1E293B);
+  font-size: 0.85rem;
+  vertical-align: middle;
+}
+
+.taxinvoice-items-grid tr:hover td,
+.taxinvoice-gst-grid tr:hover td {
+  background: rgba(109, 106, 184, 0.05);
+}
+
+.taxinvoice-items-grid input,
+.taxinvoice-gst-grid input,
+.taxinvoice-gst-grid select {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid var(--theme-border, #E2E8F0);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-family: inherit;
+}
+
+.taxinvoice-items-grid input:focus,
+.taxinvoice-gst-grid input:focus,
+.taxinvoice-gst-grid select:focus {
+  outline: none;
+  border-color: #8a87c9;
+}
+
+/* Button Styles */
+.taxinvoice-add-row-btn {
+  padding: 0.6rem 1.25rem;
+  background: rgba(72, 187, 120, 0.2);
+  color: #2f855a;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  margin-bottom: 1rem;
+}
+
+.taxinvoice-add-row-btn:hover {
+  background: #2f855a;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
+}
+
+.taxinvoice-remove-btn {
+  background: rgba(239, 68, 68, 0.2);
+  color: #dc2626;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  transition: all 0.3s ease;
+}
+
+.taxinvoice-remove-btn:hover {
+  background: #dc2626;
+  color: white;
+  transform: scale(1.1);
+}
+
+.taxinvoice-remove-btn:disabled {
+  background: #e2e8f0;
+  color: #a0aec0;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.taxinvoice-action-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  margin-bottom: 0.75rem;
+  border-top: 1px solid var(--theme-border, #E2E8F0);
+}
+
+.taxinvoice-cancel-btn {
+  padding: 0.6rem 1.25rem;
+  background: var(--card-bg, #FFFFFF);
+  color: var(--theme-text-muted, #64748B);
+  border: 1px solid var(--theme-border, #E2E8F0);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.taxinvoice-cancel-btn:hover {
+  background: rgba(245, 101, 101, 0.2);
+  border-color: #cbd5e0;
+}
+
+.taxinvoice-submit-btn {
+  padding: 0.6rem 1.25rem;
+  background: rgba(72, 187, 120, 0.2);
+  color: #2f855a;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.taxinvoice-submit-btn:hover {
+  background: #2f855a;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
+}
+
+.taxinvoice-edit-btn {
+  padding: 0.6rem 1.25rem;
+  background: rgba(59, 130, 246, 0.2);
+  color: #1e40af;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.taxinvoice-edit-btn:hover {
+  background: #1e40af;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
+}
+
+/* Modal Styles */
+.taxinvoice-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 0.5rem;
+}
+
+.taxinvoice-modal-window {
+  background: var(--card-bg, #FFFFFF);
+  border-radius: 12px;
+  width: 100%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
+}
+
+.taxinvoice-large-modal {
+  max-width: 900px;
+}
+
+.taxinvoice-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--theme-border, #E2E8F0);
+}
+
+.taxinvoice-modal-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--theme-text, #1E293B);
+}
+
+.taxinvoice-close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--theme-text-muted, #64748B);
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.taxinvoice-close-btn:hover {
+  background: #f7fafc;
+  color: var(--theme-text-muted, #64748B);
+}
+
+/* History and Details Content */
+.taxinvoice-history-content,
+.taxinvoice-details-panel {
+  padding: 1rem 1.5rem;
+}
+
+.taxinvoice-table-container {
+  overflow-x: auto;
+}
+
+.taxinvoice-history-table {
+  width: 100%;
+  border-collapse: collapse;
+  color: var(--theme-text, #1E293B);
+}
+
+.taxinvoice-history-table th {
+  text-align: left;
+  padding: 1rem;
+  font-weight: 600;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  color: var(--theme-text, #1E293B);
+  background: var(--table-header-bg, #F8FAFC);
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.taxinvoice-history-table td {
+  padding: 1rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  background: var(--card-bg, #FFFFFF);
+  color: var(--theme-text, #1E293B);
+  font-size: 0.85rem;
+  vertical-align: middle;
+}
+
+.taxinvoice-history-table tr:hover td {
+  background: rgba(109, 106, 184, 0.05);
+}
+
+/* Form Sections in Details */
+.taxinvoice-detail-section {
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--theme-border, #E2E8F0);
+}
+
+.taxinvoice-detail-section:last-of-type {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.taxinvoice-section-title {
+  margin: 0 0 0.75rem 0;
+  font-size: 1.1rem;
+  color: var(--theme-text-muted, #64748B);
+  font-weight: 600;
+}
+
+.taxinvoice-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.taxinvoice-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.taxinvoice-detail-item label {
+  font-weight: 600;
+  color: var(--theme-text-muted, #64748B);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.taxinvoice-detail-item span {
+  color: var(--theme-text, #1E293B);
+  font-size: 0.95rem;
+  padding: 0.5rem 0;
+}
+
+/* Follow Up Section */
+.taxinvoice-add-followup {
+  margin-top: 1rem;
+}
+
+.taxinvoice-followup-textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--theme-border, #E2E8F0);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  transition: border-color 0.3s ease;
+  resize: vertical;
+  min-height: 70px;
+}
+
+.taxinvoice-followup-textarea:focus {
+  outline: none;
+  border-color: #8a87c9;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05);
+}
+
+/* History Table Cells */
+.taxinvoice-history-date,
+.taxinvoice-history-action,
+.taxinvoice-history-user {
+  white-space: nowrap;
+}
+
+.taxinvoice-history-followup {
+  max-width: 300px;
+  word-wrap: break-word;
+}
+
+/* Empty State */
+.taxinvoice-empty-state {
+  text-align: center;
+  padding: 3rem;
+  color: var(--theme-text-muted, #64748B);
+}
+
+.taxinvoice-empty-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.taxinvoice-empty-subtext {
+  margin: 0.5rem 0 1rem 0;
+  font-size: 0.9rem;
+}
+
+/* Delete Confirmation Modal */
+.taxinvoice-delete-confirm {
+  text-align: center;
+  padding: 2rem;
+}
+
+.taxinvoice-delete-icon {
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 4rem;
+  color: #d69e2e;
+  opacity: 0.9;
+}
+
+.taxinvoice-delete-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--theme-text, #1E293B);
+  margin-bottom: 1rem;
+}
+
+.taxinvoice-delete-message {
+  color: var(--theme-text-muted, #64748B);
+  line-height: 1.5;
+  margin-bottom: 2rem;
+}
+
+.taxinvoice-delete-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.taxinvoice-delete-btn {
+  padding: 0.6rem 1.25rem;
+  background: rgba(239, 68, 68, 0.2);
+  color: #dc2626;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.taxinvoice-delete-btn:hover {
+  background: #dc2626;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .taxinvoice-form-grid-four {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .taxinvoice-header-panel {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+  
+  .taxinvoice-form-grid-four,
+  .taxinvoice-form-grid-two {
+    grid-template-columns: 1fr;
+    gap: 0.8rem;
+  }
+  
+  .taxinvoice-action-buttons {
+    flex-direction: column;
+  }
+  
+  .taxinvoice-cancel-btn,
+  .taxinvoice-submit-btn,
+  .taxinvoice-edit-btn,
+  .taxinvoice-remove-btn {
+    width: 100%;
+  }
+  
+  .taxinvoice-modal-window {
+    margin: 0.5rem;
+    max-height: calc(100vh - 1rem);
+  }
+  
+  .taxinvoice-large-modal {
+    max-width: calc(100vw - 1rem);
+  }
+  
+  .taxinvoice-detail-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .taxinvoice-delete-actions {
+    flex-direction: column;
+  }
+  
+  .taxinvoice-history-table {
+    font-size: 0.8rem;
+    min-width: 800px;
+  }
+  
+  .taxinvoice-history-table th,
+  .taxinvoice-history-table td {
+    padding: 0.75rem 0.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .taxinvoice-form-card {
+    padding: 1rem;
+  }
+  
+  .taxinvoice-field-group {
+    padding: 1rem;
+  }
+  
+  .taxinvoice-history-content,
+  .taxinvoice-details-panel {
+    padding: 0.75rem 1rem;
+  }
+  
+  .taxinvoice-modal-header {
+    padding: 1rem 1.5rem;
+  }
+}
+
+/* Glass effect for modern look */
+.taxinvoice-glass-form {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+/* Add to Bill.css */
+.taxinvoice-download-btn {
+  background: #10b981 !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 0.25rem 0.5rem !important;
+  font-size: 0.75rem !important;
+  cursor: pointer !important;
+  transition: all 0.2s !important;
+  min-width: 70px !important;
+}
+
+.taxinvoice-download-btn:hover {
+  background: #059669 !important;
+  transform: translateY(-1px) !important;
+}
+
+.taxinvoice-download-btn:disabled {
+  background: #6ee7b7 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+}

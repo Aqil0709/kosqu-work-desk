@@ -1,0 +1,210 @@
+
+/* ═══════════════════════════════════════════════════════════════════
+   variables.css  —  Global Design Token System
+   Premium SaaS Design System — Work Desk HRMS
+═══════════════════════════════════════════════════════════════════ */
+:root {
+  color-scheme: light;
+
+  /* ── Typography ─────────────────────────────────────────────────── */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'Fira Code', 'Cascadia Code', 'JetBrains Mono', monospace;
+
+  /* ── Font Scale ──────────────────────────────────────────────────── */
+  --text-xs:   0.70rem;   /* 11.2px */
+  --text-sm:   0.875rem;  /* 14px   */
+  --text-md:   1rem;      /* 16px   */
+  --text-lg:   1.125rem;  /* 18px   */
+  --text-xl:   1.25rem;   /* 20px   */
+  --text-2xl:  1.5rem;    /* 24px   */
+  --text-3xl:  1.875rem;  /* 30px   */
+  --text-4xl:  2.25rem;   /* 36px   */
+
+  /* ── Font Weights ────────────────────────────────────────────────── */
+  --fw-light:   300;
+  --fw-normal:  400;
+  --fw-medium:  500;
+  --fw-semi:    600;
+  --fw-bold:    700;
+  --fw-black:   800;
+
+  /* ── Line Heights ────────────────────────────────────────────────── */
+  --lh-tight:   1.25;
+  --lh-snug:    1.375;
+  --lh-normal:  1.5;
+  --lh-relaxed: 1.625;
+
+  /* ── Spacing ─────────────────────────────────────────────────────── */
+  --space-1:  0.25rem;   /* 4px  */
+  --space-2:  0.5rem;    /* 8px  */
+  --space-3:  0.75rem;   /* 12px */
+  --space-4:  1rem;      /* 16px */
+  --space-5:  1.25rem;   /* 20px */
+  --space-6:  1.5rem;    /* 24px */
+  --space-8:  2rem;      /* 32px */
+  --space-10: 2.5rem;    /* 40px */
+  --space-12: 3rem;      /* 48px */
+  --space-16: 4rem;      /* 64px */
+
+  /* ── Border Radius ───────────────────────────────────────────────── */
+  --radius-xs:   4px;
+  --radius-sm:   6px;
+  --radius-md:   8px;
+  --radius-lg:   10px;
+  --radius-xl:   14px;
+  --radius-2xl:  18px;
+  --radius-3xl:  24px;
+  --radius-pill: 999px;
+  --radius-round: 50%;
+
+  /* ── Z-index Scale ───────────────────────────────────────────────── */
+  --z-base:      1;
+  --z-raised:    10;
+  --z-dropdown:  100;
+  --z-sticky:    200;
+  --z-overlay:   300;
+  --z-modal:     400;
+  --z-popover:   500;
+  --z-toast:     600;
+  --z-tooltip:   700;
+
+  /* ── Elevation Shadows (light) ───────────────────────────────────── */
+  --shadow-xs:    0 1px 2px rgba(15,23,42,0.04);
+  --shadow-sm:    0 2px 8px rgba(15,23,42,0.06), 0 1px 2px rgba(15,23,42,0.04);
+  --shadow-md:    0 4px 16px rgba(15,23,42,0.08), 0 2px 6px rgba(15,23,42,0.04);
+  --shadow-lg:    0 12px 32px rgba(15,23,42,0.10), 0 4px 12px rgba(15,23,42,0.05);
+  --shadow-xl:    0 24px 64px rgba(15,23,42,0.12), 0 8px 24px rgba(15,23,42,0.06);
+  --shadow-modal: 0 32px 80px rgba(0,0,0,0.18), 0 8px 24px rgba(0,0,0,0.08);
+  --shadow-float: 0 20px 50px rgba(0,0,0,0.13), 0 4px 12px rgba(0,0,0,0.07);
+
+  /* Colored glow shadows */
+  --shadow-primary: 0 4px 20px rgba(79,70,229,0.25);
+  --shadow-success: 0 4px 20px rgba(16,185,129,0.25);
+  --shadow-danger:  0 4px 20px rgba(239,68,68,0.25);
+  --shadow-warning: 0 4px 20px rgba(245,158,11,0.25);
+  --shadow-purple:  0 4px 20px rgba(139,92,246,0.25);
+  --shadow-info:    0 4px 20px rgba(6,182,212,0.25);
+
+  /* ── Brand Primary (Purple-Blue #5B4FF7) ────────────────────────── */
+  --color-primary:        #5B4FF7;
+  --color-primary-hover:  #4a3ed6;
+  --color-primary-light:  #7b6ef9;
+  --color-primary-soft:   #f0eeff;
+  --color-primary-text:   #3d2fc4;
+  --color-primary-border: rgba(91,79,247,0.25);
+
+  /* ── Accent (Electric Blue) ──────────────────────────────────────── */
+  --color-accent:        #3B82F6;
+  --color-accent-hover:  #2563EB;
+  --color-accent-soft:   #EFF6FF;
+  --color-accent-text:   #1D4ED8;
+
+  /* ── Deep Navy ───────────────────────────────────────────────────── */
+  --color-navy:        #0F172A;
+  --color-navy-muted:  #1E293B;
+  --color-navy-light:  #334155;
+  --color-navy-border: #2D3748;
+
+  /* ── Success ─────────────────────────────────────────────────────── */
+  --color-success:        #10B981;
+  --color-success-hover:  #059669;
+  --color-success-soft:   #ECFDF5;
+  --color-success-text:   #065F46;
+  --color-success-border: rgba(16,185,129,0.25);
+
+  /* ── Danger ──────────────────────────────────────────────────────── */
+  --color-danger:        #EF4444;
+  --color-danger-hover:  #DC2626;
+  --color-danger-soft:   #FEF2F2;
+  --color-danger-text:   #B91C1C;
+  --color-danger-border: rgba(239,68,68,0.25);
+
+  /* ── Warning ─────────────────────────────────────────────────────── */
+  --color-warning:        #F59E0B;
+  --color-warning-hover:  #D97706;
+  --color-warning-soft:   #FFFBEB;
+  --color-warning-text:   #92400E;
+  --color-warning-border: rgba(245,158,11,0.25);
+
+  /* ── Info ────────────────────────────────────────────────────────── */
+  --color-info:        #06B6D4;
+  --color-info-hover:  #0891B2;
+  --color-info-soft:   #ECFEFF;
+  --color-info-text:   #0E7490;
+  --color-info-border: rgba(6,182,212,0.25);
+
+  /* ── Purple ──────────────────────────────────────────────────────── */
+  --color-purple:        #8B5CF6;
+  --color-purple-hover:  #7C3AED;
+  --color-purple-soft:   #F5F3FF;
+  --color-purple-text:   #6D28D9;
+  --color-purple-border: rgba(139,92,246,0.25);
+
+  /* ── Orange ──────────────────────────────────────────────────────── */
+  --color-orange:      #F97316;
+  --color-orange-soft: #FFF7ED;
+  --color-orange-text: #C2410C;
+
+  /* ── Rose ────────────────────────────────────────────────────────── */
+  --color-rose:      #F43F5E;
+  --color-rose-soft: #FFF1F2;
+  --color-rose-text: #BE123C;
+
+  /* ── Teal ────────────────────────────────────────────────────────── */
+  --color-teal:      #14B8A6;
+  --color-teal-soft: #F0FDFA;
+  --color-teal-text: #0F766E;
+
+  /* ── Surface / Background ────────────────────────────────────────── */
+  --color-bg:            #F8FAFC;
+  --color-bg-muted:      #F1F5F9;
+  --color-surface:       #FFFFFF;
+  --color-surface-muted: #F8FAFC;
+  --color-border:        #E2E8F0;
+  --color-border-strong: #CBD5E1;
+
+  /* ── Text ────────────────────────────────────────────────────────── */
+  --color-text:         #1E293B;
+  --color-text-strong:  #0F172A;
+  --color-text-muted:   #64748B;
+  --color-text-subtle:  #94A3B8;
+  --color-text-inverse: #FFFFFF;
+
+  /* ── Premium Gradients ───────────────────────────────────────────── */
+  --gradient-brand:      linear-gradient(135deg, #5B4FF7 0%, #7b6ef9 100%);
+  --gradient-brand-v:    linear-gradient(135deg, #5B4FF7 0%, #8b5cf6 100%);
+  --gradient-brand-r:    linear-gradient(135deg, #7b6ef9 0%, #5B4FF7 100%);
+  --gradient-brand-hover:linear-gradient(135deg, #4a3ed6 0%, #6a5df8 100%);
+  --gradient-success:    linear-gradient(135deg, #10B981 0%, #059669 100%);
+  --gradient-danger:     linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+  --gradient-warning:    linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+  --gradient-purple:     linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%);
+  --gradient-cyan:       linear-gradient(135deg, #06B6D4 0%, #0891B2 100%);
+  --gradient-navy:       linear-gradient(135deg, #334155 0%, #0F172A 100%);
+  --gradient-glass:      linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 100%);
+  --gradient-orange:     linear-gradient(135deg, #F97316 0%, #EA580C 100%);
+  --gradient-rose:       linear-gradient(135deg, #F43F5E 0%, #E11D48 100%);
+  --gradient-teal:       linear-gradient(135deg, #14B8A6 0%, #0D9488 100%);
+
+  /* ── Layout Dimensions ───────────────────────────────────────────── */
+  --topbar-height:           56px;
+  --sidebar-width:           240px;
+  --sidebar-collapsed-width: 60px;
+  --page-padding:            24px;
+  --page-padding-sm:         16px;
+  --control-height:          38px;
+  --control-height-sm:       32px;
+  --control-height-lg:       44px;
+
+  /* ── Transitions ─────────────────────────────────────────────────── */
+  --transition-fast:   0.12s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base:   0.20s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow:   0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-spring: 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+  --transition-bounce: 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* ── Animation curves ────────────────────────────────────────────── */
+  --ease-out-expo:  cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring:    cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-smooth:    cubic-bezier(0.4, 0, 0.2, 1);
+}

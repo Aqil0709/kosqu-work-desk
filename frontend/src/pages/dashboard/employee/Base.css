@@ -1,0 +1,725 @@
+﻿/* Base.css - Layout and Navigation Styles */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--page-bg, #F8FAFC);
+  color: var(--theme-text, #1E293B);
+  overflow-x: hidden;
+}
+
+.dashboard-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  width: 100%;
+  height: 100vh;
+}
+
+/* Dashboard Body */
+.dashboard-body {
+  display: flex;
+  flex: 1;
+  width: 100%;
+  height: 100vh;
+  position: relative;
+}
+
+/* Circular Sidebar Toggle Button */
+.sidebar-toggle-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 32px;
+  height: 32px;
+  background: var(--card-bg, #FFFFFF);
+  border: 2px solid #e0e0e0;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--theme-text-muted, #64748B);
+  z-index: 101;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.sidebar-toggle-btn.open {
+  left: calc(278px - 16px);
+  top: 5%;
+}
+
+.sidebar-toggle-btn.closed {
+  left: calc(70px - 16px);
+  top: 5%;
+}
+
+.sidebar-toggle-btn:hover {
+  background: var(--page-bg, #F8FAFC);
+  color: #6d6ab8;
+  border-color: #6d6ab8;
+  box-shadow: 0 2px 12px rgba(109, 106, 184, 0.3);
+  transform: translateY(-50%) scale(1.05);
+}
+
+/* Sidebar Styles */
+.dashboard-sidebar {
+  position: relative;
+  width: 280px;
+  background: var(--card-bg, #FFFFFF);
+  border-right: 1px solid #e0e0e0;
+  display: flex;
+  flex-direction: column;
+  transition: width 0.3s ease;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  height: 100%;
+  overflow-y: auto;
+  z-index: 100;
+}
+
+.dashboard-sidebar.closed {
+  width: 70px;
+}
+
+.sidebar-header {
+  padding: 1rem;
+  border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: var(--card-bg, #FFFFFF);
+  min-height: 80px;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  position: relative;
+}
+
+.company-title-sidebar {
+  font-size: 1.4rem;
+  font-weight: bold;
+  background: linear-gradient(135deg,
+      #5a5799 0%,
+      #b469b2 33%,
+      #d45a9b 66%,
+      #f0b6d4 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  white-space: nowrap;
+  overflow: hidden;
+  font-family: 'Inter', sans-serif;
+  text-align: center;
+}
+
+.company-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: linear-gradient(135deg,
+      #5a5799 0%,
+      #b469b2 33%,
+      #d45a9b 66%,
+      #f0b6d4 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: white;
+  font-family: 'Inter', sans-serif;
+}
+
+.sidebar-nav {
+  flex: 1;
+  padding: 0.75rem 0;
+  overflow-y: auto;
+}
+
+.sidebar-nav ul {
+  list-style: none;
+  width: 100%;
+}
+
+.sidebar-nav li {
+  margin-bottom: 0.15rem;
+  position: relative;
+  width: 100%;
+}
+
+/* Dropdown Styles - Improved with Better Spacing */
+.dropdown {
+  position: relative;
+  width: 100%;
+}
+
+.dropdown-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.6rem 1.25rem;
+  background: none;
+  border: none;
+  color: var(--theme-text, #1E293B);
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.dropdown-arrow {
+  font-size: 0.8rem;
+  transition: transform 0.3s ease;
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dropdown.open .dropdown-arrow {
+  transform: rotate(0deg);
+}
+
+.dropdown-menu {
+  list-style: none;
+  background: var(--page-bg, #F8FAFC);
+  border-radius: 0 0 6px 6px;
+  margin: 0;
+  padding: 0.1rem 0;
+  animation: slideDown 0.2s ease;
+  width: 100%;
+  border-top: 1px solid #e8e8e8;
+  position: relative;
+}
+
+/* Connecting lines for dropdown items - Adjusted for better spacing */
+.dropdown-menu::before {
+  content: '';
+  position: absolute;
+  left: 2.2rem;
+  /* Moved further right */
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: linear-gradient(to bottom,
+      transparent 0%,
+      #e0e0e0 10%,
+      #e0e0e0 90%,
+      transparent 100%);
+  z-index: 1;
+}
+
+.dropdown-menu li {
+  margin: 0;
+  width: 100%;
+  position: relative;
+}
+
+/* Dot indicators for each dropdown item - Adjusted position */
+.dropdown-menu li::before {
+  content: '';
+  position: absolute;
+  left: 2.15rem;
+  /* Moved further right */
+  top: 50%;
+  transform: translateY(-50%);
+  width: 6px;
+  height: 6px;
+  background: #6d6ab8;
+  border-radius: 50%;
+  z-index: 2;
+  transition: all 0.2s ease;
+}
+
+.dropdown-menu li:hover::before {
+  background: #6d6ab8;
+  transform: translateY(-50%) scale(1.2);
+  box-shadow: 0 0 0 2px rgba(109, 106, 184, 0.2);
+}
+
+/* Updated dropdown button styles for text-only items with better spacing */
+.dropdown-menu button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 1.25rem 0.5rem 3rem;
+  /* Increased left padding */
+  background: none;
+  border: none;
+  color: var(--theme-text-muted, #64748B);
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.85rem;
+  /* Slightly larger font */
+  font-family: 'Inter', sans-serif;
+  white-space: nowrap;
+  font-weight: 500;
+  line-height: 1.3;
+  border-radius: 0;
+  position: relative;
+  z-index: 3;
+}
+
+.dropdown-menu button:hover {
+  background: rgba(109, 106, 184, 0.08);
+  color: #6d6ab8;
+}
+
+.dropdown-menu button:active {
+  background: rgba(109, 106, 184, 0.12);
+}
+
+.user-management {
+  padding: 1rem;
+}
+
+.page-header {
+  margin-bottom: 2rem;
+}
+
+.page-header h1 {
+  font-size: 2rem;
+  font-weight: 600;
+  color: var(--theme-text, #1E293B);
+  margin-bottom: 0.5rem;
+}
+
+.page-header p {
+  color: var(--theme-text-muted, #64748B);
+  font-size: 1rem;
+}
+
+.content-section {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.section-card {
+  background: var(--card-bg, #FFFFFF);
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e0e0e0;
+}
+
+.section-card h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--theme-text, #1E293B);
+  margin-bottom: 1rem;
+}
+
+.section-card p {
+  color: var(--theme-text-muted, #64748B);
+  line-height: 1.5;
+}
+
+.dropdown-menu li:first-child button {
+  padding-top: 0.55rem;
+}
+
+.dropdown-menu li:last-child button {
+  padding-bottom: 0.55rem;
+  border-radius: 0 0 6px 6px;
+}
+
+/* Dropdown text styles - Improved alignment and spacing */
+.dropdown-text {
+  font-size: 0.85rem;
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: 0.2px;
+  margin-left: 20px;
+  display: block;
+  width: 100%;
+  padding-left: 0.5rem;
+  /* Added padding for better separation */
+  transition: all 0.2s ease;
+}
+
+.dropdown-menu button:hover .dropdown-text {
+  transform: translateX(2px);
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Active dropdown parent item styling */
+.dropdown.open>.dropdown-toggle {
+  background: linear-gradient(135deg,
+      rgba(109, 106, 184, 0.1) 0%,
+      rgba(201, 123, 199, 0.1) 33%,
+      rgba(240, 108, 179, 0.1) 66%,
+      rgba(255, 194, 224, 0.1) 100%);
+  color: #6d6ab8;
+}
+
+/* Sidebar navigation items */
+.sidebar-nav li button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 1.25rem;
+  background: none;
+  border: none;
+  color: var(--theme-text, #1E293B);
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.sidebar-nav li button:hover {
+  background: linear-gradient(135deg,
+      rgba(109, 106, 184, 0.1) 0%,
+      rgba(201, 123, 199, 0.1) 33%,
+      rgba(240, 108, 179, 0.1) 66%,
+      rgba(255, 194, 224, 0.1) 100%);
+  color: #6d6ab8;
+}
+
+.sidebar-nav li.active button {
+  background: linear-gradient(135deg,
+      rgba(109, 106, 184, 0.15) 0%,
+      rgba(201, 123, 199, 0.15) 33%,
+      rgba(240, 108, 179, 0.15) 66%,
+      rgba(255, 194, 224, 0.15) 100%);
+  border-right: 3px solid #6d6ab8;
+  color: #6d6ab8;
+  font-weight: 500;
+  font-family: 'Inter', sans-serif;
+}
+
+.nav-icon {
+  font-size: 1rem;
+  min-width: 20px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-text {
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+/* Sidebar Footer */
+.sidebar-footer {
+  padding: 1rem;
+  border-top: 1px solid #e0e0e0;
+  background: var(--card-bg, #FFFFFF);
+  margin-top: auto;
+}
+
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+.user-avatar {
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6d6ab8, #c97bc7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  color: white;
+  font-family: 'Inter', sans-serif;
+  flex-shrink: 0;
+  font-size: 0.9rem;
+  overflow: hidden;
+  /* Added to ensure image doesn't overflow */
+}
+
+.user-avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.user-info {
+  min-width: 0;
+  width: 100%;
+}
+
+.user-info p {
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--theme-text, #1E293B);
+  font-family: 'Inter', sans-serif;
+}
+
+.user-name {
+  font-weight: 500;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.85rem;
+}
+
+.user-role {
+  font-size: 0.75rem;
+  opacity: 0.7;
+  font-family: 'Inter', sans-serif;
+}
+
+/* View Profile Button Styles */
+.view-profile-btn {
+  background: linear-gradient(135deg, #6d6ab8, #c97bc7);
+  color: white;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  margin-top: 0.3rem;
+  transition: all 0.3s ease;
+  font-family: 'Inter', sans-serif;
+  width: 100%;
+}
+
+.view-profile-btn:hover {
+  background: linear-gradient(135deg, #5a5799, #b469b2);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(109, 106, 184, 0.3);
+}
+
+/* Main Content Styles */
+.dashboard-main {
+  flex: 1;
+  padding: 1rem;
+  overflow-y: auto;
+  background: var(--page-bg, #F8FAFC);
+  height: 100%;
+  width: 100%;
+  transition: all 0.3s ease;
+}
+
+/* Ensure dropdowns don't show when sidebar is closed */
+.dashboard-sidebar.closed .dropdown-menu {
+  display: none !important;
+}
+
+.dashboard-sidebar.closed .dropdown-arrow {
+  display: none !important;
+}
+
+/* Adjust main content when sidebar is closed */
+.dashboard-sidebar.closed+.dashboard-main {
+  margin-left: 1rem;
+  width: calc(100% - 70px);
+}
+
+/* Smooth transitions for all elements */
+.dashboard-sidebar,
+.sidebar-toggle-btn,
+.dashboard-main {
+  transition: all 0.3s ease;
+}
+
+/* Hover effects for the entire dropdown area */
+.dropdown:hover>.dropdown-toggle {
+  background: rgba(109, 106, 184, 0.05);
+}
+
+/* Smooth transitions */
+.dropdown-menu,
+.dropdown-menu button,
+.dropdown-toggle {
+  transition: all 0.2s ease;
+}
+
+/* Ensure proper spacing in collapsed sidebar */
+.dashboard-sidebar.closed .dropdown-toggle {
+  justify-content: center;
+  padding: 0.6rem 0;
+}
+
+.dashboard-sidebar.closed .nav-icon {
+  margin: 0 auto;
+}
+
+/* Responsive Design for Layout */
+@media (max-width: 1024px) {
+  .dashboard-sidebar {
+    width: 70px;
+    position: absolute;
+    height: 100%;
+    z-index: 100;
+  }
+
+  .dashboard-sidebar.open {
+    width: 280px;
+    box-shadow: 2px 0 15px rgba(0, 0, 0, 0.2);
+  }
+
+  .dashboard-main {
+    margin-left: 70px;
+    width: calc(100% - 70px);
+  }
+
+  .dashboard-sidebar.closed {
+    width: 70px;
+  }
+
+  .dashboard-sidebar.closed+.dashboard-main {
+    margin-left: 70px;
+    width: calc(100% - 70px);
+  }
+
+  .sidebar-toggle-btn {
+    left: calc(70px - 16px);
+  }
+
+  .sidebar-toggle-btn.open {
+    left: calc(278px - 16px);
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-main {
+    padding: 1rem;
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .dashboard-sidebar.closed {
+    width: 0;
+  }
+
+  .dashboard-sidebar.open {
+    width: 280px;
+  }
+
+  .dashboard-sidebar.closed+.dashboard-main {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .sidebar-toggle-btn {
+    left: calc(70px - 16px);
+  }
+
+  .sidebar-toggle-btn.open {
+    left: calc(278px - 16px);
+  }
+
+  /* Mobile adjustments for dropdown */
+  .dropdown-menu button {
+    padding: 0.4rem 1rem 0.4rem 2.8rem;
+    font-size: 0.8rem;
+  }
+
+  .dropdown-menu::before {
+    left: 2rem;
+  }
+
+  .dropdown-menu li::before {
+    left: 1.95rem;
+  }
+
+  .dropdown-text {
+    font-size: 0.8rem;
+    padding-left: 0.4rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-main {
+    padding: 0.75rem;
+  }
+
+  .dashboard-body {
+    height: 100vh;
+  }
+
+  .sidebar-toggle-btn {
+    width: 28px;
+    height: 28px;
+  }
+
+  .sidebar-toggle-btn.open {
+    left: calc(278px - 14px);
+  }
+
+  .sidebar-toggle-btn.closed {
+    left: calc(70px - 14px);
+  }
+
+  /* Mobile adjustments for dropdown */
+  .dropdown-menu {
+    padding: 0.05rem 0;
+  }
+
+  .dropdown-menu button {
+    padding: 0.35rem 1rem 0.35rem 2.6rem;
+    font-size: 0.75rem;
+  }
+
+  .dropdown-menu::before {
+    left: 1.8rem;
+  }
+
+  .dropdown-menu li::before {
+    left: 1.75rem;
+  }
+
+  .dropdown-text {
+    font-size: 0.75rem;
+    padding-left: 0.3rem;
+  }
+
+  .dropdown-toggle {
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+  }
+
+  /* Even smaller sizes for mobile */
+  .sidebar-nav li button {
+    font-size: 0.85rem;
+    padding: 0.5rem 1rem;
+  }
+
+  .nav-icon {
+    font-size: 0.9rem;
+  }
+}

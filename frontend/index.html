@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/tit.png" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kosqu Technolab HRMS</title>
+    <!-- Anti-flash: apply saved theme before React hydrates to prevent FOUC -->
+    <script>
+      (function() {
+        try {
+          var theme = localStorage.getItem('workdesk_theme') || 'dark';
+          var html = document.documentElement;
+          html.setAttribute('data-theme', theme);
+          html.style.colorScheme = theme;
+          if (theme === 'dark') html.classList.add('dark');
+          else html.classList.remove('dark');
+        } catch(e) {}
+      })();
+    </script>
+    <style>
+      /* Inline critical style to prevent white flash */
+      html[data-theme='dark'] body { background: #0B1120; color: #CBD5E1; }
+      html[data-theme='light'] body, html:not([data-theme]) body { background: #F8FAFC; color: #1E293B; }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

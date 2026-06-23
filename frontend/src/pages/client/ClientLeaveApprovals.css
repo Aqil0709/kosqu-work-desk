@@ -1,0 +1,198 @@
+﻿/* ── Client Leave Approvals ──────────────────────── */
+.cla-page {
+  padding: 24px;
+  min-height: 100%;
+  font-family: 'Inter', sans-serif;
+  position: relative;
+}
+
+.cla-kicker {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #6366f1;
+  margin-bottom: 4px;
+}
+
+.cla-header {
+  margin-bottom: 22px;
+}
+
+.cla-header h1 {
+  font-size: 1.55rem;
+  font-weight: 800;
+  color: var(--theme-text-strong, #0F172A);
+  margin: 0 0 4px;
+}
+
+.cla-header p {
+  font-size: 0.88rem;
+  color: var(--theme-text-muted, #64748B);
+  margin: 0;
+}
+
+/* ── Tabs ── */
+.cla-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 18px;
+  border-bottom: 2px solid var(--theme-border, #E2E8F0);
+  padding-bottom: 0;
+}
+
+.cla-tabs button {
+  position: relative;
+  padding: 9px 18px;
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--theme-text-muted, #64748B);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: color 0.15s, border-color 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cla-tabs button:hover { color: #6366f1; }
+.cla-tabs button.active { color: #6366f1; border-bottom-color: #6366f1; }
+
+.cla-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #6366f1;
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+/* ── States ── */
+.cla-loading, .cla-empty {
+  padding: 48px;
+  text-align: center;
+  color: var(--theme-text-subtle, #94A3B8);
+  font-weight: 600;
+  border: 1px dashed #e2e8f0;
+  border-radius: 12px;
+  background: var(--card-bg, #FFFFFF);
+}
+
+/* ── Toast ── */
+.cla-toast {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  padding: 13px 20px;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  z-index: 1000;
+  animation: toastIn 0.25s ease;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+}
+
+.cla-toast.ok { background: #ecfdf5; color: #065f46; border: 1px solid #bbf7d0; }
+.cla-toast.err { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Table ── */
+.cla-table-wrap {
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid var(--theme-border, #E2E8F0);
+  background: var(--card-bg, #FFFFFF);
+  box-shadow: 0 1px 2px rgba(15,23,42,0.05);
+}
+
+.cla-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.cla-table th {
+  padding: 12px 14px;
+  text-align: left;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--theme-text-muted, #64748B);
+  background: var(--page-bg, #F8FAFC);
+  border-bottom: 1px solid var(--theme-border, #E2E8F0);
+  white-space: nowrap;
+}
+
+.cla-table td {
+  padding: 13px 14px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #374151;
+  vertical-align: middle;
+}
+
+.cla-table tr:last-child td { border-bottom: none; }
+
+.cla-table tr:hover td { background: var(--page-bg, #F8FAFC); }
+
+.cla-table td strong { font-weight: 700; color: var(--theme-text-strong, #0F172A); }
+.cla-table td small { font-size: 0.75rem; color: var(--theme-text-subtle, #94A3B8); }
+
+.cla-reason {
+  max-width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cla-type-chip {
+  display: inline-flex;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--table-header-bg, #F8FAFC);
+  color: #6366f1;
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* ── Action Buttons ── */
+.cla-actions {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.cla-btn {
+  padding: 6px 14px;
+  border-radius: 7px;
+  border: none;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.cla-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.cla-btn.approve { background: #6366f1; color: #fff; }
+.cla-btn.approve:hover:not(:disabled) { background: #4f46e5; }
+
+.cla-btn.reject { background: #fee2e2; color: #b91c1c; }
+.cla-btn.reject:hover:not(:disabled) { background: #fecaca; }

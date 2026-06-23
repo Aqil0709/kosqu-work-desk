@@ -1,0 +1,431 @@
+{
+  "date": "2026-06-22T05:18:48.535Z",
+  "roles": [
+    "admin",
+    "hr",
+    "team_lead",
+    "employee",
+    "intern",
+    "consultant",
+    "client"
+  ],
+  "total": 59,
+  "pass": 45,
+  "fail": 14,
+  "score": 76,
+  "results": [
+    {
+      "status": "PASS",
+      "role": "admin",
+      "ep": "/api/salary/records",
+      "msg": "OK (400)",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "role": "admin",
+      "ep": "/api/salary/stats",
+      "msg": "OK (200)",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "role": "hr",
+      "ep": "/api/salary/records",
+      "msg": "OK (400)",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "role": "hr",
+      "ep": "/api/salary/stats",
+      "msg": "OK (200)",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "role": "team_lead",
+      "ep": "/api/salary/records",
+      "msg": "Correctly blocked (403)",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "role": "team_lead",
+      "ep": "/api/salary/stats",
+      "msg": "Correctly blocked (403)",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "role": "employee",
+      "ep": "/api/salary/my-history",
+      "msg": "OK (200)",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "role": "employee",
+      "ep": "/api/salary/records",
+      "msg": "Correctly blocked (403)",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "role": "intern",
+      "ep": "/api/salary/records",
+      "msg": "Correctly blocked (403)",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "role": "intern",
+      "ep": "/api/salary/my-history",
+      "msg": "OK (200)",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "role": "consultant",
+      "ep": "/api/salary/records",
+      "msg": "Correctly blocked (403)",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "role": "client",
+      "ep": "/api/salary/records",
+      "msg": "Correctly blocked (403)",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "role": "client",
+      "ep": "/api/salary/stats",
+      "msg": "Correctly blocked (403)",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "role": "admin",
+      "ep": "/api/employees",
+      "msg": "OK (200)",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "role": "hr",
+      "ep": "/api/employees",
+      "msg": "OK (200)",
+      "detail": ""
+    },
+    {
+      "status": "FAIL",
+      "role": "team_lead",
+      "ep": "/api/employees",
+      "msg": "Unexpected block 403",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "role": "employee",
+      "ep": "/api/employees",
+      "msg": "Correctly blocked (403)",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "role": "client",
+      "ep": "/api/employees",
+      "msg": "Correctly blocked (403)",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "role": "admin",
+      "ep": "/api/dashboard/stats",
+      "msg": "OK (200)",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "role": "admin",
+      "ep": "/api/dashboard/analytics/salary-trend",
+      "msg": "OK (200)",
+      "detail": ""
+    },
+    {
+      "status": "FAIL",
+      "role": "team_lead",
+      "ep": "/api/dashboard/stats",
+      "msg": "Unexpected block 403",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "role": "team_lead",
+      "ep": "/api/dashboard/analytics/salary-trend",
+      "msg": "Correctly blocked (403)",
+      "detail": ""
+    },
+    {
+      "status": "FAIL",
+      "role": "employee",
+      "ep": "/api/dashboard/stats",
+      "msg": "Unexpected block 403",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "role": "employee",
+      "ep": "/api/dashboard/analytics/salary-trend",
+      "msg": "Correctly blocked (403)",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "role": "client",
+      "ep": "/api/dashboard/stats",
+      "msg": "Correctly blocked (403)",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "role": "client",
+      "ep": "/api/employees",
+      "msg": "Correctly blocked (403)",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "role": "client",
+      "ep": "/api/salary/records",
+      "msg": "Correctly blocked (403)",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "role": "client",
+      "ep": "/api/salary/stats",
+      "msg": "Correctly blocked (403)",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "role": "client",
+      "ep": "/api/attendance",
+      "msg": "Correctly blocked (403)",
+      "detail": ""
+    },
+    {
+      "status": "FAIL",
+      "role": "client",
+      "ep": "/api/payroll",
+      "msg": "Should be blocked but got 404 (check body manually)",
+      "detail": "{\"success\":false,\"message\":\"Route not found\",\"data\":null}"
+    },
+    {
+      "status": "FAIL",
+      "role": "client",
+      "ep": "/api/audit-log",
+      "msg": "Should be blocked but got 404 (check body manually)",
+      "detail": "{\"success\":false,\"message\":\"Route not found\",\"data\":null}"
+    },
+    {
+      "status": "PASS",
+      "role": "client",
+      "ep": "/api/user-management",
+      "msg": "Correctly blocked (403)",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "role": "client",
+      "ep": "/api/dashboard/analytics/salary-trend",
+      "msg": "Correctly blocked (403)",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "role": "admin",
+      "ep": "/api/payroll",
+      "msg": "OK (404)",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "role": "admin",
+      "ep": "/api/payroll/runs",
+      "msg": "OK (404)",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "role": "admin",
+      "ep": "/api/salary/bulk",
+      "msg": "OK (404)",
+      "detail": ""
+    },
+    {
+      "status": "FAIL",
+      "role": "team_lead",
+      "ep": "/api/payroll",
+      "msg": "Should be blocked but got 404 (check body manually)",
+      "detail": "{\"success\":false,\"message\":\"Route not found\",\"data\":null}"
+    },
+    {
+      "status": "FAIL",
+      "role": "team_lead",
+      "ep": "/api/payroll/runs",
+      "msg": "Should be blocked but got 404 (check body manually)",
+      "detail": "{\"success\":false,\"message\":\"Route not found\",\"data\":null}"
+    },
+    {
+      "status": "FAIL",
+      "role": "team_lead",
+      "ep": "/api/salary/bulk",
+      "msg": "Should be blocked but got 404 (check body manually)",
+      "detail": "{\"success\":false,\"message\":\"Route not found\",\"data\":null}"
+    },
+    {
+      "status": "FAIL",
+      "role": "employee",
+      "ep": "/api/payroll",
+      "msg": "Should be blocked but got 404 (check body manually)",
+      "detail": "{\"success\":false,\"message\":\"Route not found\",\"data\":null}"
+    },
+    {
+      "status": "FAIL",
+      "role": "employee",
+      "ep": "/api/payroll/runs",
+      "msg": "Should be blocked but got 404 (check body manually)",
+      "detail": "{\"success\":false,\"message\":\"Route not found\",\"data\":null}"
+    },
+    {
+      "status": "FAIL",
+      "role": "employee",
+      "ep": "/api/salary/bulk",
+      "msg": "Should be blocked but got 404 (check body manually)",
+      "detail": "{\"success\":false,\"message\":\"Route not found\",\"data\":null}"
+    },
+    {
+      "status": "PASS",
+      "role": "admin",
+      "ep": "/api/audit-log",
+      "msg": "OK (404)",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "role": "hr",
+      "ep": "/api/audit-log",
+      "msg": "OK (404)",
+      "detail": ""
+    },
+    {
+      "status": "FAIL",
+      "role": "team_lead",
+      "ep": "/api/audit-log",
+      "msg": "Should be blocked but got 404 (check body manually)",
+      "detail": "{\"success\":false,\"message\":\"Route not found\",\"data\":null}"
+    },
+    {
+      "status": "FAIL",
+      "role": "employee",
+      "ep": "/api/audit-log",
+      "msg": "Should be blocked but got 404 (check body manually)",
+      "detail": "{\"success\":false,\"message\":\"Route not found\",\"data\":null}"
+    },
+    {
+      "status": "FAIL",
+      "role": "client",
+      "ep": "/api/audit-log",
+      "msg": "Should be blocked but got 404 (check body manually)",
+      "detail": "{\"success\":false,\"message\":\"Route not found\",\"data\":null}"
+    },
+    {
+      "status": "PASS",
+      "role": "admin",
+      "ep": "/api/notifications",
+      "msg": "Clean — 0 notifications, no monetary amounts",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "role": "hr",
+      "ep": "/api/notifications",
+      "msg": "Clean — 0 notifications, no monetary amounts",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "role": "team_lead",
+      "ep": "/api/notifications",
+      "msg": "Clean — 0 notifications, no monetary amounts",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "role": "employee",
+      "ep": "/api/notifications",
+      "msg": "Clean — 0 notifications, no monetary amounts",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "role": "intern",
+      "ep": "/api/notifications",
+      "msg": "Clean — 0 notifications, no monetary amounts",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "role": "consultant",
+      "ep": "/api/notifications",
+      "msg": "Clean — 0 notifications, no monetary amounts",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "role": "client",
+      "ep": "/api/notifications",
+      "msg": "Clean — 0 notifications, no monetary amounts",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "role": "admin",
+      "ep": "/api/user-management/users",
+      "msg": "OK (404)",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "role": "hr",
+      "ep": "/api/user-management/users",
+      "msg": "OK (404)",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "role": "team_lead",
+      "ep": "/api/user-management/users",
+      "msg": "Correctly blocked (403)",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "role": "employee",
+      "ep": "/api/user-management/users",
+      "msg": "Correctly blocked (403)",
+      "detail": ""
+    },
+    {
+      "status": "PASS",
+      "role": "client",
+      "ep": "/api/user-management/users",
+      "msg": "Correctly blocked (403)",
+      "detail": ""
+    }
+  ]
+}

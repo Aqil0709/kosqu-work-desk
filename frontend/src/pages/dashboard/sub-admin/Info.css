@@ -1,0 +1,123 @@
+﻿/* Employee Details Section */
+.employee-details-section {
+  margin-bottom: 2rem;
+}
+
+.employee-details-card {
+  padding: 1.5rem;
+  background: var(--card-bg, #FFFFFF);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.employee-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.employee-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #5B4FF7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: white;
+  font-size: 1.2rem;
+  box-shadow: 0 4px 12px rgba(138, 135, 201, 0.3);
+}
+
+.avatar-initials {
+  font-weight: 700;
+}
+
+.employee-basic-info {
+  flex: 1;
+}
+
+.employee-name {
+  margin: 0 0 0.3rem 0;
+  color: var(--theme-text, #1E293B);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.employee-position {
+  margin: 0 0 0.2rem 0;
+  color: #4299E1;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.employee-department {
+  margin: 0;
+  color: var(--theme-text-muted, #64748B);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.employee-details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.8rem;
+  background: rgba(248, 250, 252, 0.8);
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.detail-item:hover {
+  background: rgba(248, 250, 252, 1);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.detail-label {
+  font-size: 0.75rem;
+  color: var(--theme-text-muted, #64748B);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.detail-value {
+  font-size: 0.9rem;
+  color: var(--theme-text, #1E293B);
+  font-weight: 600;
+}
+
+/* Responsive adjustments for employee details */
+@media (max-width: 768px) {
+  .employee-header {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.8rem;
+  }
+
+  .employee-details-grid {
+    grid-template-columns: 1fr;
+    gap: 0.8rem;
+  }
+
+  .employee-name {
+    font-size: 0.8rem;
+  }
+
+  .employee-position {
+    font-size: 0.9rem;
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "Feature-based production-ready Express + MySQL backend",
+  "main": "server.js",
+  "scripts": {
+    "dev": "nodemon server.js",
+    "start": "node server.js",
+    "test": "jest --testPathPattern=tests/ --forceExit --detectOpenHandles",
+    "db:backup": "node src/scripts/db-backup.js",
+    "db:cleanup": "node src/scripts/db-cleanup.js",
+    "db:cleanup:force": "node src/scripts/db-cleanup.js --force",
+    "db:cleanup:dry": "node src/scripts/db-cleanup.js --dry-run",
+    "db:seed": "node src/scripts/db-seed.js",
+    "db:rollback": "node src/scripts/db-rollback.js",
+    "db:rollback:list": "node src/scripts/db-rollback.js --list",
+    "prod:backup": "node src/scripts/db-backup.js",
+    "prod:cleanup:dry": "node src/scripts/prod-cleanup.js --dry-run",
+    "prod:cleanup": "node src/scripts/prod-cleanup.js",
+    "prod:cleanup:force": "node src/scripts/prod-cleanup.js --force",
+    "prod:verify": "node src/scripts/prod-verify.js",
+    "prod:rollback": "node src/scripts/db-rollback.js",
+    "prod:rollback:list": "node src/scripts/db-rollback.js --list"
+  },
+  "keywords": [
+    "express",
+    "mysql",
+    "feature-based"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "compression": "^1.8.1",
+    "cors": "^2.8.6",
+    "csv-parser": "^3.2.1",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "joi": "^17.13.3",
+    "jsonwebtoken": "^9.0.3",
+    "mammoth": "^1.12.0",
+    "multer": "^2.1.1",
+    "mysql2": "^3.22.5",
+    "nodemailer": "^8.0.10",
+    "pdf-lib": "^1.17.1",
+    "pdfkit": "^0.18.0",
+    "react-calendar": "^6.0.1",
+    "socket.io": "^4.8.3",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "nodemon": "^3.1.14",
+    "supertest": "^7.2.2"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testTimeout": 10000
+  }
+}

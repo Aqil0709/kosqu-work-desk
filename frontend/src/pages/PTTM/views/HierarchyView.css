@@ -1,0 +1,242 @@
+.hierarchy-view {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--theme-bg, #f8fafc);
+  overflow: hidden;
+}
+
+.hierarchy-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  background: var(--card-bg, #fff);
+  border-bottom: 1px solid var(--card-border, #e2e8f0);
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.hierarchy-stats {
+  display: flex;
+  gap: 24px;
+}
+
+.hstat {
+  text-align: center;
+}
+
+.hstat-value {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--theme-text-strong, #0f172a);
+  line-height: 1;
+}
+
+.hstat-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--theme-text-muted, #64748b);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 4px;
+}
+
+.hierarchy-controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.hierarchy-search,
+.hierarchy-filter {
+  padding: 8px 12px;
+  border: 1.5px solid var(--card-border, #e2e8f0);
+  border-radius: 8px;
+  background: var(--theme-bg-muted, #f8fafc);
+  color: var(--theme-text, #334155);
+  font-size: 13px;
+  font-family: inherit;
+}
+
+.hierarchy-search {
+  width: 200px;
+}
+
+.hierarchy-search:focus,
+.hierarchy-filter:focus {
+  outline: none;
+  border-color: #4f46e5;
+  background: var(--card-bg, #fff);
+}
+
+.hierarchy-tree {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+/* Tree nodes */
+.tree-node {
+  margin: 2px 0;
+}
+
+.tree-node-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: default;
+  transition: background 0.15s;
+  min-height: 36px;
+  color: var(--theme-text, #334155);
+}
+
+.tree-node-header.has-children {
+  cursor: pointer;
+}
+
+.tree-node-header:hover {
+  background: var(--theme-bg-muted, #f8fafc);
+}
+
+.tree-node-header.expanded {
+  background: var(--theme-bg-muted, #f8fafc);
+}
+
+.tree-chevron {
+  font-size: 11px;
+  width: 14px;
+  color: var(--theme-text-muted, #64748b);
+  flex-shrink: 0;
+}
+
+.tree-leaf-dot {
+  width: 14px;
+  color: var(--theme-text-muted, #64748b);
+  font-size: 18px;
+  line-height: 0;
+  flex-shrink: 0;
+}
+
+.tree-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.tree-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--theme-text-strong, #0f172a);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tree-count {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.tree-children {
+  border-left: 2px solid var(--card-border, #e2e8f0);
+  margin-left: 24px;
+}
+
+/* Task leaf */
+.tree-task-leaf {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--theme-text, #334155);
+  min-height: 32px;
+  transition: background 0.15s;
+}
+
+.tree-task-leaf:hover {
+  background: var(--theme-bg-muted, #f8fafc);
+}
+
+.task-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.task-name {
+  flex: 1;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.task-priority {
+  font-size: 11px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.task-assignee {
+  font-size: 11px;
+  color: var(--theme-text-muted, #64748b);
+  flex-shrink: 0;
+}
+
+.task-due {
+  font-size: 11px;
+  color: var(--theme-text-muted, #64748b);
+  flex-shrink: 0;
+}
+
+.tree-empty {
+  padding: 8px 12px;
+  font-size: 12px;
+  color: var(--theme-text-muted, #64748b);
+  font-style: italic;
+}
+
+/* Empty state */
+.hierarchy-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 24px;
+  text-align: center;
+  color: var(--theme-text-muted, #64748b);
+}
+
+.empty-icon {
+  font-size: 56px;
+  margin-bottom: 16px;
+}
+
+.empty-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--theme-text-strong, #0f172a);
+  margin-bottom: 8px;
+}
+
+.empty-text {
+  font-size: 14px;
+  max-width: 340px;
+  line-height: 1.6;
+}
+
+.hierarchy-loading {
+  padding: 60px;
+  text-align: center;
+  color: var(--theme-text-muted, #64748b);
+  font-size: 14px;
+}

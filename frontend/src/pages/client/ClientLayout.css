@@ -1,0 +1,204 @@
+/* ── Client Portal Layout ─────────────────────────── */
+.cl-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+  font-family: var(--font-sans, 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
+  background: var(--page-bg, #F8FAFC);
+}
+
+/* Body row: sidebar + main content */
+.cl-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* ── Sidebar ── */
+.cl-sidebar {
+  background: #0f172a;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  z-index: 100;
+  box-shadow: 1px 0 0 rgba(255,255,255,0.04);
+}
+
+.cl-sidebar.open  { width: 240px; }
+.cl-sidebar.closed { width: 60px; }
+
+.cl-sidebar::-webkit-scrollbar { width: 3px; }
+.cl-sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 4px; }
+
+/* ── Brand ── */
+.cl-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60px;
+  padding: 0 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  flex-shrink: 0;
+}
+
+.cl-brand-text {
+  font-size: 1.05rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #818cf8, #6366f1);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  white-space: nowrap;
+}
+
+.cl-brand-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #fff;
+}
+
+/* ── Nav ── */
+.cl-nav {
+  flex: 1;
+  padding: 10px 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cl-section-label {
+  display: block;
+  padding: 10px 10px 4px;
+  font-size: 0.62rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255,255,255,0.28);
+}
+
+.cl-nav-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  color: rgba(255,255,255,0.6);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+
+.cl-nav-btn:hover { background: rgba(255,255,255,0.07); color: #fff; }
+.cl-nav-btn.active { background: rgba(99,102,241,0.25); color: #a5b4fc; font-weight: 600; }
+
+.cl-nav-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.cl-nav-label { flex: 1; }
+
+/* ── Footer / User Profile ── */
+.cl-footer {
+  border-top: 1px solid rgba(255,255,255,0.07);
+  padding: 10px 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cl-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  min-width: 0;
+}
+
+.cl-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1, #818cf8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.cl-user-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.cl-user-name {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #e2e8f0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cl-user-role {
+  display: block;
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.38);
+}
+
+.cl-logout { color: rgba(255,255,255,0.45); }
+.cl-logout:hover { background: rgba(239,68,68,0.15); color: #fca5a5; }
+
+/* ── Main Content ── */
+.cl-main {
+  flex: 1;
+  overflow-y: auto;
+  background: var(--page-bg, #f5f7fb);
+  color: var(--theme-text, #1e293b);
+  height: 100%;
+  min-width: 0;
+}
+
+.cl-theme-toggle {
+  color: rgba(255,255,255,0.72);
+}
+
+.cl-theme-toggle:hover {
+  background: rgba(255,255,255,0.09);
+  color: #fff;
+}
+
+@media (max-width: 768px) {
+  .cl-sidebar.closed { width: 0; overflow: hidden; }
+  .cl-toggle.closed { left: 2px; }
+}

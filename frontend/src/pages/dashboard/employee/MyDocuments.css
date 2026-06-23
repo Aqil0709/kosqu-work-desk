@@ -1,0 +1,230 @@
+﻿.my-docs-container {
+  padding: 30px;
+  background: var(--page-bg, #F8FAFC);
+  min-height: 100vh;
+}
+
+.docs-header {
+  margin-bottom: 30px;
+}
+
+.docs-header h1 {
+  font-size: 28px;
+  color: var(--theme-text, #1E293B);
+  margin-bottom: 8px;
+}
+
+.docs-header p {
+  color: var(--theme-text-muted, #64748B);
+  font-size: 16px;
+}
+
+.docs-tabs {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 30px;
+  border-bottom: 2px solid var(--theme-border, #E2E8F0);
+  padding-bottom: 2px;
+}
+
+.tab-btn {
+  padding: 12px 24px;
+  background: none;
+  border: none;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--theme-text-muted, #64748B);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  transition: all 0.2s;
+}
+
+.tab-btn:hover {
+  color: #4f46e5;
+}
+
+.tab-btn.active {
+  color: #4f46e5;
+}
+
+.tab-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: #4f46e5;
+}
+
+.docs-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+.doc-card {
+  display: flex;
+  align-items: center;
+  padding: 20px;
+  background: var(--card-bg, #FFFFFF);
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  border: 1px solid #f1f5f9;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.doc-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.doc-icon-container {
+  width: 48px;
+  height: 48px;
+  background: var(--table-header-bg, #F8FAFC);
+  color: #4f46e5;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 20px;
+}
+
+.salary-icon-bg {
+  background: #f0fdf4 !important;
+  color: #22c55e !important;
+}
+
+.salary-icon-bg .doc-icon {
+  color: #22c55e !important;
+}
+
+.doc-icon {
+  font-size: 24px;
+}
+
+.doc-info {
+  flex-grow: 1;
+}
+
+.doc-info h3 {
+  margin: 0 0 4px 0;
+  font-size: 18px;
+  color: var(--theme-text, #1E293B);
+}
+
+.doc-info p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--theme-text-muted, #64748B);
+}
+
+.doc-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.doc-view-btn, .doc-download-btn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+
+.doc-view-btn {
+  background: var(--card-bg, #FFFFFF);
+  border: 1px solid var(--theme-border, #E2E8F0);
+  color: var(--theme-text-muted, #64748B);
+}
+
+.doc-view-btn:hover {
+  background: var(--page-bg, #F8FAFC);
+  border-color: #cbd5e1;
+}
+
+.doc-download-btn {
+  background: #4f46e5;
+  border: 1px solid #4f46e5;
+  color: white;
+}
+
+.doc-download-btn:hover {
+  background: #4338ca;
+  border-color: #4338ca;
+}
+
+.no-docs {
+  text-align: center;
+  padding: 60px 20px;
+  background: var(--card-bg, #FFFFFF);
+  border-radius: 12px;
+  border: 2px dashed #e2e8f0;
+}
+
+.no-docs h3 {
+  margin: 16px 0 8px 0;
+  color: var(--theme-text, #1E293B);
+}
+
+.no-docs p {
+  color: var(--theme-text-muted, #64748B);
+}
+
+.docs-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 100px 0;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #4f46e5;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+.slips-filter-bar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding: 15px;
+  background: var(--card-bg, #FFFFFF);
+  border-radius: 10px;
+  border: 1px solid #f1f5f9;
+}
+
+.filter-select {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--theme-border, #E2E8F0);
+  font-size: 14px;
+  color: var(--theme-text, #1E293B);
+  background-color: var(--card-bg, #FFFFFF);
+  min-width: 140px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.filter-select:focus {
+  border-color: #4f46e5;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

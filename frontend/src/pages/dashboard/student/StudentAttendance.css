@@ -1,0 +1,401 @@
+﻿.student-attendance-container {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.student-attendance-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid var(--theme-border, #E2E8F0);
+}
+
+.student-attendance-header h2 {
+    margin: 0;
+    color: var(--theme-text, #1E293B);
+    font-size: 28px;
+}
+
+.student-attendance-stats {
+    display: flex;
+    gap: 20px;
+}
+
+.student-stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 20px;
+    background: #f7fafc;
+    border-radius: 8px;
+    min-width: 100px;
+}
+
+.student-stat-label {
+    font-size: 12px;
+    color: var(--theme-text-muted, #64748B);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.student-stat-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--theme-text, #1E293B);
+    margin-top: 4px;
+}
+
+/* Today's Student Attendance Card */
+.student-today-attendance-card {
+    background: var(--card-bg, #FFFFFF);
+    border-radius: 12px;
+    padding: 25px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    border: 1px solid var(--theme-border, #E2E8F0);
+}
+
+.student-today-attendance-card h3 {
+    margin: 0 0 20px 0;
+    color: var(--theme-text, #1E293B);
+    font-size: 20px;
+}
+
+.student-today-attendance-content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+}
+
+.student-attendance-status {
+    width: 100%;
+    max-width: 500px;
+    padding: 25px;
+    border-radius: 10px;
+    text-align: center;
+}
+
+.student-attendance-status.student-status-present {
+    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+    border: 2px solid #10b981;
+}
+
+.student-attendance-status.student-status-absent {
+    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+    border: 2px solid #ef4444;
+}
+
+.student-attendance-status.student-status-late {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border: 2px solid #f59e0b;
+}
+
+.student-attendance-status.student-status-excused {
+    background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+    border: 2px solid #4f46e5;
+}
+
+.student-attendance-status.student-status-half-day {
+    background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%);
+    border: 2px solid #db2777;
+}
+
+.student-status-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.student-status-text {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--theme-text, #1E293B);
+}
+
+.student-attendance-date {
+    font-size: 16px;
+    color: var(--theme-text-muted, #64748B);
+}
+
+.student-time-details {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 25px;
+}
+
+.student-time-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.student-time-label {
+    font-size: 14px;
+    color: var(--theme-text-muted, #64748B);
+    margin-bottom: 5px;
+}
+
+.student-time-value {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--theme-text, #1E293B);
+}
+
+.student-checkout-btn, .student-mark-attendance-btn {
+    padding: 12px 30px;
+    background: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.student-checkout-btn:hover, .student-mark-attendance-btn:hover {
+    background: #2563eb;
+}
+
+.student-checkout-btn:disabled, .student-mark-attendance-btn:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+}
+
+.student-no-attendance-today {
+    text-align: center;
+    padding: 40px;
+}
+
+.student-no-attendance-today p {
+    font-size: 18px;
+    color: var(--theme-text-muted, #64748B);
+    margin-bottom: 20px;
+}
+
+/* Student Attendance History */
+.student-attendance-history-section {
+    background: var(--card-bg, #FFFFFF);
+    border-radius: 12px;
+    padding: 25px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.student-attendance-history-section h3 {
+    margin: 0 0 20px 0;
+    color: var(--theme-text, #1E293B);
+    font-size: 20px;
+}
+
+.student-attendance-table-container {
+    overflow-x: auto;
+}
+
+.student-attendance-history-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.student-attendance-history-table th {
+    background: var(--page-bg, #F8FAFC);
+    padding: 12px 16px;
+    text-align: left;
+    font-weight: 600;
+    color: #4b5563;
+    border-bottom: 2px solid var(--theme-border, #E2E8F0);
+}
+
+.student-attendance-history-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--theme-border, #E2E8F0);
+}
+
+.student-attendance-row:hover {
+    background: var(--input-bg, #FFFFFF);
+}
+
+.student-status-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.student-status-badge.student-status-present {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.student-status-badge.student-status-absent {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.student-status-badge.student-status-late {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.student-status-badge.student-status-excused {
+    background: #e0e7ff;
+    color: #3730a3;
+}
+
+.student-status-badge.student-status-half-day {
+    background: #fce7f3;
+    color: #9d174d;
+}
+
+.student-remarks-cell {
+    max-width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Student Attendance Summary */
+.student-attendance-summary-card {
+    background: var(--card-bg, #FFFFFF);
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.student-attendance-summary-card h3 {
+    margin: 0 0 20px 0;
+    color: var(--theme-text, #1E293B);
+    font-size: 20px;
+}
+
+.student-summary-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 20px;
+}
+
+.student-summary-item {
+    background: var(--page-bg, #F8FAFC);
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    border: 2px solid transparent;
+}
+
+.student-summary-item.student-present {
+    border-color: #10b981;
+}
+
+.student-summary-item.student-absent {
+    border-color: #ef4444;
+}
+
+.student-summary-item.student-late {
+    border-color: #f59e0b;
+}
+
+.student-summary-item.student-excused {
+    border-color: #4f46e5;
+}
+
+.student-summary-item.student-half-day {
+    border-color: #db2777;
+}
+
+.student-summary-value {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--theme-text, #1E293B);
+    margin-bottom: 5px;
+}
+
+.student-summary-label {
+    font-size: 14px;
+    color: var(--theme-text-muted, #64748B);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Messages */
+.student-message-success {
+    margin-top: 15px;
+    padding: 12px;
+    background: #d1fae5;
+    color: #065f46;
+    border-radius: 8px;
+    text-align: center;
+    border: 1px solid #a7f3d0;
+}
+
+.student-message-error {
+    margin-top: 15px;
+    padding: 12px;
+    background: #fee2e2;
+    color: #991b1b;
+    border-radius: 8px;
+    text-align: center;
+    border: 1px solid #fecaca;
+}
+
+/* Loading State */
+.student-loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px;
+}
+
+.student-loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid var(--theme-border, #E2E8F0);
+    border-top: 4px solid #3b82f6;
+    border-radius: 50%;
+    animation: student-spin 1s linear infinite;
+    margin-bottom: 20px;
+}
+
+@keyframes student-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .student-attendance-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    
+    .student-attendance-stats {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .student-time-details {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .student-summary-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .student-attendance-history-table {
+        font-size: 14px;
+    }
+    
+    .student-attendance-history-table th,
+    .student-attendance-history-table td {
+        padding: 8px 10px;
+    }
+}

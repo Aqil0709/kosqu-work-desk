@@ -1,0 +1,806 @@
+﻿/* Add Material Icons font */
+@import url('https://fonts.googleapis.com/icon?family=Material+Icons');
+
+/* Quotation Dashboard */
+.quotation-dashboard {
+  background: var(--page-bg, #F8FAFC);
+  padding: 1rem;
+  min-height: 100vh;
+}
+
+.quotation-header-panel {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding: 0 1rem;
+}
+
+.quotation-header-panel h2 {
+  color: var(--theme-text, #1E293B);
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.quotation-history-btn {
+  background: #5B4FF7;
+  border: none;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 10px;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(138, 135, 201, 0.3);
+}
+
+.quotation-history-btn:hover {
+  background: #5B4FF7;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(138, 135, 201, 0.4);
+}
+
+.quotation-btn-icon {
+  font-size: 1.1rem;
+}
+
+/* Quotation Form Wrapper */
+.quotation-form-wrapper {
+  background: var(--card-bg, #FFFFFF);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+}
+
+.quotation-form-card {
+  padding: 1.5rem;
+}
+
+.quotation-form-card h3 {
+  margin: 0 0 1.5rem 0;
+  color: var(--theme-text, #1E293B);
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+/* Form Styles */
+.quotation-input-form {
+  padding: 0;
+}
+
+.quotation-field-group {
+  border: 1px solid var(--theme-border, #E2E8F0);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  background: #f7fafc;
+}
+
+.quotation-field-group legend {
+  font-weight: 600;
+  color: var(--theme-text-muted, #64748B);
+  padding: 0 0.5rem;
+  font-size: 1.1rem;
+}
+
+.quotation-form-grid-four {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.quotation-form-grid-two {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.quotation-input-group {
+  margin-bottom: 1rem;
+}
+
+.quotation-input-group label {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-weight: 500;
+  color: var(--theme-text-muted, #64748B);
+  font-size: 0.85rem;
+}
+
+.quotation-input-group input,
+.quotation-input-group textarea,
+.quotation-input-group select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--theme-border, #E2E8F0);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  transition: border-color 0.3s ease;
+}
+
+.quotation-input-group textarea {
+  resize: vertical;
+  min-height: 70px;
+}
+
+.quotation-input-group input:focus,
+.quotation-input-group textarea:focus,
+.quotation-input-group select:focus {
+  outline: none;
+  border-color: #8a87c9;
+  box-shadow: 0 0 0 3px rgba(138, 135, 201, 0.1);
+}
+
+.quotation-readonly-field {
+  background-color: #f7fafc;
+  color: var(--theme-text-muted, #64748B);
+  cursor: not-allowed;
+}
+
+/* Table Styles */
+.quotation-items-grid,
+.quotation-gst-grid {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+  background: var(--card-bg, #FFFFFF);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.quotation-items-grid th,
+.quotation-gst-grid th {
+  background: var(--table-header-bg, #F8FAFC);
+  padding: 1rem;
+  font-weight: 600;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  color: var(--theme-text, #1E293B);
+  font-size: 0.9rem;
+  white-space: nowrap;
+  text-align: left;
+}
+
+.quotation-items-grid td,
+.quotation-gst-grid td {
+  padding: 0.75rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  background: var(--card-bg, #FFFFFF);
+  color: var(--theme-text, #1E293B);
+  font-size: 0.85rem;
+  vertical-align: middle;
+}
+
+.quotation-items-grid tr:hover td,
+.quotation-gst-grid tr:hover td {
+  background: rgba(109, 106, 184, 0.05);
+}
+
+.quotation-items-grid input,
+.quotation-gst-grid input,
+.quotation-gst-grid select {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid var(--theme-border, #E2E8F0);
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-family: inherit;
+}
+
+.quotation-items-grid input:focus,
+.quotation-gst-grid input:focus,
+.quotation-gst-grid select:focus {
+  outline: none;
+  border-color: #8a87c9;
+}
+
+/* Button Styles */
+.quotation-add-row-btn {
+  padding: 0.6rem 1.25rem;
+  background: rgba(72, 187, 120, 0.2);
+  color: #2f855a;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  margin-bottom: 1rem;
+}
+
+.quotation-add-row-btn:hover {
+  background: #2f855a;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
+}
+
+.quotation-remove-btn {
+  background: rgba(239, 68, 68, 0.2);
+  color: #dc2626;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  transition: all 0.3s ease;
+}
+
+.quotation-remove-btn:hover {
+  background: #dc2626;
+  color: white;
+  transform: scale(1.1);
+}
+
+.quotation-remove-btn:disabled {
+  background: #e2e8f0;
+  color: #a0aec0;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.quotation-action-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  margin-bottom: 0.75rem;
+  border-top: 1px solid var(--theme-border, #E2E8F0);
+}
+
+.quotation-cancel-btn {
+  padding: 0.6rem 1.25rem;
+  background: var(--card-bg, #FFFFFF);
+  color: var(--theme-text-muted, #64748B);
+  border: 1px solid var(--theme-border, #E2E8F0);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.quotation-cancel-btn:hover {
+  background: rgba(245, 101, 101, 0.2);
+  border-color: #cbd5e0;
+}
+
+.quotation-submit-btn {
+  padding: 0.6rem 1.25rem;
+  background: rgba(72, 187, 120, 0.2);
+  color: #2f855a;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.quotation-submit-btn:hover {
+  background: #2f855a;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
+}
+
+.quotation-edit-btn {
+  padding: 0.6rem 1.25rem;
+  background: rgba(59, 130, 246, 0.2);
+  color: #1e40af;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.quotation-edit-btn:hover {
+  background: #1e40af;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* Modal Styles */
+.quotation-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 0.5rem;
+}
+
+.quotation-modal-window {
+  background: var(--card-bg, #FFFFFF);
+  border-radius: 12px;
+  width: 100%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  margin: 0;
+  padding: 1rem 1.5rem;
+}
+
+.quotation-large-modal {
+  max-width: 900px;
+}
+
+.quotation-modal-header1 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--theme-border, #E2E8F0);
+  margin: 0;
+}
+
+.quotation-modal-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--theme-text, #1E293B);
+}
+
+.quotation-close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--theme-text-muted, #64748B);
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.quotation-close-btn:hover {
+  background: #f7fafc;
+  color: var(--theme-text-muted, #64748B);
+}
+
+/* Quotation History Content - Fixed Margins and Padding */
+.quotation-history-content {
+  padding: 1.5rem;
+  margin: 0;
+}
+
+.quotation-table-container {
+  overflow-x: auto;
+  margin: 0;
+  padding: 0;
+}
+
+.quotation-history-table {
+  width: 100%;
+  border-collapse: collapse;
+  color: var(--theme-text, #1E293B);
+  margin: 0;
+  padding: 0;
+}
+
+.quotation-history-table th {
+  text-align: left;
+  padding: 0.6rem;
+  font-weight: 600;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  color: var(--theme-text, #1E293B);
+  background: var(--table-header-bg, #F8FAFC);
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.quotation-history-table td {
+  padding: 1rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  background: var(--card-bg, #FFFFFF);
+  color: var(--theme-text, #1E293B);
+  font-size: 0.85rem;
+  vertical-align: middle;
+}
+
+.quotation-history-table tr:hover td {
+  background: rgba(109, 106, 184, 0.05);
+}
+
+/* Fix for action buttons in history table */
+#history-row-actions {
+  margin: 0 !important;
+  padding: 0 !important;
+  border-top: none !important;
+  justify-content: center;
+  gap: 0.25rem;
+}
+
+#history-row-actions .quotation-edit-btn,
+#history-row-actions .quotation-submit-btn,
+#history-row-actions .quotation-remove-btn {
+  margin: 0;
+  padding: 0.25rem 0.5rem !important;
+  font-size: 0.75rem !important;
+  min-width: auto;
+}
+
+/* Modal content spacing */
+.quotation-modal-window .quotation-history-content {
+  padding: 1.5rem;
+}
+
+.quotation-modal-window .quotation-action-buttons {
+  margin: 1rem 1.5rem 1.5rem 1.5rem;
+}
+
+/* Form Sections in Details */
+.quotation-detail-section {
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--theme-border, #E2E8F0);
+}
+
+.quotation-detail-section:last-of-type {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.quotation-section-title {
+  margin: 0 0 0.75rem 0;
+  font-size: 1.1rem;
+  color: var(--theme-text-muted, #64748B);
+  font-weight: 600;
+}
+
+.quotation-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.quotation-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.quotation-detail-item label {
+  font-weight: 600;
+  color: var(--theme-text-muted, #64748B);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.quotation-detail-item span {
+  color: var(--theme-text, #1E293B);
+  font-size: 0.95rem;
+  padding: 0.5rem 0;
+}
+
+/* Follow Up Section */
+.quotation-add-followup {
+  margin-top: 1rem;
+}
+
+.quotation-followup-textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--theme-border, #E2E8F0);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  transition: border-color 0.3s ease;
+  resize: vertical;
+  min-height: 70px;
+}
+
+.quotation-followup-textarea:focus {
+  outline: none;
+  border-color: #8a87c9;
+  box-shadow: 0 0 0 3px rgba(138, 135, 201, 0.1);
+}
+
+/* History Table Cells */
+.quotation-history-date,
+.quotation-history-action,
+.quotation-history-user {
+  white-space: nowrap;
+}
+
+.quotation-history-followup {
+  max-width: 300px;
+  word-wrap: break-word;
+}
+
+/* Empty State */
+.quotation-empty-state {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  margin: 0;
+  color: var(--theme-text-muted, #64748B);
+}
+
+.quotation-empty-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.quotation-empty-subtext {
+  margin: 0.5rem 0 1rem 0;
+  font-size: 0.9rem;
+}
+
+/* Delete Confirmation Modal */
+.quotation-delete-confirm {
+  text-align: center;
+  padding: 2rem;
+}
+
+.quotation-delete-icon {
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 4rem;
+  color: #d69e2e;
+  opacity: 0.9;
+}
+
+.quotation-delete-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--theme-text, #1E293B);
+  margin-bottom: 1rem;
+}
+
+.quotation-delete-message {
+  color: var(--theme-text-muted, #64748B);
+  line-height: 1.5;
+  margin-bottom: 2rem;
+}
+
+.quotation-delete-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.quotation-delete-btn {
+  padding: 0.6rem 1.25rem;
+  background: rgba(239, 68, 68, 0.2);
+  color: #dc2626;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.quotation-delete-btn:hover {
+  background: #dc2626;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+/* Additional specific fixes for quotation history */
+#quotation-history-content {
+  padding: 1.5rem !important;
+  margin: 0 !important;
+}
+
+#history-table-container {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+#quotation-history-table {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+#history-modal-actions {
+  margin: 1rem 1.5rem 1.5rem 1.5rem !important;
+  padding: 0.75rem 0 0 0 !important;
+}
+
+/* Remove any default margins from table rows */
+.quotation-history-row td {
+  margin: 0;
+  padding: 1rem;
+}
+
+/* Ensure action buttons in table don't have extra margins */
+.quotation-history-row .quotation-action-buttons {
+  margin: 0 !important;
+  padding: 0 !important;
+  gap: 0.25rem;
+}
+
+/* Additional unique classes for quotation items */
+.quotation-item-description,
+.quotation-item-quantity,
+.quotation-item-rate,
+.quotation-item-total {
+  font-family: inherit;
+}
+
+.quotation-gst-type,
+.quotation-gst-percentage {
+  font-family: inherit;
+}
+
+.edit-item-description,
+.edit-item-quantity,
+.edit-item-rate,
+.edit-item-total,
+.edit-gst-type,
+.edit-gst-percentage {
+  font-family: inherit;
+}
+
+.view-item-row,
+.view-gst-row,
+.history-entry-row {
+  transition: background-color 0.2s ease;
+}
+
+.view-item-row:hover,
+.view-gst-row:hover,
+.history-entry-row:hover {
+  background-color: rgba(109, 106, 184, 0.05);
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .quotation-form-grid-four {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .quotation-header-panel {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+  
+  .quotation-form-grid-four,
+  .quotation-form-grid-two {
+    grid-template-columns: 1fr;
+    gap: 0.8rem;
+  }
+  
+  .quotation-action-buttons {
+    flex-direction: column;
+  }
+  
+  .quotation-cancel-btn,
+  .quotation-submit-btn,
+  .quotation-edit-btn,
+  .quotation-remove-btn {
+    width: 100%;
+  }
+  
+  .quotation-modal-window {
+    margin: 0.5rem;
+    max-height: calc(100vh - 1rem);
+  }
+  
+  .quotation-large-modal {
+    max-width: calc(100vw - 1rem);
+  }
+  
+  .quotation-detail-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .quotation-delete-actions {
+    flex-direction: column;
+  }
+  
+  .quotation-history-table {
+    font-size: 0.8rem;
+    min-width: 800px;
+  }
+  
+  .quotation-history-table th,
+  .quotation-history-table td {
+    padding: 0.75rem 0.5rem;
+  }
+  
+  /* Responsive fixes for history content */
+  .quotation-history-content {
+    padding: 1rem;
+  }
+  
+  .quotation-modal-window .quotation-action-buttons {
+    margin: 1rem;
+  }
+  
+  .quotation-empty-state {
+    padding: 2rem 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .quotation-form-card {
+    padding: 1rem;
+  }
+  
+  .quotation-field-group {
+    padding: 1rem;
+  }
+  
+  .quotation-history-content,
+  .quotation-details-panel {
+    padding: 0.75rem 1rem;
+  }
+  
+  .quotation-modal-header {
+    padding-bottom: 1rem;
+  }
+  
+  .quotation-history-content {
+    padding: 0.75rem;
+  }
+  
+  .quotation-modal-header {
+    padding-bottom: 1rem;
+  }
+  
+  .quotation-modal-window .quotation-action-buttons {
+    margin: 0.75rem;
+    padding: 0.75rem 0 0 0;
+  }
+}
+
+/* Glass effect for modern look */
+.quotation-glass-form {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+.quotation-download-btn {
+  background: #10b981 !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 4px !important;
+  padding: 0.25rem 0.5rem !important;
+  font-size: 0.75rem !important;
+  cursor: pointer !important;
+  transition: all 0.2s !important;
+  min-width: 70px !important;
+}
+
+.quotation-download-btn:hover {
+  background: #059669 !important;
+  transform: translateY(-1px) !important;
+}
+
+.quotation-download-btn:disabled {
+  background: #6ee7b7 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+}

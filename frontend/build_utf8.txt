@@ -1,0 +1,209 @@
+﻿
+> arham-it-frontend@0.0.0 build
+> vite build
+
+node.exe : [2m7:35:50 
+am[22m 
+[33m[1m[vite][22m[39m 
+[33mwarning: `esbuild` 
+option was specified by 
+"vite:react-babel" 
+plugin. This option is 
+deprecated, please use 
+`oxc` instead.[39m
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo        
+      : NotSpecified: (  
+  [2m7:35:50 am...` in   
+ stead.[39m:String) [    
+], RemoteException
+    + FullyQualifiedError 
+   Id : NativeCommandErr  
+  or
+ 
+`optimizeDeps.rollupOption
+s` / `ssr.optimizeDeps.rol
+lupOptions` is 
+deprecated. Use `optimizeD
+eps.rolldownOptions` 
+instead. Note that this 
+option may be set by a 
+plugin. Set 
+VITE_DEPRECATION_TRACE=1 
+to see where it is called.
+[vite:react-babel] We 
+recommend switching to `@v
+itejs/plugin-react-oxc` 
+for improved performance. 
+More information at 
+https://vite.dev/rolldown
+[36mvite v8.0.2 [32mbuilding client environment for production...[36m[39m
+[2K
+[33m[vite:css][postcss] 
+@import must precede all 
+other statements (besides 
+@charset or empty @layer)
+1271 |  
+1272 |  /* Import Inter 
+font */
+1273 |  @import url('https
+://fonts.googleapis.com/cs
+s2?family=Inter:wght@300;4
+00;500;600;700&display=swa
+p');
+     |  ^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^
+1274 |  
+1275 |  /* Quick Stats 
+Section */[39m
+[33m[vite:css][postcss] 
+@import must precede all 
+other statements (besides 
+@charset or empty @layer)
+1275 |  
+1276 |  /* Import Inter 
+font */
+1277 |  @import url('https
+://fonts.googleapis.com/cs
+s2?family=Inter:wght@300;4
+00;500;600;700&display=swa
+p');
+     |  ^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^
+1278 |  
+1279 |  /* Quick Stats 
+Section */[39m
+transforming...Γ£ô 439 modules transformed.
+[31mΓ£ù[39m Build 
+failed in 413ms
+[31merror during build:
+[31mBuild failed with 1 
+error:
+
+[31m[builtin:vite-transfo
+rm] Error:[0m Expected 
+`}` but found `EOF`
+      [38;5;246mΓò¡[0m[
+38;5;246mΓöÇ[0m[38;5;246
+m[[0m src/pages/dashboard
+/employee/Projects.jsx:151
+0:34 [38;5;246m][0m
+      [38;5;246mΓöé[0m
+ [38;5;246m   7 Γöé[0m 
+[38;5;249mc[0m[38;5;249m
+o[0m[38;5;249mn[0m[38;
+5;249ms[0m[38;5;249mt[0
+m[38;5;249m [0m[38;5;24
+9mP[0m[38;5;249mr[0m[3
+8;5;249mo[0m[38;5;249mj
+[0m[38;5;249me[0m[38;5;
+249mc[0m[38;5;249mt[0m
+[38;5;249mM[0m[38;5;249m
+a[0m[38;5;249mn[0m[38;
+5;249ma[0m[38;5;249mg[0
+m[38;5;249me[0m[38;5;24
+9mm[0m[38;5;249me[0m[3
+8;5;249mn[0m[38;5;249mt
+[0m[38;5;249m [0m[38;5;
+249m=[0m[38;5;249m [0m
+[38;5;249m([0m[38;5;249m
+)[0m[38;5;249m [0m[38;
+5;249m=[0m[38;5;249m>[0
+m[38;5;249m [0m{
+ [38;5;240m     Γöé[0m  
+                          
+     Γö¼  
+ [38;5;240m     Γöé[0m  
+                          
+     Γò░ΓöÇΓöÇ Opened here
+ [38;5;240m     Γöé[0m 
+ [38;5;246m1510 Γöé[0m 
+[38;5;249me[0m[38;5;249m
+x[0m[38;5;249mp[0m[38;
+5;249mo[0m[38;5;249mr[0
+m[38;5;249mt[0m[38;5;24
+9m [0m[38;5;249md[0m[3
+8;5;249me[0m[38;5;249mf
+[0m[38;5;249ma[0m[38;5;
+249mu[0m[38;5;249ml[0m
+[38;5;249mt[0m[38;5;249m
+ [0m[38;5;249mP[0m[38;
+5;249mr[0m[38;5;249mo[0
+m[38;5;249mj[0m[38;5;24
+9me[0m[38;5;249mc[0m[3
+8;5;249mt[0m[38;5;249mM
+[0m[38;5;249ma[0m[38;5;
+249mn[0m[38;5;249ma[0m
+[38;5;249mg[0m[38;5;249m
+e[0m[38;5;249mm[0m[38;
+5;249me[0m[38;5;249mn[0
+m[38;5;249mt[0m[38;5;24
+9m;[0m
+ [38;5;240m     Γöé[0m  
+                          
+      Γöé 
+ [38;5;240m     Γöé[0m  
+                          
+      Γò░ΓöÇ `}` expected
+[38;5;246mΓöÇΓöÇΓöÇΓöÇΓöÇ
+ΓöÇΓò»[0m
+[31m
+    at aggregateBindingErr
+orsIntoJsError (file:///C:
+/Users/ADMIN/Documents/Git
+Hub/work-desk/frontend/nod
+e_modules/rolldown/dist/sh
+ared/error-D8cGyrC7.mjs:48
+:18)
+    at 
+unwrapBindingResult (file:
+///C:/Users/ADMIN/Document
+s/GitHub/work-desk/fronten
+d/node_modules/rolldown/di
+st/shared/error-D8cGyrC7.m
+js:18:128)
+    at #build (file:///C:/
+Users/ADMIN/Documents/GitH
+ub/work-desk/frontend/node
+_modules/rolldown/dist/sha
+red/rolldown-build-CL9PyQ2
+E.mjs:3313:34)
+    at async 
+buildEnvironment (file:///
+C:/Users/ADMIN/Documents/G
+itHub/work-desk/frontend/n
+ode_modules/vite/dist/node
+/chunks/node.js:32829:64)
+    at async Object.build 
+(file:///C:/Users/ADMIN/Do
+cuments/GitHub/work-desk/f
+rontend/node_modules/vite/
+dist/node/chunks/node.js:3
+3251:19)
+    at async 
+Object.buildApp (file:///C
+:/Users/ADMIN/Documents/Gi
+tHub/work-desk/frontend/no
+de_modules/vite/dist/node/
+chunks/node.js:33248:153)
+    at async 
+CAC.<anonymous> (file:///C
+:/Users/ADMIN/Documents/Gi
+tHub/work-desk/frontend/no
+de_modules/vite/dist/node/
+cli.js:778:3) {
+  errors: [Getter/Setter]
+}[39m

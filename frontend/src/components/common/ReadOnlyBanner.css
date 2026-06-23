@@ -1,0 +1,27 @@
+.read-only-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: #fffbeb;
+  border-bottom: 1px solid #fcd34d;
+  color: #92400e;
+  font-size: 0.875rem;
+}
+
+.read-only-banner i {
+  font-size: 1rem;
+}
+
+.dashboard-main.module-readonly .add-employee-btn,
+.dashboard-main.module-readonly .submit-btn:not(.cancel-btn),
+.dashboard-main.module-readonly .deletebtn,
+.dashboard-main.module-readonly .viewedit-btn,
+.dashboard-main.module-readonly .mm-manage-btn,
+.dashboard-main.module-readonly .mm-save-btn,
+.dashboard-main.module-readonly button[class*='add-'],
+.dashboard-main.module-readonly .export-btn[onclick] {
+  pointer-events: none;
+  opacity: 0.45;
+  cursor: not-allowed;
+}

@@ -1,0 +1,52 @@
+﻿
+/* Form Group Styles */
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group textarea,
+.form-group input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--theme-border, #E2E8F0);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  transition: border-color 0.3s ease;
+  background: var(--card-bg, #FFFFFF);
+}
+
+.form-group textarea:focus,
+.form-group input:focus {
+  outline: none;
+  border-color: #8a87c9;
+  box-shadow: 0 0 0 3px rgba(138, 135, 201, 0.1);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .quotation-header-panel {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+  
+  .success-message {
+    width: 100%;
+    text-align: center;
+  }
+  
+  .quotation-action-buttons {
+    flex-direction: column;
+  }
+  
+ 
+}
+
+@media (max-width: 480px) {
+  .quotation-form-card {
+    padding: 1rem;
+  }
+  
+ 
+}

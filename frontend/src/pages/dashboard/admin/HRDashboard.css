@@ -1,0 +1,445 @@
+/* ═══════════════════════════════════════════════════════════════════
+   Employee Portal — Premium SaaS Layout
+   Unified with Admin & Dashboard Design System
+═══════════════════════════════════════════════════════════════════ */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+/* ── Global Theme Variables ────────────────────────────────────── */
+:root {
+  --emp-bg: #F8FAFC;
+  --emp-surface: #FFFFFF;
+  --emp-border: #E2E8F0;
+  --emp-border-strong: #CBD5E1;
+  --emp-text-main: #0F172A;
+  --emp-text-muted: #64748B;
+  --emp-bg-hover: #F1F5F9;
+  
+  --emp-primary: #4F46E5;
+  --emp-primary-soft: #EEF2FF;
+  --emp-primary-text: #3730A3;
+  
+  --emp-warning-bg: #FEF9C3;
+  --emp-warning-text: #854D0E;
+  --emp-warning-border: #FEF08A;
+  
+  --emp-btn-bg: #FFFFFF;
+  --emp-btn-text: #0F172A;
+  --emp-btn-hover: #F1F5F9;
+
+  --emp-shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+  --emp-shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+[data-theme='dark'] {
+  --emp-bg: #0B1121;
+  --emp-surface: #131B2C;
+  --emp-border: #1E293B;
+  --emp-border-strong: #334155;
+  --emp-text-main: #F8FAFC;
+  --emp-text-muted: #94A3B8;
+  --emp-bg-hover: #1E293B;
+  
+  --emp-primary: #6366F1;
+  --emp-primary-soft: rgba(99, 102, 241, 0.15);
+  --emp-primary-text: #A5B4FC;
+
+  /* FIX: Adjusted warning colors for Dark Mode to avoid blinding yellow */
+  --emp-warning-bg: rgba(234, 179, 8, 0.12);
+  --emp-warning-text: #FDE047;
+  --emp-warning-border: rgba(234, 179, 8, 0.25);
+
+  /* FIX: Adjusted buttons so they aren't white in Dark Mode */
+  --emp-btn-bg: #1E293B;
+  --emp-btn-text: #F8FAFC;
+  --emp-btn-hover: #334155;
+
+  --emp-shadow-sm: 0 2px 4px rgba(0,0,0,0.4);
+  --emp-shadow-md: 0 8px 16px rgba(0,0,0,0.5);
+}
+
+/* ── Reset & Base ──────────────────────────────────────────────── */
+.employee-portal {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--emp-bg);
+  color: var(--emp-text-main);
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.employee-portal * {
+  box-sizing: border-box;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   HR DASHBOARD SPECIFIC STYLES
+═══════════════════════════════════════════════════════════════ */
+.hr-dashboard-container {
+  padding: 32px;
+  background-color: var(--emp-bg);
+  min-height: 100%;
+  font-family: inherit;
+  color: var(--emp-text-main);
+  transition: background-color 0.3s ease;
+}
+
+/* Header Row */
+.hr-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.hr-page-subtitle {
+  margin: 0 0 4px 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--emp-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.hr-page-title {
+  margin: 0;
+  font-weight: 800;
+  font-size: 1.75rem;
+  letter-spacing: -0.02em;
+  color: var(--emp-text-main);
+}
+
+/* Secondary Button (Fixes the white button issue in Dark Mode) */
+.hr-btn-secondary {
+  background-color: var(--emp-btn-bg);
+  color: var(--emp-btn-text);
+  border: 1px solid var(--emp-border);
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.hr-btn-secondary:hover {
+  background-color: var(--emp-btn-hover);
+}
+
+.hr-btn-secondary.btn-sm {
+  padding: 6px 12px;
+  font-size: 0.85rem;
+}
+
+.mt-3 { margin-top: 12px; }
+
+/* Top Summary Grid */
+.hr-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.hr-summary-card {
+  background: var(--emp-surface);
+  border: 1px solid var(--emp-border);
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  box-shadow: var(--emp-shadow-sm);
+}
+
+.summary-info .summary-label {
+  margin: 0 0 8px 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--emp-text-muted);
+}
+
+.summary-info .summary-value {
+  margin: 0 0 8px 0;
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--emp-text-main);
+  line-height: 1;
+}
+
+.summary-info .summary-subtext {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--emp-text-muted);
+}
+
+.summary-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+
+/* Icon Colors */
+.emp { background-color: rgba(99, 102, 241, 0.15); color: #818CF8; }
+.cash { background-color: rgba(16, 185, 129, 0.15); color: #34D399; }
+.resign { background-color: rgba(245, 158, 11, 0.15); color: #FBBF24; }
+.doc { background-color: rgba(59, 130, 246, 0.15); color: #60A5FA; }
+
+/* Main Grid Layout */
+.hr-main-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+}
+
+/* Section Cards (Main containers) */
+.hr-section-card {
+  background: var(--emp-surface);
+  border: 1px solid var(--emp-border);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: var(--emp-shadow-sm);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.section-header.small {
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.section-header h3 {
+  margin: 0 0 4px 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--emp-text-main);
+}
+
+.section-header p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--emp-text-muted);
+}
+
+.badge {
+  background: var(--emp-primary-soft);
+  color: var(--emp-primary-text);
+  font-weight: 700;
+  font-size: 0.85rem;
+  padding: 4px 10px;
+  border-radius: 12px;
+}
+
+/* Inner Stat Cards (Fixes the White Box issue) */
+.attendance-inner-grid, .documents-inner-grid {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+/* FIX: Using var(--emp-bg) here ensures that in Light mode these are light gray, 
+  and in Dark Mode they are deeply dark (#0B1121), not solid white. 
+*/
+.inner-stat-card {
+  background: var(--emp-bg); 
+  border: 1px solid var(--emp-border);
+  border-radius: 8px;
+  padding: 16px;
+  flex: 1;
+  min-width: 120px;
+  transition: border-color 0.2s ease;
+}
+
+.inner-stat-card.cursor-pointer {
+  cursor: pointer;
+}
+
+.inner-stat-card.cursor-pointer:hover {
+  border-color: var(--emp-border-strong);
+}
+
+.inner-stat-card p {
+  margin: 0 0 8px 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--emp-text-muted);
+}
+
+.inner-stat-card h4 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--emp-text-main);
+}
+
+/* Progress Bar */
+.attendance-progress-bar {
+  height: 8px;
+  background: var(--emp-bg);
+  border-radius: 4px;
+  margin-bottom: 24px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--emp-primary);
+  border-radius: 4px;
+}
+
+/* Quick Actions Grid */
+.quick-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+/* FIX: Changed hardcoded white background to var(--emp-bg) */
+.quick-action-btn {
+  background: var(--emp-bg);
+  border: 1px solid var(--emp-border);
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.quick-action-btn:hover {
+  border-color: var(--emp-border-strong);
+  background: var(--emp-bg-hover);
+}
+
+.action-icon {
+  font-size: 1.4rem;
+}
+.action-icon.emp-color { color: #818CF8; }
+.action-icon.cash-color { color: #34D399; }
+.action-icon.doc-color { color: #60A5FA; }
+
+/* Alert Box (Fixes the blinding yellow issue) */
+.hr-alert-card {
+  background: var(--emp-surface);
+  border: 1px solid var(--emp-border);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.alert-header h3 {
+  margin: 0 0 16px 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--emp-text-main);
+}
+
+.alert-body {
+  display: flex;
+  gap: 16px;
+}
+
+.alert-icon-box {
+  background: var(--emp-warning-bg);
+  color: var(--emp-warning-text);
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+  border: 1px solid var(--emp-warning-border);
+}
+
+.alert-content p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--emp-text-muted);
+  line-height: 1.5;
+}
+
+/* Warning List Items */
+.warning-list-item {
+  background: var(--emp-warning-bg);
+  color: var(--emp-warning-text);
+  border: 1px solid var(--emp-warning-border);
+  padding: 12px 16px;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.warning-list-item:last-child {
+  margin-bottom: 0;
+}
+
+/* Activity List */
+.activity-item {
+  background: var(--emp-bg);
+  border: 1px solid var(--emp-border);
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.activity-item:last-child {
+  margin-bottom: 0;
+}
+
+.activity-dot {
+  width: 10px;
+  height: 10px;
+  background-color: #FBBF24;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.activity-info h4 {
+  margin: 0 0 4px 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--emp-text-main);
+}
+
+.activity-info p {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--emp-text-muted);
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .hr-main-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .hr-dashboard-container { padding: 20px; }
+  .hr-header-row { flex-direction: column; align-items: flex-start; gap: 16px; }
+}

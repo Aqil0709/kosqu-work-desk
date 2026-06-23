@@ -1,0 +1,73 @@
+﻿diff --git a/frontend/src/services/attendanceAPI.js b/frontend/src/services/attendanceAPI.js
+index f2c080c..10bc36b 100644
+--- a/frontend/src/services/attendanceAPI.js
++++ b/frontend/src/services/attendanceAPI.js
+@@ -106,47 +106,7 @@ export const attendanceAPI = {
+     });
+   },
+ 
+-  getMonthlyAttendanceSummary: (employeeId, month, year) => {
+-    // Use existing endpoint or create summary from history
+-    return api.get(`/attendance/history/${employeeId}`).then(response => {
+-      let attendance = response.data.attendance || response.data.data || [];
+-      
+-      // Filter by month and year
+-      if (month && year) {
+-        attendance = attendance.filter(record => {
+-          const recordDate = new Date(record.date || record.check_in_time);
+-          return recordDate.getMonth() + 1 === parseInt(month) && 
+-                 recordDate.getFullYear() === parseInt(year);
+-        });
+-      }
+-      
+-      // Calculate summary
+-      const summary = {
+-        present: attendance.filter(a => a.status === 'present').length,
+-        absent: attendance.filter(a => a.status === 'absent').length,
+-        late: attendance.filter(a => a.status === 'late').length,
+-        halfDay: attendance.filter(a => a.status === 'half-day').length
+-      };
+-      
+-      return { data: { summary, attendance } };
+-    });
+-  },
+-
+-  getTodayAttendance: (employeeId) => {
+-    const today = new Date().toISOString().split('T')[0];
+-    return api.get(`/attendance/history/${employeeId}`).then(response => {
+-      let attendance = response.data.attendance || response.data.data || [];
+-      const todayRecord = attendance.find(record => {
+-        const recordDate = new Date(record.date || record.check_in_time).toISOString().split('T')[0];
+-        return recordDate === today;
+-      });
+-      return { data: { attendance: todayRecord ? [todayRecord] : [] } };
+-    });
+-  },
+-  // src/services/attendanceAPI.js - Add this method
+-
+-// src/services/attendanceAPI.js
+-getMonthlySummary: async (employeeId, month, year) => {
++  getMonthlyAttendanceSummary: async (employeeId, month, year) => {
+     // Convert month name to number if needed
+     let monthNumber = month;
+     if (isNaN(month) && month) {
+@@ -160,5 +120,17 @@ getMonthlySummary: async (employeeId, month, year) => {
+     
+     // Use the correct endpoint
+     return api.get(`/attendance/summary/${employeeId}?month=${monthNumber}&year=${year}`);
+-},
++  },
++
++  getTodayAttendance: (employeeId) => {
++    const today = new Date().toISOString().split('T')[0];
++    return api.get(`/attendance/history/${employeeId}`).then(response => {
++      let attendance = response.data.attendance || response.data.data || [];
++      const todayRecord = attendance.find(record => {
++        const recordDate = new Date(record.date || record.check_in_time).toISOString().split('T')[0];
++        return recordDate === today;
++      });
++      return { data: { attendance: todayRecord ? [todayRecord] : [] } };
++    });
++  },
+ };
+\ No newline at end of file

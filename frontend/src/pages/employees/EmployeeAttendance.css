@@ -1,0 +1,1730 @@
+﻿/* Attendance.css - Complete version matching Employee.css design system */
+.attendance-section {
+  background: var(--page-bg, #F8FAFC);
+  padding: 0.5rem 1rem 1rem;
+  min-height: 100vh;
+  font-family: 'Inter', sans-serif;
+}
+
+/* Attendance Header */
+.attendance-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+  padding: 0 1rem;
+}
+
+.attendance-header h2 {
+  color: var(--theme-text, #1E293B);
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+/* Buttons — Design System Aligned */
+.add-attendance-btn,
+.face-recognition-btn,
+.check-in-btn,
+.check-out-btn {
+  background: var(--gradient-brand, linear-gradient(135deg, #5B4FF7, #7b6ef9));
+  border: none;
+  color: #fff;
+  padding: 0 18px;
+  min-height: 38px;
+  border-radius: var(--radius-lg, 10px);
+  cursor: pointer;
+  font-family: var(--font-sans, 'Inter', sans-serif);
+  font-weight: 600;
+  font-size: 0.875rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(91, 79, 247, 0.30);
+  white-space: nowrap;
+}
+
+.add-attendance-btn:hover,
+.face-recognition-btn:hover,
+.check-in-btn:hover,
+.check-out-btn:hover {
+  background: var(--gradient-brand-hover, linear-gradient(135deg, #4a3ed6, #6a5df8));
+  transform: translateY(-1px) scale(1.01);
+  box-shadow: 0 4px 18px rgba(91, 79, 247, 0.42);
+}
+
+.btn-icon {
+  font-size: 1.1rem;
+}
+
+/* Attendance Actions */
+.attendance-actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.auto-checkout-toggle {
+  min-height: 42px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--theme-border, #E2E8F0);
+  border-radius: 8px;
+  background: var(--card-bg, #FFFFFF);
+  color: var(--theme-text, #1E293B);
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.15rem 0.5rem;
+  align-items: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.auto-checkout-toggle input {
+  width: 16px;
+  height: 16px;
+  accent-color: #6d6ab8;
+}
+
+.auto-checkout-toggle small {
+  grid-column: 2;
+  color: var(--theme-text-muted, #64748B);
+  font-size: 0.7rem;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+/* .quick-actions {
+  display: flex;
+  gap: 0.5rem;
+} */
+
+.check-in-btn,
+.check-out-btn {
+  padding: 0.75rem 1rem;
+  font-size: 0.85rem;
+}
+
+/* Attendance Statistics */
+.attendance-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.stat-card {
+  background: var(--card-bg, #FFFFFF);
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  text-align: center;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+}
+
+.stat-card h3 {
+  margin: 0 0 0.5rem 0;
+  color: var(--theme-text-muted, #64748B);
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-number {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--theme-text, #1E293B);
+}
+
+.stat-number.present {
+  color: var(--color-success, #10b981);
+}
+
+.stat-number.absent {
+  color: var(--color-danger, #ef4444);
+}
+
+/* Table Container */
+.attendance-table-container {
+  background: var(--card-bg, #FFFFFF);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  color: var(--theme-text, #1E293B);
+}
+
+.attendance-table-container .table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.table-header h3 {
+  margin: 0;
+  color: var(--theme-text, #1E293B);
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.attendance-table-container .table-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: flex-end;
+  margin-left: auto;
+  width: min(760px, 100%);
+}
+
+.filter-btn,
+.refresh-btn,
+.export-btn {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--theme-border, #E2E8F0);
+  background: var(--card-bg, #FFFFFF);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  min-height: 38px;
+  white-space: nowrap;
+}
+
+.attendance-table-container .table-search-input {
+  width: min(50%, 420px);
+  flex: initial;
+  min-width: 280px;
+  max-width: none;
+}
+
+.attendance-table-container .filter-btn {
+  width: 220px;
+  min-width: 180px;
+}
+
+.attendance-table-container .refresh-btn {
+  flex: 0 0 auto;
+}
+
+.attendance-table-container .table-count-label {
+  display: block;
+  padding: 0.35rem 1.5rem 0;
+}
+
+.filter-btn:hover,
+.refresh-btn:hover,
+.export-btn:hover {
+  background: linear-gradient(135deg, rgba(109, 106, 184, 0.15) 0%, rgba(201, 123, 199, 0.15) 33%, rgba(240, 108, 179, 0.15) 66%, rgba(255, 194, 224, 0.15) 100%);
+  border-color: #cbd5e0;
+}
+
+.refresh-btn {
+  background: #5B4FF7;
+  color: white;
+  border: none;
+}
+
+.refresh-btn:hover {
+  background: #5B4FF7;
+}
+
+/* Table Styles */
+.table-wrapper {
+  overflow-x: auto;
+}
+
+.attendance-table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  color: var(--theme-text, #1E293B);
+}
+
+.attendance-table th {
+  text-align: left;
+  padding: 1rem;
+  font-weight: 600;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  color: var(--theme-text, #1E293B);
+  background: var(--table-header-bg, #F8FAFC);
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.attendance-table td {
+  padding: 1rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  background: var(--card-bg, #FFFFFF);
+  color: var(--theme-text, #1E293B);
+  font-size: 0.85rem;
+  vertical-align: middle;
+  transition: all 0.3s ease;
+}
+
+/* Table Cells */
+.date-cell {
+  color: var(--theme-text-muted, #64748B);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.time-cell {
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+  color: var(--theme-text, #1E293B);
+  white-space: nowrap;
+}
+
+/* Status Badges */
+.status-badge {
+  padding: 0.4rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  display: inline-block;
+}
+
+.status-approved {
+  background: rgba(72, 187, 120, 0.2);
+  color: #2f855a;
+}
+
+.status-pending {
+  background: rgba(237, 137, 54, 0.2);
+  color: #c05621;
+}
+
+.status-rejected {
+  background: rgba(245, 101, 101, 0.2);
+  color: #c53030;
+}
+
+/* Method Badges */
+.method-badge {
+  padding: 0.3rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  display: inline-block;
+}
+
+.face-method {
+  background: rgba(138, 135, 201, 0.2);
+  color: #8a87c9;
+}
+
+.pin-method {
+  background: rgba(232, 147, 192, 0.2);
+  color: #e893c0;
+}
+
+.manual-method {
+  background: rgba(248, 209, 232, 0.2);
+  color: #6d6ab8;
+}
+
+/* Method Cell */
+.method-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Action Buttons */
+.action-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.view-details-btn {
+  padding: 0.4rem 0.8rem;
+  background: rgba(59, 130, 246, 0.2);
+  color: #1e40af;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.view-details-btn:hover {
+  background: #1e40af;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modal-content {
+  background: var(--card-bg, #FFFFFF);
+  border-radius: 12px;
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.camera-modal {
+  max-width: 600px;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--theme-border, #E2E8F0);
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  /* color: var(--theme-text, #1E293B); */
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--theme-text-muted, #64748B);
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.close-btn:hover {
+  background: #f7fafc;
+  color: var(--theme-text-muted, #64748B);
+}
+
+/* Camera Styles */
+.camera-container {
+  padding: 1.5rem;
+}
+
+.camera-preview {
+  position: relative;
+  background: #000;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.camera-video {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+
+.face-guide-frame {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 250px;
+  height: 250px;
+  border: 2px solid #8a87c9;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+  pointer-events: none;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.guide-text {
+  position: absolute;
+  bottom: -2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #8a87c9;
+  font-size: 0.85rem;
+  font-weight: 500;
+  white-space: nowrap;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.camera-controls {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.capture-btn {
+  padding: 0.75rem 1.5rem;
+  background: #5B4FF7;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.capture-btn:hover:not(:disabled) {
+  background: #5B4FF7;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(138, 135, 201, 0.4);
+}
+
+.capture-btn:disabled {
+  background: #cbd5e0;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.button-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.camera-controls .cancel-btn {
+  padding: 0.75rem 1.5rem;
+  background: var(--card-bg, #FFFFFF);
+  color: var(--theme-text-muted, #64748B);
+  border: 1px solid var(--theme-border, #E2E8F0);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.camera-controls .cancel-btn:hover {
+  background: #f7fafc;
+  border-color: #cbd5e0;
+}
+
+.camera-instructions {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: #f7fafc;
+  border-radius: 8px;
+  border: 1px solid var(--theme-border, #E2E8F0);
+  text-align: left;
+}
+
+.camera-instructions p {
+  margin: 0.5rem 0;
+  color: var(--theme-text-muted, #64748B);
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.camera-instructions p:before {
+  content: "•";
+  color: #8a87c9;
+  font-weight: bold;
+}
+
+/* PIN Verification */
+.pin-verification-container {
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.pin-header {
+  margin-bottom: 1.5rem;
+}
+
+.pin-icon {
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+  color: #8a87c9;
+}
+
+.pin-header h3 {
+  margin: 0 0 0.5rem 0;
+  color: var(--theme-text, #1E293B);
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.pin-subtitle {
+  color: var(--theme-text-muted, #64748B);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.pin-input-container {
+  margin-bottom: 1.5rem;
+}
+
+.pin-input {
+  width: 200px;
+  padding: 1rem;
+  border: 2px solid var(--theme-border, #E2E8F0);
+  border-radius: 8px;
+  font-size: 1.5rem;
+  text-align: center;
+  letter-spacing: 0.5rem;
+  font-weight: 600;
+  color: var(--theme-text, #1E293B);
+  transition: all 0.3s ease;
+}
+
+.pin-input:focus {
+  outline: none;
+  border-color: #8a87c9;
+  box-shadow: 0 0 0 3px rgba(138, 135, 201, 0.1);
+}
+
+.pin-hint {
+  color: var(--theme-text-muted, #64748B);
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
+}
+
+.pin-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.pin-submit-btn {
+  padding: 0.75rem 1.5rem;
+  background: #5B4FF7;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.pin-submit-btn:hover:not(:disabled) {
+  background: #5B4FF7;
+  transform: translateY(-2px);
+}
+
+.pin-submit-btn:disabled {
+  background: #cbd5e0;
+  cursor: not-allowed;
+}
+
+.pin-cancel-btn {
+  padding: 0.75rem 1.5rem;
+  background: var(--card-bg, #FFFFFF);
+  color: var(--theme-text-muted, #64748B);
+  border: 1px solid var(--theme-border, #E2E8F0);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.pin-cancel-btn:hover:not(:disabled) {
+  background: #f7fafc;
+  border-color: #cbd5e0;
+}
+
+.pin-security-note {
+  background: rgba(255, 193, 7, 0.1);
+  border: 1px solid rgba(255, 193, 7, 0.2);
+  border-radius: 8px;
+  padding: 1rem;
+  text-align: left;
+  color: #856404;
+  font-size: 0.85rem;
+}
+
+/* Verification Result */
+.verification-result {
+  margin: 1rem 1.5rem;
+  padding: 1rem;
+  border-radius: 8px;
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.verification-result.success {
+  background: rgba(72, 187, 120, 0.1);
+  border: 1px solid rgba(72, 187, 120, 0.2);
+}
+
+.verification-result.error {
+  background: rgba(245, 101, 101, 0.1);
+  border: 1px solid rgba(245, 101, 101, 0.2);
+}
+
+.result-icon {
+  font-size: 1.5rem;
+}
+
+.result-message {
+  flex: 1;
+}
+
+.result-message p {
+  margin: 0 0 0.5rem 0;
+  font-weight: 600;
+}
+
+.result-message p:last-child {
+  margin-bottom: 0;
+}
+
+.result-details {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.result-details p {
+  margin: 0.25rem 0;
+  font-size: 0.85rem;
+  font-weight: normal;
+}
+
+/* Form Styles */
+.attendance-form {
+  padding: 1rem 2rem 2rem 2rem;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-weight: 500;
+  color: var(--theme-text-muted, #64748B);
+  font-size: 0.9rem;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--theme-border, #E2E8F0);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  transition: all 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #8a87c9;
+  box-shadow: 0 0 0 3px rgba(138, 135, 201, 0.1);
+}
+
+.time-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.helper-text {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--theme-text-muted, #64748B);
+  font-style: italic;
+}
+
+.form-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--theme-border, #E2E8F0);
+}
+
+.cancel-btn {
+  padding: 0.6rem 1.25rem;
+  background: var(--card-bg, #FFFFFF);
+  color: var(--theme-text-muted, #64748B);
+  border: 1px solid var(--theme-border, #E2E8F0);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.cancel-btn:hover {
+  background: #f7fafc;
+  border-color: #cbd5e0;
+}
+
+.submit-btn {
+  padding: 0.6rem 1.25rem;
+  background: #5B4FF7;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.submit-btn:hover {
+  background: #5B4FF7;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(138, 135, 201, 0.3);
+}
+
+/* Loading and Error States */
+.loading-container,
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  text-align: center;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #8a87c9;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+.error-message {
+  color: #c53030;
+  margin-bottom: 1rem;
+  font-weight: 500;
+}
+
+.retry-btn {
+  padding: 0.6rem 1.25rem;
+  background: #5B4FF7;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.retry-btn:hover {
+  background: #5B4FF7;
+  transform: translateY(-1px);
+}
+
+/* No Data State */
+.no-data {
+  text-align: center;
+  padding: 3rem;
+  color: var(--theme-text-muted, #64748B);
+}
+
+.no-data p {
+  margin: 0.5rem 0 1rem 0;
+  font-size: 0.9rem;
+}
+
+.no-employees {
+  text-align: center;
+  padding: 3rem;
+  color: var(--theme-text-muted, #64748B);
+}
+
+.no-data-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.no-data-subtext {
+  margin: 0.5rem 0 1rem 0;
+  font-size: 0.9rem;
+}
+
+.add-first-btn {
+  padding: 0.5rem 1rem;
+  background: #6d6ab8;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.add-first-btn:hover {
+  background: #5a57a5;
+}
+
+/* Glass Form */
+.glass-form {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+/* Dropdown hover styles */
+.filter-btn option:hover {
+  background: linear-gradient(135deg, rgba(109, 106, 184, 0.15) 0%, rgba(201, 123, 199, 0.15) 33%, rgba(240, 108, 179, 0.15) 66%, rgba(255, 194, 224, 0.15) 100%);
+}
+
+/* Disabled States */
+.face-recognition-btn:disabled,
+.check-in-btn:disabled,
+.check-out-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* Hover effects for table rows */
+.attendance-table tbody tr:hover td {
+  background: #f7fafc;
+}
+
+/* Select dropdown styling */
+select.filter-btn {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234a5568' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.7rem center;
+  background-size: 1em;
+  padding-right: 2.5rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .attendance-header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+  
+  .attendance-actions {
+    flex-direction: column;
+    width: 100%;
+    gap: 0.75rem;
+  }
+  
+  .quick-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .check-in-btn, .check-out-btn {
+    flex: 1;
+  }
+  
+  .table-header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+    display: flex;
+  }
+  
+  .table-actions {
+    align-self: stretch;
+    justify-content: flex-start;
+    margin-left: 0;
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  .attendance-table-container .table-search-input,
+  .attendance-table-container .filter-btn,
+  .attendance-table-container .refresh-btn,
+  .attendance-table-container .export-btn {
+    flex: 1 1 100%;
+    max-width: 100%;
+    width: 100%;
+  }
+  
+  .attendance-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .time-inputs {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+  }
+  
+  .cancel-btn, .submit-btn {
+    width: 100%;
+  }
+  
+  .attendance-table {
+    font-size: 0.8rem;
+  }
+  
+  .attendance-table th,
+  .attendance-table td {
+    padding: 0.75rem 0.5rem;
+  }
+  
+  .camera-controls,
+  .pin-actions {
+    flex-direction: column;
+  }
+  
+  .camera-instructions {
+    font-size: 0.8rem;
+  }
+  
+  .guide-text {
+    font-size: 0.75rem;
+    bottom: -1.5rem;
+  }
+  
+  .pin-input {
+    width: 100%;
+    max-width: 200px;
+  }
+  
+  .modal-content {
+    margin: 1rem;
+    max-height: calc(100vh - 2rem);
+  }
+}
+
+@media (max-width: 480px) {
+  .attendance-stats {
+    grid-template-columns: 1fr;
+  }
+  
+  .face-guide-frame {
+    width: 200px;
+    height: 200px;
+  }
+}
+
+
+.no-leaves{
+    display: flex;               /* Enable flex layout */
+  flex-direction: column;      /* Stack children vertically */
+  align-items: center;         /* Center horizontally */
+  justify-content: center;     /* Center vertically */
+  text-align: center;          /* Center text */
+  padding: 20px;               /* Optional padding */
+  box-sizing: border-box;      /* Include padding in width/height */
+  color: var(--theme-text-muted, #64748B);                 /* Text color */
+  font-family: Arial, sans-serif; /* Font */
+}
+
+/* Leave Management Section */
+.leave-management-section {
+  background: var(--page-bg, #F8FAFC);
+  padding: 1rem;
+  min-height: 100vh;
+}
+
+.leave-management-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding: 0 1rem;
+}
+
+.leave-management-title {
+  color: var(--theme-text, #1E293B);
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.leave-add-btn {
+  background: #5B4FF7;
+  border: none;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 10px;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(138, 135, 201, 0.3);
+}
+
+.leave-add-btn:hover {
+  background: #5B4FF7;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(138, 135, 201, 0.4);
+}
+
+.leave-btn-icon {
+  font-size: 1.1rem;
+}
+
+/* Leave Table */
+.leave-table-container {
+  background: var(--card-bg, #FFFFFF);
+  border-radius: 12px;
+  overflow: hidden;
+  width: 100%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.leave-table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.leave-table-title {
+  margin: 0;
+  color: var(--theme-text, #1E293B);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.leave-table-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.leave-filter-select, .leave-export-btn {
+  padding: 0.4rem 0.8rem;
+  border: 1px solid var(--theme-border, #E2E8F0);
+  background: var(--card-bg, #FFFFFF);
+  color: black;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.leave-filter-select:hover, .leave-export-btn:hover {
+  background: linear-gradient(135deg, rgba(109, 106, 184, 0.15) 0%, rgba(201, 123, 199, 0.15) 33%, rgba(240, 108, 179, 0.15) 66%, rgba(255, 194, 224, 0.15) 100%);
+  border-color: #cbd5e0;
+}
+
+.leave-records-table {
+  width: 100%;
+  border-collapse: collapse;
+  color: var(--theme-text, #1E293B);
+  font-size: 0.8rem;
+}
+
+.leave-records-table th {
+  text-align: left;
+  padding: 0.75rem 0.5rem;
+  font-weight: 600;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  color: var(--theme-text, #1E293B);
+  background: var(--table-header-bg, #F8FAFC);
+  white-space: nowrap;
+  font-size: 0.8rem;
+}
+
+.leave-records-table td {
+  padding: 0.6rem 0.5rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  background: var(--card-bg, #FFFFFF);
+  color: var(--theme-text, #1E293B);
+  vertical-align: middle;
+  transition: all 0.3s ease;
+  word-wrap: break-word;
+  font-size: 0.8rem;
+  line-height: 1.2;
+}
+
+/* Table Header Cells */
+.leave-th-date, .leave-th-description, .leave-th-from, .leave-th-to, .leave-th-status {
+  font-weight: 600;
+}
+
+/* Table Data Cells */
+.leave-td-date, .leave-td-description, .leave-td-from, .leave-td-to, .leave-td-status {
+  vertical-align: middle;
+}
+
+.leave-table-row:hover {
+  background-color: var(--page-bg, #F8FAFC);
+}
+
+/* Leave Cells */
+.leave-date-cell {
+  color: var(--theme-text-muted, #64748B);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.leave-description-cell {
+  font-weight: 700;
+  color: var(--theme-text, #1E293B);
+  white-space: normal;
+  word-wrap: break-word;
+}
+
+/* Leave Status Badges */
+.leave-status-badge {
+  padding: 0.3rem 0.6rem;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.leave-status--approved {
+  background: rgba(72, 187, 120, 0.2);
+  color: #2f855a;
+}
+
+.leave-status--pending {
+  background: rgba(237, 137, 54, 0.2);
+  color: #c05621;
+}
+
+.leave-status--rejected {
+  background: rgba(245, 101, 101, 0.2);
+  color: #c53030;
+}
+
+/* Leave Modal Styles */
+.leave-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.leave-modal-content {
+  background: var(--card-bg, #FFFFFF);
+  border-radius: 12px;
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.leave-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem;
+  border-bottom: 1px solid var(--theme-border, #E2E8F0);
+}
+
+.leave-modal-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--theme-text, #1E293B);
+}
+
+.leave-modal-close {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  color: var(--theme-text-muted, #64748B);
+  padding: 0;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.leave-modal-close:hover {
+  background: #f7fafc;
+  color: var(--theme-text-muted, #64748B);
+}
+
+/* Leave Form Styles */
+.leave-form {
+  padding: 1.25rem;
+}
+
+.leave-form-group {
+  margin-bottom: 1.25rem;
+}
+
+.leave-form-label {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-weight: 500;
+  color: var(--theme-text-muted, #64748B);
+  font-size: 0.85rem;
+}
+
+.leave-form-input,
+.leave-form-select,
+.leave-form-textarea {
+  width: 100%;
+  padding: 0.6rem;
+  border: 1px solid var(--theme-border, #E2E8F0);
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-family: inherit;
+  transition: border-color 0.3s ease;
+}
+
+.leave-form-input:focus,
+.leave-form-select:focus,
+.leave-form-textarea:focus {
+  outline: none;
+  border-color: #8a87c9;
+  box-shadow: 0 0 0 3px rgba(138, 135, 201, 0.1);
+}
+
+.leave-disabled-input {
+  background-color: #f7fafc;
+  color: var(--theme-text-muted, #64748B);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.leave-helper-text {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--theme-text-muted, #64748B);
+  font-style: italic;
+}
+
+.leave-form-actions {
+  display: flex;
+  gap: 0.8rem;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+}
+
+.leave-cancel-btn {
+  padding: 0.6rem 1.25rem;
+  background: var(--card-bg, #FFFFFF);
+  color: var(--theme-text-muted, #64748B);
+  border: 1px solid var(--theme-border, #E2E8F0);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.leave-cancel-btn:hover {
+  background: #f7fafc;
+  border-color: #cbd5e0;
+}
+
+.leave-submit-btn {
+  padding: 0.6rem 1.25rem;
+  background: rgba(72, 187, 120, 0.2);
+  color: #2f855a;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.leave-submit-btn:hover {
+  background: #2f855a;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(138, 135, 201, 0.3);
+}
+
+/* Glass Form Effect for Leave */
+.glass-form-leave {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+}
+
+/* Responsive Design for Leave Management */
+@media (max-width: 768px) {
+  .leave-management-header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+  
+  .leave-table-header {
+    flex-direction: column;
+    gap: 0.8rem;
+    align-items: flex-start;
+    padding: 0.8rem 1rem;
+  }
+  
+  .leave-table-actions {
+    align-self: flex-end;
+  }
+  
+  .leave-records-table th,
+  .leave-records-table td {
+    padding: 0.5rem 0.4rem;
+    font-size: 0.75rem;
+  }
+  
+  .leave-form-actions {
+    flex-direction: column;
+  }
+  
+  .leave-cancel-btn,
+  .leave-submit-btn {
+    width: 100%;
+  }
+}
+/* Tab Styles - Gradient Background for All Tabs, Blue for Active Tab */
+.view-tabs {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  background: transparent;
+  padding: 0;
+}
+
+.employee-attendance-main {
+  padding-top: 0;
+}
+
+.employee-attendance-main .view-tabs {
+  margin: 0 0 24px;
+  padding: 0 20px;
+}
+
+.tab-btn {
+  padding: 12px 28px;
+  background: #5B4FF7;
+  border: none;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  color: white;
+  transition: all 0.3s ease;
+  border-radius: 12px;
+  opacity: 0.7;
+}
+
+.tab-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-2px);
+}
+
+/* Active tab - Blue color */
+.tab-btn.active {
+  background: #3b82f6;
+  color: white;
+  opacity: 1;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+/* Remove underline completely */
+.tab-btn.active::after {
+  display: none;
+}
+
+/* Make sure attendance and leave sections don't have extra borders when in tabs */
+.attendance-section,
+.leave-management-section {
+  border-radius: 12px;
+  background: var(--page-bg, #F8FAFC);
+  padding: 20px;
+}
+
+/* Adjust the container for tab content */
+.tab-content {
+  background: transparent;
+}
+
+/* Dashboard Main Layout */
+.dashboard-main {
+  flex: 1;
+  overflow-y: auto;
+  /* padding: 20px; */
+  background: var(--page-bg, #F8FAFC);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .view-tabs {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 0 16px;
+  }
+  
+  .tab-btn {
+    flex: 1;
+    text-align: center;
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+}
+
+/* New Leave Balances Widget Styles */
+.leave-balances-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.leave-balance-card {
+  background: var(--card-bg, #FFFFFF);
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.leave-balance-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+}
+
+.leave-balance-type {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--theme-text-muted, #64748B);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.leave-balance-value {
+  margin: 6px 0;
+  display: flex;
+  align-items: baseline;
+}
+
+.balance-remaining {
+  font-size: 24px;
+  font-weight: 700;
+  color: #3b82f6;
+}
+
+.balance-divider {
+  font-size: 16px;
+  color: #cbd5e0;
+  margin: 0 4px;
+}
+
+.balance-allocated {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--theme-text-muted, #64748B);
+}
+
+.leave-balance-usage {
+  font-size: 10px;
+  color: #a0aec0;
+  font-weight: 500;
+}
+
+/* Leave Type Badges in History Table */
+.leave-type-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.leave-type-casual {
+  background-color: #e0e7ff;
+  color: #3730a3;
+}
+
+.leave-type-sick {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.leave-type-earned {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.leave-type-maternity {
+  background-color: #fce7f3;
+  color: #9d174d;
+}
+
+.leave-type-unpaid {
+  background-color: #f3f4f6;
+  color: #374151;
+}
+
+/* -------------------------------------------------------------------
+   PREMIUM DESIGN SYSTEM OVERRIDES
+------------------------------------------------------------------- */
+.attendance-section {
+  background: transparent !important;
+  min-height: unset !important;
+}
+
+/* Header */
+.attendance-header h2,
+.attendance-header h3 { color: var(--theme-text-strong, #1a202c) !important; }
+
+/* Check-out / action buttons */
+.check-out-btn {
+  background: var(--gradient-brand, linear-gradient(135deg,#4F46E5 0%,#3B82F6 100%)) !important;
+  color: #fff !important; border: none !important;
+  border-radius: var(--radius-lg, 12px) !important;
+  box-shadow: none !important;
+}
+.check-out-btn:hover { opacity: 0.88 !important; transform: translateY(-1px) !important; }
+
+/* Stat cards */
+.attendance-section .stat-card {
+  background: var(--card-bg, #fff) !important;
+  border: 1px solid var(--card-border, rgba(226,232,240,0.8)) !important;
+  box-shadow: var(--card-shadow) !important;
+  border-radius: var(--radius-xl, 16px) !important;
+  transition: transform .25s cubic-bezier(.34,1.56,.64,1), box-shadow .25s ease !important;
+}
+.attendance-section .stat-card:hover { transform: translateY(-3px) !important; box-shadow: var(--card-shadow-hover) !important; }
+.attendance-section .stat-number { color: var(--theme-text-strong, #1a202c) !important; }
+
+/* Table */
+.attendance-table-container {
+  background: var(--card-bg, #fff) !important;
+  border: 1px solid var(--card-border, rgba(226,232,240,0.8)) !important;
+  box-shadow: var(--card-shadow) !important;
+  border-radius: var(--radius-xl, 16px) !important;
+}
+.attendance-table th {
+  background: var(--table-header-bg, #f8fafc) !important;
+  color: var(--theme-text-muted, #718096) !important;
+  border-bottom-color: var(--table-border, rgba(0,0,0,.1)) !important;
+}
+.attendance-table td {
+  color: var(--theme-text, #334155) !important;
+  background: var(--card-bg, #fff) !important;
+  border-bottom-color: var(--table-border, rgba(0,0,0,.05)) !important;
+}
+.attendance-table tbody tr:hover td { background: var(--table-row-hover, #f8fafc) !important; }
+
+/* Status badges */
+.status-approved { background: var(--color-success-soft,#ECFDF5) !important; color: var(--color-success-text,#065F46) !important; }
+.status-pending  { background: var(--color-warning-soft,#FFFBEB) !important; color: var(--color-warning-text,#92400E) !important; }
+.status-rejected { background: var(--color-danger-soft,#FEF2F2) !important;  color: var(--color-danger-text,#B91C1C) !important; }
+
+/* Method badges */
+.face-method   { background: var(--color-accent-soft,#EFF6FF) !important; color: var(--color-accent-text,#1D4ED8) !important; }
+.pin-method    { background: var(--color-primary-soft,#EEF2FF) !important; color: var(--color-primary-text,#3730A3) !important; }
+.manual-method { background: var(--color-warning-soft,#FFFBEB) !important; color: var(--color-warning-text,#92400E) !important; }
+
+/* Export / refresh buttons */
+.export-btn,
+.attendance-section .refresh-btn {
+  background: var(--theme-bg-muted, #f8fafc) !important;
+  border: 1px solid var(--card-border, #e2e8f0) !important;
+  color: var(--theme-text, #475569) !important;
+  border-radius: var(--radius-lg, 10px) !important;
+}
+.export-btn:hover,
+.attendance-section .refresh-btn:hover {
+  background: var(--color-primary-soft, #EEF2FF) !important;
+  color: var(--color-primary, #4F46E5) !important;
+  border-color: var(--color-primary, #4F46E5) !important;
+}
+
+/* Modal */
+.attendance-section .modal-content {
+  background: var(--card-bg, #fff) !important;
+  border: 1px solid var(--card-border) !important;
+  box-shadow: var(--shadow-modal) !important;
+}
+
+/* Dark mode */
+[data-theme='dark'] .attendance-section .stat-card,
+[data-theme='dark'] .attendance-table-container,
+[data-theme='dark'] .attendance-section .modal-content {
+  background: var(--card-bg) !important; border-color: var(--card-border) !important;
+}
+[data-theme='dark'] .attendance-table th { background: var(--table-header-bg) !important; color: var(--theme-text-muted) !important; }
+[data-theme='dark'] .attendance-table td { background: var(--card-bg) !important; color: var(--theme-text) !important; }

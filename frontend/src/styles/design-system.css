@@ -1,0 +1,748 @@
+/* ═══════════════════════════════════════════════════════════════════
+   design-system.css — Unified Enterprise HRMS Design System
+   Applied globally across ALL roles: Admin, HR, Team Lead, Employee
+   This file standardizes buttons, cards, tables, forms, badges
+   and ensures visual consistency regardless of role or layout.
+═══════════════════════════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════════════════
+   UNIFIED BUTTON SYSTEM
+   Overrides page-specific button classes to ensure
+   consistent appearance across every module.
+══════════════════════════════════════════════════ */
+
+/* Base reset for all <button> elements */
+button {
+  font-family: var(--font-sans, 'Inter', sans-serif);
+}
+
+/* ── Semantic button aliases ──────────────────────────────────────
+   These map common class names used across pages to the
+   .app-button system. Any button matching these patterns
+   gets the correct consistent style.
+────────────────────────────────────────────────────────────────── */
+
+/* Primary actions: blue/indigo gradient */
+.btn-primary,
+.btn-add,
+.btn-create,
+.btn-submit,
+.btn-publish,
+.btn-generate,
+.btn-save,
+.import-btn,
+.ann-btn-primary,
+.pay-btn,
+button.primary,
+[class*="btn-primary"]:not([class*="btn-primary-"]) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 38px;
+  padding: 0 18px;
+  background: var(--gradient-brand, linear-gradient(135deg,#5B4FF7,#7b6ef9));
+  color: #ffffff !important;
+  border: none;
+  border-radius: var(--radius-lg, 10px);
+  font-size: var(--text-sm, 0.875rem);
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  text-decoration: none;
+  box-shadow: 0 2px 8px rgba(91,79,247,0.30);
+  transition: all 0.2s ease;
+}
+
+.btn-primary:hover, .btn-add:hover, .btn-create:hover, .btn-submit:hover,
+.btn-publish:hover, .btn-generate:hover, .btn-save:hover, .import-btn:hover,
+.ann-btn-primary:hover, .pay-btn:hover, button.primary:hover {
+  background: var(--gradient-brand-hover, linear-gradient(135deg,#4a3ed6,#6a5df8));
+  box-shadow: 0 4px 18px rgba(91,79,247,0.42);
+  transform: translateY(-1px) scale(1.01);
+  transition: all 0.2s ease;
+}
+
+/* Secondary / ghost actions */
+.btn-secondary,
+.btn-cancel,
+.btn-outline,
+.btn-ghost,
+.btn-refresh,
+button.secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 38px;
+  padding: 0 16px;
+  background: transparent;
+  color: var(--theme-text, #1E293B);
+  border: 1px solid var(--theme-border, #E2E8F0);
+  border-radius: var(--radius-lg, 10px);
+  font-size: var(--text-sm, 0.875rem);
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-secondary:hover, .btn-cancel:hover, .btn-outline:hover,
+.btn-ghost:hover, .btn-refresh:hover, button.secondary:hover {
+  background: var(--theme-bg-muted, #F1F5F9);
+  border-color: var(--theme-border-strong, #CBD5E1);
+  transform: translateY(-1px);
+}
+
+/* Success / approve actions */
+.btn-success,
+.btn-approve,
+.btn-mark-paid,
+button.success {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 0 14px;
+  background: var(--color-success-soft, #ECFDF5);
+  color: var(--color-success-text, #065F46) !important;
+  border: 1px solid rgba(16,185,129,0.25);
+  border-radius: var(--radius-lg, 10px);
+  font-size: var(--text-sm, 0.875rem);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-success:hover, .btn-approve:hover, .btn-mark-paid:hover, button.success:hover {
+  background: var(--gradient-success, linear-gradient(135deg,#10B981,#059669));
+  color: #fff !important;
+  border-color: transparent;
+  box-shadow: 0 4px 14px rgba(16,185,129,0.35);
+}
+
+/* Danger / delete actions */
+.btn-danger,
+.btn-delete,
+.btn-reject,
+button.danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 0 14px;
+  background: var(--color-danger-soft, #FEF2F2);
+  color: var(--color-danger-text, #B91C1C) !important;
+  border: 1px solid rgba(239,68,68,0.25);
+  border-radius: var(--radius-lg, 10px);
+  font-size: var(--text-sm, 0.875rem);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-danger:hover, .btn-delete:hover, .btn-reject:hover, button.danger:hover {
+  background: var(--gradient-danger, linear-gradient(135deg,#EF4444,#DC2626));
+  color: #fff !important;
+  border-color: transparent;
+  box-shadow: 0 4px 14px rgba(239,68,68,0.35);
+}
+
+/* Warning actions */
+.btn-warning, button.warning {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 0 14px;
+  background: var(--color-warning-soft, #FFFBEB);
+  color: var(--color-warning-text, #92400E) !important;
+  border: 1px solid rgba(245,158,11,0.25);
+  border-radius: var(--radius-lg, 10px);
+  font-size: var(--text-sm, 0.875rem);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-warning:hover, button.warning:hover {
+  background: var(--gradient-warning, linear-gradient(135deg,#F59E0B,#D97706));
+  color: #fff !important;
+  border-color: transparent;
+}
+
+/* Info actions */
+.btn-info, button.info {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 0 14px;
+  background: var(--color-info-soft, #ECFEFF);
+  color: var(--color-info-text, #0E7490) !important;
+  border: 1px solid rgba(6,182,212,0.25);
+  border-radius: var(--radius-lg, 10px);
+  font-size: var(--text-sm, 0.875rem);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-info:hover, button.info:hover {
+  background: var(--gradient-cyan, linear-gradient(135deg,#06B6D4,#0891B2));
+  color: #fff !important;
+  border-color: transparent;
+}
+
+/* Disabled state — global */
+button:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+/* Small buttons */
+.btn-sm {
+  min-height: 30px !important;
+  padding: 0 10px !important;
+  font-size: 0.78rem !important;
+  border-radius: 8px !important;
+}
+
+/* Icon-only buttons */
+.btn-icon {
+  min-height: 34px;
+  width: 34px;
+  padding: 0 !important;
+  border-radius: var(--radius-md, 8px);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--theme-border, #E2E8F0);
+  color: var(--theme-text-muted, #64748B);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.btn-icon:hover {
+  background: var(--theme-bg-muted, #F1F5F9);
+  color: var(--theme-text-strong, #0F172A);
+  border-color: var(--theme-border-strong, #CBD5E1);
+}
+
+/* Action button groups in tables */
+.action-buttons,
+.ann-actions,
+.table-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: nowrap;
+}
+
+/* ══════════════════════════════════════════════════
+   UNIFIED CARD SYSTEM
+══════════════════════════════════════════════════ */
+
+/* Standard card — used as base for all modules */
+.card,
+.module-card,
+.glass-form,
+.content-card,
+.dashboard-card,
+.section-card {
+  background: var(--card-bg, var(--theme-surface, #fff));
+  border: 1px solid var(--card-border, var(--theme-border, #E2E8F0));
+  border-radius: var(--radius-xl, 14px);
+  box-shadow: var(--card-shadow, 0 1px 3px rgba(0,0,0,.05), 0 4px 16px rgba(0,0,0,.04));
+  overflow: hidden;
+}
+
+/* Page wrapper padding */
+.page-content,
+.module-content,
+.admin-content {
+  padding: 0;
+  min-height: 100%;
+}
+
+/* ══════════════════════════════════════════════════
+   UNIFIED TABLE SYSTEM
+══════════════════════════════════════════════════ */
+
+/* All tables in the app */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  color: var(--theme-text, #1E293B);
+}
+
+thead th {
+  background: var(--table-header-bg, var(--theme-bg-muted, #F8FAFC)) !important;
+  color: var(--theme-text-strong, #0F172A) !important;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--table-border, var(--theme-border, #E2E8F0)) !important;
+  white-space: nowrap;
+}
+
+tbody td {
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--table-border, var(--theme-border, #E2E8F0)) !important;
+  background: var(--card-bg, #fff) !important;
+  color: var(--theme-text, #1E293B);
+  font-size: 0.875rem;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+tbody tr:last-child td {
+  border-bottom: none !important;
+}
+
+tbody tr:hover td {
+  background: var(--table-row-hover, var(--theme-bg-muted, #F8FAFC)) !important;
+}
+
+/* ══════════════════════════════════════════════════
+   UNIFIED FORM INPUTS
+══════════════════════════════════════════════════ */
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="date"],
+input[type="search"],
+input[type="tel"],
+input[type="url"],
+select,
+textarea {
+  background: var(--input-bg, var(--theme-surface, #fff)) !important;
+  color: var(--theme-text, #1E293B) !important;
+  border: 1px solid var(--input-border, var(--theme-border, #E2E8F0)) !important;
+  border-radius: var(--radius-md, 8px);
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="number"]:focus,
+input[type="date"]:focus,
+input[type="search"]:focus,
+input[type="tel"]:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--input-focus-border, var(--color-primary, #4F46E5)) !important;
+  outline: none;
+  box-shadow: 0 0 0 3px var(--input-focus-ring, rgba(79,70,229,0.12));
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--theme-text-subtle, #94A3B8) !important;
+}
+
+/* ══════════════════════════════════════════════════
+   UNIFIED BADGE / CHIP SYSTEM
+══════════════════════════════════════════════════ */
+
+.badge,
+.status-badge,
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill, 999px);
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+  letter-spacing: 0.03em;
+}
+
+.badge-success { background: var(--color-success-soft, #ECFDF5); color: var(--color-success-text, #065F46); }
+.badge-danger  { background: var(--color-danger-soft, #FEF2F2);  color: var(--color-danger-text, #B91C1C); }
+.badge-warning { background: var(--color-warning-soft, #FFFBEB); color: var(--color-warning-text, #92400E); }
+.badge-info    { background: var(--color-info-soft, #ECFEFF);    color: var(--color-info-text, #0E7490); }
+.badge-primary { background: var(--color-primary-soft, #EEF2FF); color: var(--color-primary-text, #3730A3); }
+.badge-neutral { background: var(--theme-bg-muted, #F1F5F9);     color: var(--theme-text-muted, #64748B); }
+
+/* ══════════════════════════════════════════════════
+   UNIFIED PAGE HEADER
+══════════════════════════════════════════════════ */
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: var(--theme-text-strong, #0F172A);
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+
+.page-subtitle {
+  margin: 4px 0 0;
+  font-size: 0.875rem;
+  color: var(--theme-text-muted, #64748B);
+}
+
+/* ══════════════════════════════════════════════════
+   FILTER / SEARCH BAR CONSISTENCY
+══════════════════════════════════════════════════ */
+
+.filters-row,
+.filter-bar,
+.search-row,
+.table-filters {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 16px 20px;
+  background: var(--card-bg, var(--theme-surface, #fff));
+  border-bottom: 1px solid var(--card-border, var(--theme-border, #E2E8F0));
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 140px;
+}
+
+.filter-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--theme-text-muted, #64748B);
+}
+
+/* ══════════════════════════════════════════════════
+   UNIFIED MODAL SYSTEM
+══════════════════════════════════════════════════ */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.52);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: var(--z-modal, 400);
+  padding: 16px;
+}
+
+.modal-box {
+  background: var(--card-bg, var(--theme-surface, #fff));
+  border: 1px solid var(--card-border, var(--theme-border, #E2E8F0));
+  border-radius: var(--radius-2xl, 18px);
+  box-shadow: var(--shadow-modal, 0 32px 80px rgba(0,0,0,.18));
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: modal-in 0.2s cubic-bezier(0.16,1,0.3,1) both;
+}
+
+@keyframes modal-in {
+  from { opacity: 0; transform: scale(0.94) translateY(16px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--card-border, var(--theme-border, #E2E8F0));
+}
+
+.modal-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--theme-text-strong, #0F172A);
+}
+
+.modal-body  { padding: 20px 24px; }
+.modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--card-border, var(--theme-border, #E2E8F0));
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* Close button */
+.modal-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  color: var(--theme-text-muted, #64748B);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+
+.modal-close:hover {
+  background: var(--theme-bg-muted, #F1F5F9);
+  color: var(--theme-text-strong, #0F172A);
+}
+
+/* ══════════════════════════════════════════════════
+   DARK MODE OVERRIDES FOR DESIGN SYSTEM
+══════════════════════════════════════════════════ */
+
+[data-theme='dark'] .btn-secondary,
+[data-theme='dark'] .btn-cancel,
+[data-theme='dark'] .btn-outline,
+[data-theme='dark'] .btn-ghost,
+[data-theme='dark'] .btn-refresh {
+  background: var(--theme-surface-muted, #263344);
+  color: var(--theme-text, #CBD5E1);
+  border-color: var(--theme-border, #2D3F55);
+}
+
+[data-theme='dark'] .btn-secondary:hover,
+[data-theme='dark'] .btn-cancel:hover,
+[data-theme='dark'] .btn-outline:hover,
+[data-theme='dark'] .btn-ghost:hover,
+[data-theme='dark'] .btn-refresh:hover {
+  background: var(--theme-bg-muted, #1E293B);
+  color: var(--theme-text-strong, #F1F5F9);
+  border-color: var(--theme-border-strong, #3D5068);
+}
+
+[data-theme='dark'] .btn-icon {
+  border-color: var(--theme-border, #2D3F55);
+  color: var(--theme-text-muted, #94A3B8);
+}
+
+[data-theme='dark'] .btn-icon:hover {
+  background: var(--theme-surface-muted, #263344);
+  color: var(--theme-text-strong, #F1F5F9);
+}
+
+/* ══════════════════════════════════════════════════
+   DARK MODE TABLE OVERRIDES
+══════════════════════════════════════════════════ */
+
+[data-theme='dark'] thead th {
+  background: var(--theme-surface-muted, #263344) !important;
+  color: var(--theme-text-strong, #F1F5F9) !important;
+  border-bottom-color: var(--theme-border, #2D3F55) !important;
+}
+
+[data-theme='dark'] tbody td {
+  background: var(--theme-surface, #1E293B) !important;
+  color: var(--theme-text, #CBD5E1) !important;
+  border-bottom-color: var(--theme-border, #2D3F55) !important;
+}
+
+[data-theme='dark'] tbody tr:hover td {
+  background: var(--theme-surface-muted, #263344) !important;
+}
+
+/* ══════════════════════════════════════════════════
+   DARK MODE INPUT OVERRIDES
+══════════════════════════════════════════════════ */
+
+[data-theme='dark'] input[type="text"],
+[data-theme='dark'] input[type="email"],
+[data-theme='dark'] input[type="password"],
+[data-theme='dark'] input[type="number"],
+[data-theme='dark'] input[type="date"],
+[data-theme='dark'] input[type="search"],
+[data-theme='dark'] input[type="tel"],
+[data-theme='dark'] select,
+[data-theme='dark'] textarea {
+  background: var(--theme-surface-muted, #263344) !important;
+  color: var(--theme-text, #CBD5E1) !important;
+  border-color: var(--theme-border, #2D3F55) !important;
+}
+
+[data-theme='dark'] input::placeholder,
+[data-theme='dark'] textarea::placeholder {
+  color: var(--theme-text-subtle, #64748B) !important;
+}
+
+/* ══════════════════════════════════════════════════
+   DARK MODE CARD / MODAL OVERRIDES
+══════════════════════════════════════════════════ */
+
+[data-theme='dark'] .modal-box {
+  background: var(--theme-surface, #1E293B);
+  border-color: var(--theme-border, #2D3F55);
+}
+
+/* ══════════════════════════════════════════════════
+   LAYOUT CONSISTENCY — same shell for all roles
+══════════════════════════════════════════════════ */
+
+/* Main content area gets consistent padding via al-main in AdminLayout
+   and .main-content in EmployeeLayout — both use 24-32px */
+
+/* Scrollbar — unified across layouts */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--theme-border-strong, #CBD5E1);
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--theme-text-subtle, #94A3B8);
+}
+
+[data-theme='dark'] ::-webkit-scrollbar-thumb {
+  background: var(--theme-border, #2D3F55);
+}
+
+/* ══════════════════════════════════════════════════
+   SALARY PAGE SPECIFIC OVERRIDES
+   Ensure status badges and action buttons are tight
+══════════════════════════════════════════════════ */
+
+.salary-status-badge { white-space: nowrap; }
+
+/* ══════════════════════════════════════════════════
+   GLOBAL TYPOGRAPHY CONSISTENCY
+══════════════════════════════════════════════════ */
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--theme-text-strong, #0F172A);
+  font-family: var(--font-sans, 'Inter', sans-serif);
+}
+
+p { color: var(--theme-text, #1E293B); }
+
+label {
+  color: var(--theme-text, #1E293B);
+  font-weight: 500;
+}
+
+/* ══════════════════════════════════════════════════
+   ANNOUNCEMENT PAGE ICONS — Lucide SVG sizing
+══════════════════════════════════════════════════ */
+
+.ann-btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md, 8px);
+  border: 1px solid var(--theme-border, #E2E8F0);
+  background: transparent;
+  color: var(--theme-text-muted, #64748B);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  padding: 0;
+}
+
+.ann-btn-icon:hover {
+  background: var(--theme-bg-muted, #F1F5F9);
+  color: var(--theme-text-strong, #0F172A);
+}
+
+.ann-btn-icon.edit:hover  { background: var(--color-primary-soft, #EEF2FF); color: var(--color-primary, #4F46E5); border-color: var(--color-primary-border, rgba(99,102,241,0.25)); }
+.ann-btn-icon.delete:hover { background: var(--color-danger-soft, #FEF2F2);  color: var(--color-danger, #EF4444); border-color: rgba(239,68,68,0.25); }
+
+[data-theme='dark'] .ann-btn-icon {
+  border-color: var(--theme-border, #2D3F55);
+  color: var(--theme-text-muted, #94A3B8);
+}
+
+[data-theme='dark'] .ann-btn-icon:hover {
+  background: var(--theme-surface-muted, #263344);
+  color: var(--theme-text-strong, #F1F5F9);
+}
+
+/* ══════════════════════════════════════════════════
+   GLOBAL BUTTON COLOR SYSTEM OVERRIDE
+   Replaces all legacy pink/purple gradient buttons
+   (#8a87c9 → #d4a3d2 → #e893c0 → #f8d1e8) with the
+   unified brand indigo-violet design system color.
+   Applied as a high-specificity catch-all so individual
+   page CSS files do not need to be touched one by one.
+══════════════════════════════════════════════════ */
+
+/* ─── Common primary action button class names used across every module ── */
+.add-btn, .create-btn, .add-leave-btn, .add-attendance-btn,
+.add-expense-btn, .add-employee-btn, .add-client-btn,
+.add-student-btn, .add-course-btn, .add-project-btn,
+.add-shift-btn, .add-holiday-btn, .add-department-btn,
+.add-announcement-btn, .add-quotation-btn, .add-billing-btn,
+.add-challan-btn, .add-salary-btn, .add-lead-btn,
+.create-btn, .submit-btn, .publish-btn, .generate-btn,
+.add-new-btn, .new-btn,
+.face-recognition-btn, .check-in-btn, .check-out-btn,
+.leave-add-btn, .leave-apply-btn, .apply-leave-btn,
+.export-excel-btn, .download-btn, .import-btn,
+.action-btn.primary, .header-btn.primary,
+.salary-generate-btn, .salary-pay-btn, .pay-now-btn,
+.quick-action-btn, .attendance-record-btn,
+[class$="-add-btn"]:not(.btn-danger):not(.btn-secondary),
+[class$="-create-btn"]:not(.btn-danger):not(.btn-secondary),
+[class$="-submit-btn"]:not(.btn-danger):not(.btn-secondary),
+[class*="add-"][class$="-btn"]:not(.btn-danger):not(.btn-secondary):not(.btn-icon) {
+  background: var(--gradient-brand, linear-gradient(135deg,#5B4FF7,#7b6ef9)) !important;
+  border: none !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(91,79,247,0.30) !important;
+  border-radius: var(--radius-lg, 10px) !important;
+  font-weight: 600 !important;
+  transition: all 0.2s ease !important;
+}
+
+.add-btn:hover, .create-btn:hover, .add-leave-btn:hover, .add-attendance-btn:hover,
+.add-expense-btn:hover, .add-employee-btn:hover, .add-client-btn:hover,
+.add-student-btn:hover, .add-course-btn:hover, .add-project-btn:hover,
+.add-shift-btn:hover, .add-holiday-btn:hover, .add-department-btn:hover,
+.add-announcement-btn:hover, .add-quotation-btn:hover, .add-billing-btn:hover,
+.add-challan-btn:hover, .add-salary-btn:hover, .add-lead-btn:hover,
+.new-btn:hover, .add-new-btn:hover,
+.face-recognition-btn:hover, .check-in-btn:hover, .check-out-btn:hover,
+.leave-add-btn:hover, .leave-apply-btn:hover, .apply-leave-btn:hover,
+.export-excel-btn:hover, .download-btn:hover,
+.salary-generate-btn:hover, .salary-pay-btn:hover, .pay-now-btn:hover,
+[class*="add-"][class$="-btn"]:not(.btn-danger):not(.btn-secondary):not(.btn-icon):hover {
+  background: var(--gradient-brand-hover, linear-gradient(135deg,#4a3ed6,#6a5df8)) !important;
+  box-shadow: 0 4px 18px rgba(91,79,247,0.42) !important;
+  transform: translateY(-1px) scale(1.01) !important;
+  color: #ffffff !important;
+}

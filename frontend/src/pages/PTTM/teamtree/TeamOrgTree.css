@@ -1,0 +1,201 @@
+/* ── Team Org Tree ─────────────────────────────────────────────────────── */
+
+.tot-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--page-bg, #f8fafc);
+  overflow: hidden;
+}
+
+/* ── Stats bar ─────────────────────────────────────────────────────────── */
+.tot-statsbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 18px;
+  background: var(--card-bg, #fff);
+  border-bottom: 1px solid var(--theme-border, #e2e8f0);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.tot-stat {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 8px;
+  font-size: .78rem;
+}
+.tot-stat strong { font-size: .95rem; font-weight: 800; }
+.tot-stat span   { font-size: .72rem; color: var(--theme-text-muted, #64748b); font-weight: 500; }
+
+.tot-stat--purple { background: #f5f3ff; color: #8b5cf6; }
+.tot-stat--blue   { background: #eff6ff; color: #3b82f6; }
+.tot-stat--green  { background: #f0fdf4; color: #10b981; }
+.tot-stat--neutral{ background: #f8fafc; color: #64748b; }
+
+.tot-statsbar-sep {
+  width: 1px; height: 24px;
+  background: var(--theme-border, #e2e8f0);
+  margin: 0 8px;
+  flex-shrink: 0;
+}
+
+.tot-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: .72rem;
+  color: var(--theme-text-muted, #64748b);
+  padding: 0 6px;
+}
+
+/* ── Toolbar ───────────────────────────────────────────────────────────── */
+.tot-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 18px;
+  background: var(--card-bg, #fff);
+  border-bottom: 1px solid var(--theme-border, #e2e8f0);
+  flex-shrink: 0;
+}
+
+.tot-search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: 1;
+  max-width: 360px;
+  background: var(--page-bg, #f8fafc);
+  border: 1px solid var(--theme-border, #e2e8f0);
+  border-radius: 8px;
+  padding: 5px 10px;
+  color: var(--theme-text-muted, #94a3b8);
+  transition: border-color .15s;
+}
+.tot-search-wrap:focus-within {
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 3px #8b5cf620;
+}
+.tot-search {
+  flex: 1;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: .82rem;
+  color: var(--theme-text-strong, #0f172a);
+}
+.tot-search::placeholder { color: #94a3b8; }
+.tot-search-clear {
+  border: none; background: transparent; cursor: pointer;
+  color: #94a3b8; display: flex; align-items: center; padding: 0;
+}
+.tot-search-clear:hover { color: #ef4444; }
+
+.tot-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.tot-chain-badge {
+  font-size: .7rem;
+  font-weight: 700;
+  color: #8b5cf6;
+  background: #f5f3ff;
+  border-radius: 20px;
+  padding: 3px 10px;
+  border: 1px solid #c4b5fd;
+}
+
+.tot-tool-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px;
+  border: 1px solid var(--theme-border, #e2e8f0);
+  border-radius: 7px;
+  background: var(--card-bg, #fff);
+  color: var(--theme-text-muted, #64748b);
+  cursor: pointer;
+  font-size: .78rem;
+  font-weight: 600;
+  transition: all .15s;
+}
+.tot-tool-btn:hover {
+  border-color: #8b5cf6;
+  color: #8b5cf6;
+  background: #f5f3ff;
+}
+.tot-refresh:hover { color: #10b981; border-color: #10b981; background: #f0fdf4; }
+.tot-expand-all   { color: #3b82f6; border-color: #3b82f6; background: #eff6ff; }
+.tot-expand-all:hover { background: #dbeafe; }
+
+/* ── Canvas ────────────────────────────────────────────────────────────── */
+.tot-canvas {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ── Center / empty / error ────────────────────────────────────────────── */
+.tot-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: var(--theme-text-muted, #64748b);
+}
+.tot-center p { font-size: .9rem; text-align: center; max-width: 320px; }
+.tot-center button {
+  margin-top: 4px;
+  padding: 7px 18px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  font-size: .82rem;
+  font-weight: 600;
+  color: #64748b;
+  transition: all .15s;
+}
+.tot-center button:hover { border-color: #8b5cf6; color: #8b5cf6; }
+.tot-error { color: #ef4444; }
+
+/* ── Spinner ────────────────────────────────────────────────────────────── */
+@keyframes tot-rotate {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+.tot-spin { animation: tot-rotate .8s linear infinite; }
+
+/* ── React Flow overrides ──────────────────────────────────────────────── */
+.tot-canvas .react-flow__controls {
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,.1);
+  border: 1px solid var(--theme-border, #e2e8f0);
+}
+.tot-canvas .react-flow__controls-button {
+  background: var(--card-bg, #fff);
+  border: none;
+  border-bottom: 1px solid var(--theme-border, #e2e8f0);
+  color: var(--theme-text-muted, #64748b);
+  width: 28px;
+  height: 28px;
+}
+.tot-canvas .react-flow__controls-button:hover {
+  background: #f5f3ff;
+  color: #8b5cf6;
+}
+.tot-canvas .react-flow__controls-button:last-child { border-bottom: none; }
+
+.tot-canvas .react-flow__background { background: var(--page-bg, #f8fafc); }
+.tot-canvas .react-flow__minimap    { border-radius: 10px !important; overflow: hidden; }

@@ -1,0 +1,1021 @@
+﻿/* HolidayManagement.css - Premium Modern Styles for Holiday Module */
+
+:root {
+    --primary-color: #4f46e5;
+    --primary-hover: #4338ca;
+    --success-color: #10b981;
+    --success-bg: rgba(16, 185, 129, 0.1);
+    --warning-color: #f59e0b;
+    --warning-bg: rgba(245, 158, 11, 0.1);
+    --danger-color: #ef4444;
+    --danger-bg: rgba(239, 68, 68, 0.1);
+    --info-color: #3b82f6;
+    --text-main: #1f2937;
+    --text-muted: #6b7280;
+    --bg-main: #f9fafb;
+    --bg-card: #ffffff;
+    --border-color: var(--theme-border, #E2E8F0);
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+[data-theme='dark'] {
+    --text-main: #CBD5E1;
+    --text-muted: #94A3B8;
+    --bg-main: #0B1120;
+    --bg-card: #1E293B;
+    --border-color: #2D3F55;
+    --success-bg: rgba(16, 185, 129, 0.15);
+    --warning-bg: rgba(245, 158, 11, 0.15);
+    --danger-bg: rgba(239, 68, 68, 0.15);
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+    --shadow-lg: 0 12px 32px rgba(0,0,0,0.5);
+}
+
+.holiday-container {
+    padding: 16px;
+    background-color: var(--bg-main);
+    min-height: calc(100vh - 72px);
+    font-family: 'Inter', -apple-system, sans-serif;
+    color: var(--text-main);
+}
+
+/* Header Sections */
+.holiday-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.holiday-title-group h2 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--theme-text-strong, #0F172A);
+    letter-spacing: -0.5px;
+}
+
+.holiday-title-group p {
+    margin: 2px 0 0 0;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.holiday-header-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+/* Stats Cards */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.stat-card {
+    background: var(--bg-card);
+    border-radius: 12px;
+    padding: 12px 16px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: var(--transition);
+}
+
+.stat-card:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.stat-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+}
+
+.stat-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--theme-text-strong, #0F172A);
+}
+
+.stat-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 500;
+    margin-top: 1px;
+}
+
+/* Controls Bar */
+.controls-card {
+    background: var(--bg-card);
+    border-radius: 12px;
+    padding: 10px 16px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
+    margin-bottom: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.filter-group {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.holiday-select {
+    padding: 6px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    background-color: var(--bg-card);
+    transition: var(--transition);
+}
+
+.holiday-select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.view-tabs {
+    background: #f3f4f6;
+    padding: 3px;
+    border-radius: 6px;
+    display: flex;
+    gap: 3px;
+}
+
+.view-tab {
+    padding: 4px 12px;
+    border-radius: 5px;
+    border: none;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    background: transparent;
+    color: var(--text-muted);
+    transition: var(--transition);
+}
+
+.view-tab.active {
+    background: var(--bg-card);
+    color: var(--primary-color);
+    box-shadow: var(--shadow-sm);
+}
+
+/* General Buttons */
+.btn {
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: var(--transition);
+}
+
+.btn-primary {
+    background: var(--primary-color);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: var(--primary-hover);
+}
+
+.btn-secondary {
+    background: var(--card-bg, #FFFFFF);
+    border-color: var(--border-color);
+    color: var(--text-main);
+}
+
+.btn-secondary:hover {
+    background: var(--input-bg, #FFFFFF);
+    border-color: #d1d5db;
+}
+
+.btn-danger {
+    background: var(--danger-color);
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #dc2626;
+}
+
+.btn-success {
+    background: var(--success-color);
+    color: white;
+}
+
+.btn-success:hover {
+    background: #059669;
+}
+
+.badge-count {
+    background: rgba(255,255,255,0.2);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 11px;
+}
+
+/* Calendar Grid */
+.calendar-card {
+    background: var(--bg-card);
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
+    margin-bottom: 16px;
+}
+
+.calendar-days-header {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    font-weight: 600;
+    padding: 8px 0;
+    background: var(--input-bg, #FFFFFF);
+    border-radius: 6px;
+    color: var(--text-muted);
+    font-size: 13px;
+    margin-bottom: 8px;
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+}
+
+.calendar-cell {
+    border-radius: 8px;
+    padding: 10px 8px;
+    min-height: 72px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: var(--transition);
+    border: 1px solid var(--border-color);
+    position: relative;
+    overflow: hidden;
+}
+
+.calendar-cell.clickable {
+    cursor: pointer;
+}
+
+.calendar-cell.clickable:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.cell-number {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--theme-text, #1E293B);
+}
+
+.cell-label {
+    font-size: 10px;
+    font-weight: 600;
+    border-radius: 5px;
+    padding: 2px 6px;
+    margin-top: 4px;
+    text-align: center;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Cell States */
+.cell-sunday {
+    background-color: #fffbeb;
+    border-color: #fde68a;
+    color: #b45309;
+}
+
+.cell-sunday .cell-number {
+    color: #b45309;
+}
+
+.cell-holiday {
+    background-color: #fef2f2;
+    border-color: #fee2e2;
+    color: #b91c1c;
+}
+
+.cell-holiday .cell-number {
+    color: #b91c1c;
+}
+
+.cell-holiday-label {
+    background-color: #fee2e2;
+    color: #b91c1c;
+    border: 1px solid rgba(185, 28, 28, 0.2);
+}
+
+.cell-selected {
+    background-color: #ecfdf5;
+    border-color: #a7f3d0;
+    color: #047857;
+}
+
+.cell-selected .cell-number {
+    color: #047857;
+}
+
+.cell-selected-label {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
+.cell-empty {
+    background-color: var(--input-bg, #FFFFFF);
+    border-color: transparent;
+    cursor: default;
+}
+
+/* List View Layout */
+.list-view-container {
+    background: var(--bg-card);
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+    margin-bottom: 16px;
+}
+
+.list-view-header {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.search-input-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 280px;
+}
+
+.search-input {
+    width: 100%;
+    padding: 6px 10px 6px 32px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 13px;
+    transition: var(--transition);
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.search-icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+}
+
+.table-responsive {
+    overflow-x: auto;
+    width: 100%;
+}
+
+.holiday-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.holiday-table th, 
+.holiday-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 13px;
+}
+
+.holiday-table th {
+    background-color: var(--input-bg, #FFFFFF);
+    font-weight: 600;
+    color: var(--text-muted);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.holiday-table tbody tr {
+    transition: var(--transition);
+}
+
+.holiday-table tbody tr:hover {
+    background-color: var(--input-bg, #FFFFFF);
+}
+
+/* Category Badges */
+.badge-cat {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.badge-gazetted {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+.badge-restricted {
+    background-color: #ffedd5;
+    color: #9a3412;
+}
+
+.badge-company {
+    background-color: #e0e7ff;
+    color: #3730a3;
+}
+
+.badge-local {
+    background-color: #f3f4f6;
+    color: #374151;
+}
+
+/* Legend Section */
+.legend-card {
+    display: flex;
+    gap: 16px;
+    padding: 10px 16px;
+    background: var(--bg-card);
+    border-radius: 8px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+.legend-color {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+}
+
+/* Modal Layout */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(17, 24, 39, 0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.holiday-container .modal-content {
+    background: var(--bg-card);
+    border-radius: 14px;
+    width: 100%;
+    max-width: 480px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 24px 64px rgba(15, 23, 42, 0.24);
+    border: 1px solid rgba(226, 232, 240, 0.95);
+    overflow: hidden;
+    animation: scaleIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.holiday-container .modal-content form {
+    display: flex;
+    flex-direction: column;
+    max-height: calc(90vh - 50px);
+    overflow: hidden;
+    margin: 0;
+}
+
+.holiday-container .modal-header {
+    padding: 16px 18px;
+    border-bottom: 1px solid var(--theme-border, #E2E8F0);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+    flex-shrink: 0;
+    position: relative;
+}
+
+/* .holiday-container .modal-header::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: var(--primary-color);
+} */
+
+.holiday-container .modal-header h3 {
+    margin: 0;
+    min-width: 0;
+    color: var(--theme-text-strong, #0F172A);
+    font-size: 17px;
+    font-weight: 800;
+    line-height: 1.25;
+    letter-spacing: 0;
+    overflow-wrap: anywhere;
+}
+
+.holiday-container .modal-close {
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border: 1px solid #dbe3ef;
+    border-radius: 8px;
+    background: var(--card-bg, #FFFFFF);
+    color: var(--theme-text-muted, #64748B);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    font-size: 20px;
+    line-height: 1;
+    transition: var(--transition);
+}
+
+.holiday-container .modal-close:hover {
+    border-color: #cbd5e1;
+    background: var(--page-bg, #F8FAFC);
+    color: var(--theme-text-strong, #0F172A);
+    transform: translateY(-1px);
+}
+
+.holiday-container .modal-body {
+    padding: 16px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.form-group {
+    margin-bottom: 12px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.form-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-main);
+    margin-bottom: 4px;
+}
+
+.form-input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 13px;
+    box-sizing: border-box;
+    transition: var(--transition);
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+/* Modal Checkbox label styling */
+.modal-checkbox-label {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 6px !important;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 12px;
+    color: var(--text-main);
+    user-select: none;
+    margin: 0 !important;
+    width: auto !important;
+}
+
+.modal-checkbox-label input[type="checkbox"] {
+    width: 14px !important;
+    height: 14px !important;
+    margin: 0 !important;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.modal-footer {
+    padding: 12px 16px;
+    background-color: var(--input-bg, #FFFFFF);
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+/* File Drag & Drop Import */
+.import-area {
+    border: 2px dashed #d1d5db;
+    border-radius: 12px;
+    padding: 30px 20px;
+    text-align: center;
+    background-color: #fafafa;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.import-area:hover {
+    border-color: var(--primary-color);
+    background-color: rgba(79, 70, 229, 0.02);
+}
+
+.import-icon {
+    font-size: 32px;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+}
+
+.import-area p {
+    margin: 4px 0;
+    font-size: 14px;
+    color: var(--text-main);
+}
+
+.import-area span {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.template-link {
+    display: inline-block;
+    margin-top: 12px;
+    color: var(--primary-color);
+    font-weight: 600;
+    font-size: 13px;
+    text-decoration: none;
+}
+
+.template-link:hover {
+    text-decoration: underline;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+    from { transform: scale(0.95); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.checkbox-cell {
+    width: 40px;
+    text-align: center;
+}
+
+.checkbox-input {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+/* Category Breakdown Card */
+.stat-card--breakdown {
+    align-items: flex-start;
+}
+
+/* Combined Total + Breakdown Card */
+.stat-card--combined {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+}
+
+.combined-top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.combined-divider {
+    height: 1px;
+    background: var(--border-color);
+    margin: 0 -4px;
+}
+
+.category-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+}
+
+.cat-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.cat-pill {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 20px;
+    min-width: 60px;
+    text-align: center;
+    flex-shrink: 0;
+    letter-spacing: 0.2px;
+}
+
+.cat-bar-track {
+    flex: 1;
+    height: 4px;
+    background: #f3f4f6;
+    border-radius: 99px;
+    overflow: hidden;
+}
+
+.cat-bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    min-width: 3px;
+}
+
+.cat-count {
+    font-size: 11px;
+    font-weight: 700;
+    min-width: 14px;
+    text-align: right;
+    flex-shrink: 0;
+}
+
+/* Holiday summary cards and controls polish */
+.holiday-container .stats-grid {
+    grid-template-columns: minmax(360px, 1fr) minmax(300px, 1fr);
+    align-items: stretch;
+}
+
+.holiday-container .stat-card {
+    min-height: 128px;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+}
+
+.holiday-container .stat-card--combined {
+    padding: 16px;
+}
+
+.holiday-container .combined-top {
+    justify-content: flex-start;
+}
+
+.holiday-container .combined-divider {
+    margin: 2px 0;
+}
+
+.holiday-container .category-breakdown {
+    gap: 7px;
+}
+
+.holiday-container .cat-row {
+    gap: 8px;
+}
+
+.holiday-container .cat-pill {
+    min-width: 82px;
+    text-align: left;
+    padding: 3px 8px;
+}
+
+.holiday-container .cat-bar-track {
+    height: 6px;
+    background: #eef2f7;
+}
+
+.holiday-container .cat-count {
+    min-width: 22px;
+}
+
+.holiday-container .stat-card--upcoming {
+    justify-content: center;
+    padding: 18px;
+}
+
+.holiday-container .stat-card--upcoming .stat-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+}
+
+.holiday-container .stat-card--upcoming .stat-info {
+    min-width: 0;
+}
+
+.holiday-container .stat-value--holiday-name {
+    max-width: 100%;
+    font-size: 1.05rem;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+}
+
+.holiday-container .stat-date {
+    margin-top: 4px;
+    color: var(--success-color);
+    font-size: 0.78rem;
+    font-weight: 800;
+}
+
+.holiday-container .controls-card {
+    padding: 12px 16px;
+    border-radius: 12px;
+    align-items: end;
+}
+
+.holiday-filter-group,
+.holiday-action-group {
+    display: flex;
+    align-items: end;
+    gap: 12px;
+    min-width: 0;
+}
+
+.holiday-filter-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 180px;
+}
+
+.holiday-filter-field--period {
+    min-width: 340px;
+}
+
+.holiday-filter-field--year {
+    min-width: 140px;
+}
+
+.holiday-filter-field label {
+    color: var(--theme-text-muted, #64748B);
+    font-size: 0.82rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.holiday-select-row {
+    display: grid;
+    grid-template-columns: minmax(170px, 1fr) minmax(112px, 0.65fr);
+    gap: 10px;
+}
+
+.holiday-container .holiday-select {
+    width: 100%;
+    min-height: 40px;
+    padding: 0 2rem 0 0.85rem;
+    border: 1px solid #dbe3ef;
+    border-radius: 10px;
+    background-color: var(--card-bg, #FFFFFF);
+    color: var(--theme-text-strong, #0F172A);
+    font: inherit;
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 40px;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    appearance: auto;
+}
+
+.holiday-container .holiday-select option {
+    color: var(--theme-text-strong, #0F172A);
+    background: var(--card-bg, #FFFFFF);
+}
+
+.holiday-container .holiday-select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+}
+
+.holiday-container .btn,
+.holiday-container .view-tab {
+    min-height: 40px;
+    justify-content: center;
+    white-space: nowrap;
+}
+
+.holiday-container .view-tabs {
+    min-height: 40px;
+    align-items: center;
+    border-radius: 10px;
+}
+
+@media (max-width: 900px) {
+    .holiday-container .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .holiday-container .controls-card {
+        align-items: stretch;
+    }
+
+    .holiday-filter-group,
+    .holiday-action-group {
+        width: 100%;
+        flex-wrap: wrap;
+    }
+
+    .holiday-filter-field,
+    .holiday-filter-field--period,
+    .holiday-filter-field--year {
+        flex: 1 1 240px;
+        min-width: 0;
+    }
+}
+
+@media (max-width: 560px) {
+    .holiday-select-row,
+    .holiday-filter-group,
+    .holiday-action-group {
+        display: grid;
+        grid-template-columns: 1fr;
+        width: 100%;
+    }
+
+    .holiday-container .btn,
+    .holiday-container .view-tabs,
+    .holiday-container .view-tab {
+        width: 100%;
+    }
+
+    .holiday-container .view-tabs {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+}

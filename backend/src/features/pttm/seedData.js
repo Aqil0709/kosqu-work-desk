@@ -1,0 +1,151 @@
+// backend/src/features/pttm/seedData.js
+
+const projects = [
+  { key: 'p1', name: 'Work Desk', description: 'Task, Team & HR management system', start_date: '2026-03-01', end_date: '2026-06-30', status: 'In Progress' },
+  { key: 'p2', name: 'EPL Safety Portal', description: 'Safety portal - Android PTW & Web UI', start_date: '2026-03-01', end_date: '2026-05-31', status: 'In Progress' },
+  { key: 'p3', name: 'Edunovaa', description: 'Android side & React migration', start_date: '2026-03-01', end_date: '2026-06-30', status: 'In Progress' },
+  { key: 'p4', name: 'EPL Maintenance', description: 'C&I, EVIM, CNI, NPD ongoing support', start_date: '2026-01-01', end_date: '2026-12-31', status: 'On Going' },
+  { key: 'p5', name: 'Wizro.ai', description: 'SAP AI module with automation', start_date: '2026-03-01', end_date: '2026-06-30', status: 'In Progress' },
+  { key: 'p6', name: 'OPD Care v3.0', description: 'Prescription PDF Design', start_date: '2026-03-01', end_date: '2026-04-30', status: 'Completed' },
+  { key: 'p7', name: 'Shah Optics', description: 'Optics management system', start_date: '2026-04-01', end_date: '2026-05-31', status: 'In Progress' },
+  { key: 'p8', name: 'Essel ProPack - EVIM', description: 'EVIM module for Essel ProPack EPL', start_date: '2026-03-01', end_date: '2026-05-31', status: 'In Progress' },
+  { key: 'p9', name: 'Essel ProPack - CNI', description: 'CNI LabOS module', start_date: '2026-03-01', end_date: '2026-04-30', status: 'Completed' },
+  { key: 'p10', name: 'Mentoraa', description: 'AI mentoring platform', start_date: '2026-03-01', end_date: '2026-06-30', status: 'Planning' },
+  { key: 'p11', name: 'Job Portal', description: 'Job portal platform', start_date: '2026-03-01', end_date: '2026-05-31', status: 'In Progress' },
+  { key: 'p12', name: 'Achivers Website', description: 'Website UI finishing', start_date: '2026-03-01', end_date: '2026-04-15', status: 'Completed' },
+  { key: 'p13', name: 'IOT Dashytics', description: 'SQL migrations and super admin panel', start_date: '2026-03-01', end_date: '2026-06-30', status: 'Planning' }
+];
+
+const teams = [
+  { key: 't1', name: 'Work Desk Team', project: 'p1' },
+  { key: 't2', name: 'Android Team', project: 'p2' },
+  { key: 't3', name: 'Web UI Team', project: 'p2' },
+  { key: 't4', name: 'React Migration Team', project: 'p3' },
+  { key: 't5', name: 'Support Team', project: 'p3' },
+  { key: 't6', name: 'EPL Support', project: 'p4' },
+  { key: 't7', name: 'EVIM Team', project: 'p4' },
+  { key: 't8', name: 'CNI Team', project: 'p4' },
+  { key: 't9', name: 'AI Dev Team', project: 'p5' },
+  { key: 't10', name: 'OPD Team', project: 'p6' },
+  { key: 't11', name: 'Shah Optics Team', project: 'p7' },
+  { key: 't12', name: 'EVIM Dev', project: 'p8' },
+  { key: 't13', name: 'CNI Dev', project: 'p9' },
+  { key: 't14', name: 'Mentoraa Team', project: 'p10' },
+  { key: 't15', name: 'Job Portal Team', project: 'p11' },
+  { key: 't16', name: 'UI Team', project: 'p12' }
+];
+
+const users = [
+  { key: 'u1', name: 'Aniruddha Manmode', role: 'Team Lead' },
+  { key: 'u2', name: 'Aaqib Shaikh', role: 'Developer' },
+  { key: 'u3', name: 'Jubeda Shaikh', role: 'Developer' },
+  { key: 'u4', name: 'Rijwan Shaikh', role: 'Developer' },
+  { key: 'u5', name: 'Yusuf Shaikh', role: 'Developer' },
+  { key: 'u6', name: 'Arshan Shaikh', role: 'Developer' },
+  { key: 'u7', name: 'Karan Sakure', role: 'Developer' },
+  { key: 'u8', name: 'Mustakim Pathan', role: 'Developer' },
+  { key: 'u9', name: 'Numair Sayyed', role: 'Developer' },
+  { key: 'u10', name: 'Muzammil Shaikh', role: 'Developer' },
+  { key: 'u11', name: 'Ayan Shaikh', role: 'Tester' },
+  { key: 'u12', name: 'Faisal Khan', role: 'Developer' },
+  { key: 'u13', name: 'Umair Shaikh', role: 'Developer' },
+  { key: 'u14', name: 'Asifa Sarkar', role: 'Developer' }
+];
+
+const phases = [
+  { key: 'ph1', name: 'Phase 1 - Planning', project: 'p1', order_num: 1, description: 'Requirements gathering and architecture design' },
+  { key: 'ph2', name: 'Phase 2 - Development', project: 'p1', order_num: 2, description: 'Core feature development' },
+  { key: 'ph3', name: 'Phase 3 - Testing & Deploy', project: 'p1', order_num: 3, description: 'QA, bug fixes and deployment' },
+  { key: 'ph4', name: 'Phase 1 - Android Setup', project: 'p2', order_num: 1, description: 'Expo migration and device setup' },
+  { key: 'ph5', name: 'Phase 2 - PTW Module', project: 'p2', order_num: 2, description: 'Permit-to-Work form development' },
+  { key: 'ph6', name: 'Phase 1 - Migration', project: 'p3', order_num: 1, description: 'React migration and Android setup' },
+  { key: 'ph7', name: 'Phase 2 - Features', project: 'p3', order_num: 2, description: 'Multi-tenant, fees, attendance' },
+  { key: 'ph8', name: 'Phase 1 - AI Core', project: 'p5', order_num: 1, description: 'SAP chat interface and LLM setup' },
+  { key: 'ph9', name: 'Phase 2 - DB Sync', project: 'p5', order_num: 2, description: 'DB config, cron jobs and N8N sync' }
+];
+
+const T = (project, team, user, date, task_title, description, status, remarks = '') => ({
+  project, team, user, date, task_title, description, status, remarks
+});
+
+const tasks = [
+  T('p1', 't1', 'u1', '2026-03-19', 'Multi-user Super Admin Architecture', 'Created Admin Dashboard, DB Migrations, Backend Controllers', 'Completed', '-'),
+  T('p1', 't1', 'u1', '2026-03-22', 'Work Desk Bug Fixing', 'Fixed various UI & backend bugs in Work Desk', 'Completed', '-'),
+  T('p1', 't1', 'u3', '2026-03-23', 'HR Module Dynamic Settings', 'Resignation Letter, Experience Letter, Increment Letter made dynamic', 'Completed', 'Coordinated with Arshan'),
+  T('p1', 't1', 'u1', '2026-03-26', 'Work Desk - Ubuntu Deployment', 'Deployment Setup on Ubuntu Server, completed successfully', 'Completed', 'Deployed successfully'),
+  T('p1', 't1', 'u1', '2026-03-28', 'Work Desk - Numair Setup & Theme', 'Explained super admin theme change to Numair', 'Completed', 'Numair working on it'),
+  T('p1', 't1', 'u1', '2026-03-31', 'Server Fixes (5 items)', 'Employee error fix, Github link, Deploy.sh, .env structure, Employee delete fix', 'Completed', '-'),
+  T('p1', 't1', 'u3', '2026-04-01', 'Task & Team Management', 'Task/Team management working correctly, project delete error fixed', 'Completed', '-'),
+  T('p1', 't1', 'u1', '2026-04-02', 'SMTP Settings Implementation', 'SMTP integration for Forget Password; removed default pass system', 'Completed', '-'),
+  T('p1', 't1', 'u1', '2026-04-06', 'Code Merge from Jubeda', "Merged Jubeda's code into main branch", 'Completed', '-'),
+  T('p1', 't1', 'u1', '2026-04-07', 'Password Reset Function', 'Implemented password reset with enhancements', 'Completed', '-'),
+  T('p1', 't1', 'u3', '2026-04-08', 'Attendance Error Fix', 'Solved errors in attendance module', 'Completed', '-'),
+  T('p1', 't1', 'u1', '2026-04-10', 'Console Logs Removed + Git Merge', 'Removed console logs, merged new updates to main', 'Completed', '-'),
+  T('p1', 't1', 'u1', '2026-04-11', 'Attendance Management Error Fix', 'Fixed attendance management error', 'Completed', '-'),
+  T('p1', 't1', 'u3', '2026-04-13', 'Work Desk Testing', 'Testing Work Desk and solving errors, made changes', 'Completed', '-'),
+  T('p1', 't1', 'u3', '2026-04-14', 'Form 11 Added', 'Added Form 11 in HR dashboard; fixed attendance report generation error', 'Completed', '-'),
+  T('p1', 't1', 'u1', '2026-04-15', 'Security Patches + Git Merge', 'Security patches applied, increment/experience letter modification', 'Completed', '-'),
+  T('p1', 't1', 'u1', '2026-04-16', 'Authorization Fixed', 'Authorization fixed for all modules', 'Completed', '-'),
+  T('p1', 't1', 'u3', '2026-04-16', 'Work Desk Attendance', 'Worked on attendance, improved edit employee in admin/HR panel', 'Completed', '-'),
+  T('p1', 't1', 'u1', '2026-04-17', 'HR & Employee 403 Fixed', 'Fixed 403 Unauthorized error for HR and Employee', 'Completed', '-'),
+  T('p1', 't1', 'u3', '2026-04-17', 'Interns Module Added', 'Added Intern part in Work Desk', 'Completed', '-'),
+  T('p1', 't1', 'u3', '2026-04-18', 'Admin Project Module Dynamic', 'Made project module dynamic in admin & HR panel', 'Completed', '-'),
+  T('p1', 't1', 'u3', '2026-04-20', 'Intern Panel Error Solving', 'Working on Intern panel errors', 'In Progress', '-'),
+  T('p2', 't2', 'u1', '2026-03-20', 'EPL Android App Migration', 'Migrated whole Android app from emulator to Expo Go', 'Completed', '-'),
+  T('p2', 't2', 'u1', '2026-03-23', 'Setup in Team Laptops', 'Setup in Muzammil, Umair & Mustakim laptops', 'Completed', '-'),
+  T('p2', 't3', 'u1', '2026-03-21', 'PTW Form Auth & Validation Step 2', 'PTW Form auth & validation till step 2', 'Completed', '-'),
+  T('p2', 't3', 'u1', '2026-03-29', 'PTW Form Validations & Bug Fixes', 'Fixed View-only bugs and validations till step 4', 'Completed', 'Only till step 4'),
+  T('p2', 't2', 'u1', '2026-04-02', 'Worker Module Backend Integration', 'Integrated backend to worker module in Android app', 'Completed', '-'),
+  T('p2', 't3', 'u1', '2026-04-03', 'PTW Module Testing', 'Tested PTW with test cases, met with Santosh Gosavi', 'Completed', '-'),
+  T('p2', 't2', 'u8', '2026-04-13', 'Safety Portal Android Changes', 'Changes given by Apeksha done', 'Completed', '-'),
+  T('p3', 't4', 'u1', '2026-03-20', 'Edunovaa Support Update', 'Website and Web App updated', 'Completed', '-'),
+  T('p3', 't4', 'u1', '2026-03-23', 'Android Setup & Git Repo', 'Setup of Android side and Git Repo for Edunovaa', 'Completed', '-'),
+  T('p3', 't4', 'u12', '2026-03-27', 'Frontend Structure Explanation', 'Explained frontend structure change to Faisal Khan', 'Completed', 'Faisal completed same day'),
+  T('p3', 't5', 'u5', '2026-03-19', 'Previous Balance Card', 'Implemented previous balance card in Edunovaa', 'Completed', '-'),
+  T('p3', 't5', 'u5', '2026-03-24', 'Multi Tenant Architecture', 'Building multi admin/tenant system', 'In Progress', '-'),
+  T('p3', 't5', 'u5', '2026-03-26', 'Superadmin Authentication', 'Auth for superadmin, admin and users from same page', 'Completed', '-'),
+  T('p3', 't5', 'u5', '2026-04-13', 'Edunovaa Production Ready', 'Made Edunovaa production ready and Git initialized', 'Completed', '-'),
+  T('p3', 't5', 'u5', '2026-04-20', 'Student Fees Receipt Bug Fix', 'Fixed student fees receipt link bug', 'Completed', '-'),
+  T('p3', 't5', 'u5', '2026-04-20', 'Teacher Attendance Sorting', 'Fixed teacher attendance sorting in teacher login', 'Completed', '-'),
+  T('p3', 't5', 'u5', '2026-04-20', 'Student Attendance Pre-March Fix', 'Fixed students attendance not shown before March issue', 'Completed', '-'),
+  T('p5', 't9', 'u2', '2026-03-08', 'Wizro AI - Godrage Flow Understanding', 'Meeting with Abhishek and Rajiv for Godrage demo', 'Completed', '-'),
+  T('p5', 't9', 'u2', '2026-03-16', 'Wizro AI - DB Config PPT', 'Made PPT and slides for DB_Config meeting presentation', 'Completed', '-'),
+  T('p5', 't9', 'u2', '2026-04-02', 'SAP Chat Interface Architecture', 'Refactored Excel_Wizro.AI chat controller, conditional rendering by type enums', 'Completed', '-'),
+  T('p5', 't9', 'u2', '2026-04-09', 'Llama.cpp & Phi 3 Setup + Frontend', 'Setup Llama.cpp & Phi 3, built frontend for SAP Wizro', 'Completed', 'Coordinated with Saad'),
+  T('p5', 't9', 'u2', '2026-04-11', 'Wizro AI Main Backend', 'Backend testing + implementation after automation success', 'Completed', '-'),
+  T('p5', 't9', 'u2', '2026-04-16', 'DB_Config - Send to Automation', 'DB connection details sent to automation correctly, NGROK bridge for sync', 'Completed', 'NGROK bridge used'),
+  T('p5', 't9', 'u2', '2026-04-18', 'DB_Config Real-Time Sync', 'Working on real-time sync via NGROK/N8N', 'Completed', '-'),
+  T('p5', 't9', 'u2', '2026-04-20', 'Access Control - Table Visibility', 'Backend shows all tables when connected to a database', 'Completed', '-'),
+  T('p5', 't9', 'u2', '2026-04-22', 'DB_Config Cron Job Sync', 'Cron job every 30 min -> sends to N8N -> automation responds with updated details', 'Completed', 'Max 30-min latency'),
+  T('p6', 't10', 'u1', '2026-04-14', 'OPD Care - Prescription Print', 'Prescription print, Medical Certificate, Fitness Certificate, Billing Receipt', 'Completed', '-'),
+  T('p6', 't10', 'u5', '2026-04-21', 'OPD Care Bug Fixes', 'PDF print button fix, add new patient in prescription, reminder notes fixed', 'Completed', '-'),
+  T('p7', 't11', 'u1', '2026-04-04', 'Shah Optics - Basic Structure', 'Basic structure implemented', 'Completed', '-'),
+  T('p7', 't11', 'u1', '2026-04-16', 'Shah Optics - SQLite Backend', 'Backend connected with SQLite database', 'Completed', '-'),
+  T('p7', 't11', 'u10', '2026-04-18', 'Shah Optics - Git Merge', 'Git merge and dependency problems solved', 'Completed', "Inside Muzammil's laptop"),
+  T('p7', 't11', 'u1', '2026-04-21', 'Shah Optics - New Changes Backend', 'New backend changes integrated', 'Completed', '-'),
+  T('p8', 't12', 'u7', '2026-03-19', 'EVIM - RFQ Air Freight Fix', 'Fixed checkdate undefined error and collation error in DB', 'Completed', '-'),
+  T('p8', 't12', 'u7', '2026-03-24', 'EVIM - ER_DATA_TOO_LONG Fix', 'Increased s_vendor_nm column to VARCHAR(6000)', 'Completed', 'Attended RFQ meeting'),
+  T('p8', 't12', 'u7', '2026-03-27', 'EVIM - Dashboard & PySpark', 'Fixed PySpark issues on Windows, converted amount fields to double', 'Completed', '-'),
+  T('p8', 't12', 'u7', '2026-03-30', 'EVIM - Aging Reports PySpark', 'Aging report fetches correctly, resolved PySpark error', 'Completed', '-'),
+  T('p8', 't12', 'u7', '2026-04-03', 'EVIM - Pending Level 1 Invoice', 'Resolved CORS error, done Pending L1 Invoice count and sum', 'Completed', '-'),
+  T('p8', 't12', 'u7', '2026-04-09', 'EVIM - Production Deployment', 'Applied local changes to production', 'Completed', '-'),
+  T('p8', 't12', 'u7', '2026-04-10', 'EVIM - Invoice Form Improvements', '2MB upload limit, added date fields in invoice form', 'Completed', '-'),
+  T('p9', 't13', 'u6', '2026-03-19', 'CNI - T-Site Module Error Fix', 'Fixed data storing error in T-site; files not storing resolved with Nitesh sir', 'Completed', '-'),
+  T('p9', 't13', 'u6', '2026-03-25', 'CNI - LabOS Graph Data', 'Data showing as expected in graph', 'Completed', '-'),
+  T('p9', 't13', 'u6', '2026-03-28', 'CNI - LabOS Global Search', 'Implemented global search showing child table data', 'Completed', '-'),
+  T('p9', 't13', 'u6', '2026-04-01', 'CNI - Edit Sample Description', 'Users can now edit Sample Description before initiator submits', 'Completed', '-'),
+  T('p9', 't13', 'u6', '2026-04-07', 'CNI - Meeting + New Requirements', 'Showed previous work to client, took new requirements', 'Completed', '-'),
+  T('p9', 't13', 'u6', '2026-04-13', 'CNI - Dev Code Error Solving', 'Solved errors in development; code running locally but not in dev', 'Completed', 'Coordinated with Sarvesh & Arshan'),
+  T('p9', 't13', 'u6', '2026-04-15', 'CNI - Merge 3 Tabs', 'Merging 3 different tabs into one as per client requirement', 'Completed', '-'),
+  T('p9', 't13', 'u6', '2026-04-23', 'CNI - Production Ready', 'All issues solved in development, tested, code ready for production', 'Completed', '-'),
+  T('p11', 't15', 'u9', '2026-03-24', 'Job Portal - UI Testing', 'Job Portal Testing (UI)', 'Completed', '-'),
+  T('p12', 't16', 'u9', '2026-04-13', 'Achivers Website - Production Ready', 'Made it production ready, Git initialized', 'Completed', '-')
+];
+
+module.exports = {
+  projects,
+  teams,
+  users,
+  phases,
+  tasks
+};

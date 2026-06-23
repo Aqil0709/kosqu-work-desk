@@ -1,0 +1,1185 @@
+/* ════════════════════════════════════════════════════════════════════
+   light-mode-overrides.css
+   Fixes all components that hardcode dark colors without data-theme guards.
+   Applied only in light mode. Dark mode is completely unaffected.
+════════════════════════════════════════════════════════════════════ */
+
+/* ─────────────────────────────────────────────────────────────────
+   BODY / ROOT
+───────────────────────────────────────────────────────────────── */
+:root:not([data-theme='dark']) body,
+:root:not([data-theme='dark']) #root,
+[data-theme='light'] body,
+[data-theme='light'] #root {
+  background: var(--page-bg, #F8FAFC);
+  color: var(--theme-text, #1E293B);
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   SINGLE EMPLOYEE CREATE MODAL  (ecm-*)
+   This modal hardcodes dark navy — fix for light mode
+───────────────────────────────────────────────────────────────── */
+:root:not([data-theme='dark']) .ecm-modal,
+[data-theme='light'] .ecm-modal {
+  background: #FFFFFF !important;
+  border: 1px solid #E2E8F0 !important;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.12), 0 8px 24px rgba(0,0,0,0.06) !important;
+}
+:root:not([data-theme='dark']) .ecm-header,
+[data-theme='light'] .ecm-header {
+  border-bottom-color: #E2E8F0 !important;
+  background: #F8FAFC !important;
+}
+:root:not([data-theme='dark']) .ecm-header h2,
+[data-theme='light'] .ecm-header h2 { color: #0F172A !important; }
+:root:not([data-theme='dark']) .ecm-header p,
+[data-theme='light'] .ecm-header p { color: #64748B !important; }
+:root:not([data-theme='dark']) .ecm-close,
+[data-theme='light'] .ecm-close {
+  background: #F1F5F9 !important;
+  border-color: #E2E8F0 !important;
+  color: #64748B !important;
+}
+:root:not([data-theme='dark']) .ecm-steps,
+[data-theme='light'] .ecm-steps {
+  background: #F8FAFC !important;
+  border-bottom: 1px solid #E2E8F0 !important;
+}
+:root:not([data-theme='dark']) .ecm-step,
+[data-theme='light'] .ecm-step { color: #94A3B8 !important; }
+:root:not([data-theme='dark']) .ecm-step.done,
+[data-theme='light'] .ecm-step.done { color: #4F46E5 !important; }
+:root:not([data-theme='dark']) .ecm-step.active,
+[data-theme='light'] .ecm-step.active { color: #0F172A !important; }
+:root:not([data-theme='dark']) .ecm-step-circle,
+[data-theme='light'] .ecm-step-circle {
+  background: #E2E8F0 !important;
+  border-color: #E2E8F0 !important;
+  color: #64748B !important;
+}
+:root:not([data-theme='dark']) .ecm-step.done .ecm-step-circle,
+:root:not([data-theme='dark']) .ecm-step.active .ecm-step-circle,
+[data-theme='light'] .ecm-step.done .ecm-step-circle,
+[data-theme='light'] .ecm-step.active .ecm-step-circle {
+  background: #4F46E5 !important;
+  border-color: #4F46E5 !important;
+  color: #fff !important;
+}
+:root:not([data-theme='dark']) .ecm-body,
+[data-theme='light'] .ecm-body { background: #FFFFFF !important; }
+:root:not([data-theme='dark']) .ecm-body::-webkit-scrollbar-thumb,
+[data-theme='light'] .ecm-body::-webkit-scrollbar-thumb { background: #CBD5E1 !important; }
+:root:not([data-theme='dark']) .ecm-section-title h3,
+[data-theme='light'] .ecm-section-title h3 { color: #0F172A !important; }
+:root:not([data-theme='dark']) .ecm-section-title p,
+[data-theme='light'] .ecm-section-title p { color: #64748B !important; }
+:root:not([data-theme='dark']) .ecm-field label,
+[data-theme='light'] .ecm-field label { color: #374151 !important; }
+:root:not([data-theme='dark']) .ecm-field input,
+:root:not([data-theme='dark']) .ecm-field select,
+:root:not([data-theme='dark']) .ecm-field textarea,
+[data-theme='light'] .ecm-field input,
+[data-theme='light'] .ecm-field select,
+[data-theme='light'] .ecm-field textarea {
+  background: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+  color: #0F172A !important;
+}
+:root:not([data-theme='dark']) .ecm-field select option,
+[data-theme='light'] .ecm-field select option {
+  background: #FFFFFF !important;
+  color: #0F172A !important;
+}
+:root:not([data-theme='dark']) .ecm-footer,
+[data-theme='light'] .ecm-footer {
+  background: #F8FAFC !important;
+  border-top-color: #E2E8F0 !important;
+}
+:root:not([data-theme='dark']) .ecm-error-msg,
+[data-theme='light'] .ecm-error-msg { color: #B91C1C !important; }
+:root:not([data-theme='dark']) .ecm-rules .fail,
+[data-theme='light'] .ecm-rules .fail { color: #94A3B8 !important; }
+:root:not([data-theme='dark']) .ecm-rules .ok,
+[data-theme='light'] .ecm-rules .ok { color: #059669 !important; }
+:root:not([data-theme='dark']) .ecm-pp-row span,
+[data-theme='light'] .ecm-pp-row span { color: #374151 !important; }
+:root:not([data-theme='dark']) .ecm-pp-row strong,
+[data-theme='light'] .ecm-pp-row strong { color: #0F172A !important; }
+:root:not([data-theme='dark']) .ecm-pp-row.net strong,
+[data-theme='light'] .ecm-pp-row.net strong { color: #059669 !important; }
+:root:not([data-theme='dark']) .ecm-step-line,
+[data-theme='light'] .ecm-step-line { background: #E2E8F0 !important; }
+:root:not([data-theme='dark']) .ecm-step-line::after,
+[data-theme='light'] .ecm-step-line::after { background: #4F46E5 !important; }
+:root:not([data-theme='dark']) .ecm-label,
+[data-theme='light'] .ecm-label { color: #374151 !important; }
+:root:not([data-theme='dark']) .ecm-header,
+[data-theme='light'] .ecm-header { border-bottom-color: #E2E8F0 !important; background: #F8FAFC !important; }
+:root:not([data-theme='dark']) .ecm-steps,
+[data-theme='light'] .ecm-steps { border-bottom-color: #E2E8F0 !important; background: #F8FAFC !important; }
+:root:not([data-theme='dark']) .ecm-footer,
+[data-theme='light'] .ecm-footer { background: #F8FAFC !important; border-top-color: #E2E8F0 !important; }
+:root:not([data-theme='dark']) .ecm-body,
+[data-theme='light'] .ecm-body { background: #FFFFFF !important; }
+
+/* ─────────────────────────────────────────────────────────────────
+   DECLARATION FORM  (epf-*)
+───────────────────────────────────────────────────────────────── */
+:root:not([data-theme='dark']) .epf-header-card,
+[data-theme='light'] .epf-header-card {
+  background: linear-gradient(135deg, #4F46E5 0%, #6366F1 100%) !important;
+  color: #fff !important;
+}
+:root:not([data-theme='dark']) .epf-container,
+[data-theme='light'] .epf-container {
+  background: var(--page-bg, #F8FAFC) !important;
+  color: var(--theme-text, #1E293B) !important;
+}
+:root:not([data-theme='dark']) .epf-card,
+[data-theme='light'] .epf-card {
+  background: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+  color: #1E293B !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   PTTM / PROJECT MANAGEMENT  (pttm-*, kanban-*)
+───────────────────────────────────────────────────────────────── */
+:root:not([data-theme='dark']) .pttm-root,
+:root:not([data-theme='dark']) .pttm-container,
+[data-theme='light'] .pttm-root,
+[data-theme='light'] .pttm-container {
+  background: var(--page-bg, #F8FAFC) !important;
+  color: var(--theme-text, #1E293B) !important;
+}
+:root:not([data-theme='dark']) .pttm-sidebar,
+[data-theme='light'] .pttm-sidebar {
+  background: #FFFFFF !important;
+  border-right: 1px solid #E2E8F0 !important;
+  color: #1E293B !important;
+}
+:root:not([data-theme='dark']) .pttm-sidebar-item,
+[data-theme='light'] .pttm-sidebar-item {
+  color: #374151 !important;
+}
+:root:not([data-theme='dark']) .pttm-sidebar-item:hover,
+[data-theme='light'] .pttm-sidebar-item:hover {
+  background: #F1F5F9 !important;
+  color: #0F172A !important;
+}
+:root:not([data-theme='dark']) .pttm-header,
+[data-theme='light'] .pttm-header {
+  background: #FFFFFF !important;
+  border-bottom: 1px solid #E2E8F0 !important;
+  color: #0F172A !important;
+}
+:root:not([data-theme='dark']) .pttm-task-card,
+:root:not([data-theme='dark']) .pttm-card,
+[data-theme='light'] .pttm-task-card,
+[data-theme='light'] .pttm-card {
+  background: #FFFFFF !important;
+  border: 1px solid #E2E8F0 !important;
+  color: #1E293B !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06) !important;
+}
+:root:not([data-theme='dark']) .kanban-column,
+[data-theme='light'] .kanban-column {
+  background: #F1F5F9 !important;
+  border: 1px solid #E2E8F0 !important;
+}
+:root:not([data-theme='dark']) .kanban-column-header,
+[data-theme='light'] .kanban-column-header {
+  color: #374151 !important;
+}
+:root:not([data-theme='dark']) .kanban-card,
+[data-theme='light'] .kanban-card {
+  background: #FFFFFF !important;
+  border: 1px solid #E2E8F0 !important;
+  color: #1E293B !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06) !important;
+}
+:root:not([data-theme='dark']) .pttm-modal-overlay,
+[data-theme='light'] .pttm-modal-overlay {
+  background: rgba(0,0,0,0.45) !important;
+}
+:root:not([data-theme='dark']) .pttm-modal,
+[data-theme='light'] .pttm-modal {
+  background: #FFFFFF !important;
+  border: 1px solid #E2E8F0 !important;
+  color: #1E293B !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   ANNOUNCEMENTS  (ann-*)
+───────────────────────────────────────────────────────────────── */
+:root:not([data-theme='dark']) .ann-card,
+:root:not([data-theme='dark']) .announcement-card,
+[data-theme='light'] .ann-card,
+[data-theme='light'] .announcement-card {
+  background: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+  color: #1E293B !important;
+}
+:root:not([data-theme='dark']) .ann-title,
+[data-theme='light'] .ann-title { color: #0F172A !important; }
+:root:not([data-theme='dark']) .ann-body,
+[data-theme='light'] .ann-body { color: #374151 !important; }
+
+/* ─────────────────────────────────────────────────────────────────
+   MOM  (mom-*)
+───────────────────────────────────────────────────────────────── */
+:root:not([data-theme='dark']) .mom-wrap,
+:root:not([data-theme='dark']) .mom-container,
+[data-theme='light'] .mom-wrap,
+[data-theme='light'] .mom-container {
+  background: var(--page-bg, #F8FAFC) !important;
+  color: var(--theme-text, #1E293B) !important;
+}
+:root:not([data-theme='dark']) .mom-card,
+[data-theme='light'] .mom-card {
+  background: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+  color: #1E293B !important;
+}
+:root:not([data-theme='dark']) .mom-meta,
+[data-theme='light'] .mom-meta { color: #64748B !important; }
+
+/* ─────────────────────────────────────────────────────────────────
+   AUDIT LOG  (audit-*)
+───────────────────────────────────────────────────────────────── */
+:root:not([data-theme='dark']) .audit-log-section,
+[data-theme='light'] .audit-log-section {
+  background: var(--page-bg, #F8FAFC) !important;
+  color: var(--theme-text, #1E293B) !important;
+}
+:root:not([data-theme='dark']) .audit-row,
+:root:not([data-theme='dark']) .audit-entry,
+[data-theme='light'] .audit-row,
+[data-theme='light'] .audit-entry {
+  background: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+  color: #1E293B !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   ORG CHART
+───────────────────────────────────────────────────────────────── */
+:root:not([data-theme='dark']) .org-chart-container,
+[data-theme='light'] .org-chart-container {
+  background: var(--page-bg, #F8FAFC) !important;
+}
+:root:not([data-theme='dark']) .org-node,
+[data-theme='light'] .org-node {
+  background: #FFFFFF !important;
+  border: 1px solid #E2E8F0 !important;
+  color: #1E293B !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06) !important;
+}
+:root:not([data-theme='dark']) .org-name,
+[data-theme='light'] .org-name { color: #0F172A !important; }
+:root:not([data-theme='dark']) .org-title,
+[data-theme='light'] .org-title { color: #64748B !important; }
+
+/* ─────────────────────────────────────────────────────────────────
+   REPORTS MANAGEMENT  (rm-*)
+───────────────────────────────────────────────────────────────── */
+:root:not([data-theme='dark']) .rm-wrapper,
+[data-theme='light'] .rm-wrapper {
+  background: var(--page-bg, #F8FAFC) !important;
+  color: var(--theme-text, #1E293B) !important;
+}
+:root:not([data-theme='dark']) .rm-card,
+[data-theme='light'] .rm-card {
+  background: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+  color: #1E293B !important;
+}
+:root:not([data-theme='dark']) .rm-table-wrap,
+[data-theme='light'] .rm-table-wrap {
+  background: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   EMPLOYEE DASHBOARD  (emp-dash-*, check-in banner etc.)
+───────────────────────────────────────────────────────────────── */
+:root:not([data-theme='dark']) .checkin-banner,
+[data-theme='light'] .checkin-banner {
+  background: linear-gradient(135deg, #4F46E5, #6366F1) !important;
+  color: #fff !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   RECHARTS TOOLTIP
+───────────────────────────────────────────────────────────────── */
+:root:not([data-theme='dark']) .recharts-default-tooltip,
+[data-theme='light'] .recharts-default-tooltip {
+  background: #FFFFFF !important;
+  border: 1px solid #E2E8F0 !important;
+  color: #1E293B !important;
+}
+:root:not([data-theme='dark']) .recharts-tooltip-item,
+[data-theme='light'] .recharts-tooltip-item { color: #374151 !important; }
+:root:not([data-theme='dark']) .recharts-tooltip-label,
+[data-theme='light'] .recharts-tooltip-label { color: #0F172A !important; }
+
+/* ─────────────────────────────────────────────────────────────────
+   GLOBAL TABLES
+───────────────────────────────────────────────────────────────── */
+:root:not([data-theme='dark']) thead th,
+[data-theme='light'] thead th {
+  background: #F8FAFC !important;
+  color: #374151 !important;
+  border-color: #E2E8F0 !important;
+}
+:root:not([data-theme='dark']) tbody td,
+[data-theme='light'] tbody td {
+  color: #1E293B !important;
+  border-color: #F1F5F9 !important;
+}
+:root:not([data-theme='dark']) tbody tr:hover td,
+[data-theme='light'] tbody tr:hover td {
+  background: #F8FAFC !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   EMPLOYEE PORTAL — COMPREHENSIVE LIGHT MODE OVERRIDES
+   Fixes all hardcoded dark/opaque colors in employee pages
+═══════════════════════════════════════════════════════════════════ */
+
+/* ── Layout shell ────────────────────────────────────────────────── */
+:root:not([data-theme='dark']) .employee-portal,
+[data-theme='light'] .employee-portal {
+  background: var(--page-bg, #F8FAFC) !important;
+  color: var(--theme-text, #1E293B) !important;
+}
+
+:root:not([data-theme='dark']) .dashboard-main,
+:root:not([data-theme='dark']) .emp-scroll-area,
+:root:not([data-theme='dark']) .employee-dashboard,
+[data-theme='light'] .dashboard-main,
+[data-theme='light'] .emp-scroll-area,
+[data-theme='light'] .employee-dashboard {
+  background: var(--page-bg, #F8FAFC) !important;
+  color: var(--theme-text, #1E293B) !important;
+}
+
+/* ── Generic page containers ─────────────────────────────────────── */
+:root:not([data-theme='dark']) .attendance-section,
+:root:not([data-theme='dark']) .leave-management-section,
+:root:not([data-theme='dark']) .expense-section,
+:root:not([data-theme='dark']) .personal-info-section,
+[data-theme='light'] .attendance-section,
+[data-theme='light'] .leave-management-section,
+[data-theme='light'] .expense-section,
+[data-theme='light'] .personal-info-section {
+  background: var(--page-bg, #F8FAFC) !important;
+  color: var(--theme-text, #1E293B) !important;
+}
+
+/* ── Cards ───────────────────────────────────────────────────────── */
+:root:not([data-theme='dark']) .stat-card,
+:root:not([data-theme='dark']) .leave-balance-card,
+:root:not([data-theme='dark']) .ep-stat,
+:root:not([data-theme='dark']) .ep-table-wrap,
+:root:not([data-theme='dark']) .attendance-table-container,
+:root:not([data-theme='dark']) .leave-table-container,
+:root:not([data-theme='dark']) .expense-table-container,
+:root:not([data-theme='dark']) .pi-profile-card,
+:root:not([data-theme='dark']) .pi-info-card,
+:root:not([data-theme='dark']) .my-docs-container .doc-card,
+[data-theme='light'] .stat-card,
+[data-theme='light'] .leave-balance-card,
+[data-theme='light'] .ep-stat,
+[data-theme='light'] .ep-table-wrap,
+[data-theme='light'] .attendance-table-container,
+[data-theme='light'] .leave-table-container,
+[data-theme='light'] .expense-table-container,
+[data-theme='light'] .pi-profile-card,
+[data-theme='light'] .pi-info-card,
+[data-theme='light'] .my-docs-container .doc-card {
+  background: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+  color: #1E293B !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 4px 16px rgba(0,0,0,0.04) !important;
+}
+
+/* ── Modals ──────────────────────────────────────────────────────── */
+:root:not([data-theme='dark']) .modal-content,
+:root:not([data-theme='dark']) .leave-modal-content,
+:root:not([data-theme='dark']) .ep-modal,
+:root:not([data-theme='dark']) .attendance-detail-modal,
+:root:not([data-theme='dark']) .attendance-edit-modal,
+:root:not([data-theme='dark']) .attendance-checkin-modal,
+[data-theme='light'] .modal-content,
+[data-theme='light'] .leave-modal-content,
+[data-theme='light'] .ep-modal,
+[data-theme='light'] .attendance-detail-modal,
+[data-theme='light'] .attendance-edit-modal,
+[data-theme='light'] .attendance-checkin-modal {
+  background: #FFFFFF !important;
+  border: 1px solid #E2E8F0 !important;
+  color: #1E293B !important;
+}
+
+:root:not([data-theme='dark']) .modal-header,
+:root:not([data-theme='dark']) .leave-modal-header,
+:root:not([data-theme='dark']) .ep-modal-header,
+[data-theme='light'] .modal-header,
+[data-theme='light'] .leave-modal-header,
+[data-theme='light'] .ep-modal-header {
+  background: #F8FAFC !important;
+  border-bottom: 1px solid #E2E8F0 !important;
+}
+
+:root:not([data-theme='dark']) .modal-header h2,
+:root:not([data-theme='dark']) .leave-modal-title,
+:root:not([data-theme='dark']) .ep-modal-header h2,
+[data-theme='light'] .modal-header h2,
+[data-theme='light'] .leave-modal-title,
+[data-theme='light'] .ep-modal-header h2 {
+  color: #0F172A !important;
+}
+
+:root:not([data-theme='dark']) .modal-footer,
+:root:not([data-theme='dark']) .ep-modal-footer,
+:root:not([data-theme='dark']) .form-actions,
+:root:not([data-theme='dark']) .leave-form-actions,
+[data-theme='light'] .modal-footer,
+[data-theme='light'] .ep-modal-footer,
+[data-theme='light'] .form-actions,
+[data-theme='light'] .leave-form-actions {
+  background: #F8FAFC !important;
+  border-top: 1px solid #E2E8F0 !important;
+}
+
+/* ── Tables ──────────────────────────────────────────────────────── */
+:root:not([data-theme='dark']) .table-header,
+:root:not([data-theme='dark']) .leave-table-header,
+[data-theme='light'] .table-header,
+[data-theme='light'] .leave-table-header {
+  background: #FFFFFF !important;
+  border-bottom: 1px solid #E2E8F0 !important;
+}
+
+:root:not([data-theme='dark']) .attendance-table th,
+:root:not([data-theme='dark']) .leave-records-table th,
+:root:not([data-theme='dark']) .expense-table th,
+:root:not([data-theme='dark']) .ep-table th,
+[data-theme='light'] .attendance-table th,
+[data-theme='light'] .leave-records-table th,
+[data-theme='light'] .expense-table th,
+[data-theme='light'] .ep-table th {
+  background: #F8FAFC !important;
+  color: #64748B !important;
+  border-bottom: 1px solid #E2E8F0 !important;
+}
+
+:root:not([data-theme='dark']) .attendance-table td,
+:root:not([data-theme='dark']) .leave-records-table td,
+:root:not([data-theme='dark']) .expense-table td,
+:root:not([data-theme='dark']) .ep-table td,
+[data-theme='light'] .attendance-table td,
+[data-theme='light'] .leave-records-table td,
+[data-theme='light'] .expense-table td,
+[data-theme='light'] .ep-table td {
+  color: #1E293B !important;
+  border-bottom: 1px solid #F1F5F9 !important;
+}
+
+:root:not([data-theme='dark']) .attendance-table tbody tr:hover td,
+:root:not([data-theme='dark']) .leave-table-row:hover td,
+:root:not([data-theme='dark']) .expense-table tbody tr:hover td,
+[data-theme='light'] .attendance-table tbody tr:hover td,
+[data-theme='light'] .leave-table-row:hover td,
+[data-theme='light'] .expense-table tbody tr:hover td {
+  background: #F8FAFC !important;
+}
+
+/* ── Form inputs ─────────────────────────────────────────────────── */
+:root:not([data-theme='dark']) .form-group input,
+:root:not([data-theme='dark']) .form-group select,
+:root:not([data-theme='dark']) .form-group textarea,
+:root:not([data-theme='dark']) .leave-form-input,
+:root:not([data-theme='dark']) .leave-form-select,
+:root:not([data-theme='dark']) .leave-form-textarea,
+:root:not([data-theme='dark']) .pin-input,
+:root:not([data-theme='dark']) .filter-btn,
+:root:not([data-theme='dark']) .leave-filter-select,
+:root:not([data-theme='dark']) .export-btn,
+:root:not([data-theme='dark']) .leave-export-btn,
+:root:not([data-theme='dark']) .filter-select,
+:root:not([data-theme='dark']) .ep-year-select,
+:root:not([data-theme='dark']) .table-search-input,
+[data-theme='light'] .form-group input,
+[data-theme='light'] .form-group select,
+[data-theme='light'] .form-group textarea,
+[data-theme='light'] .leave-form-input,
+[data-theme='light'] .leave-form-select,
+[data-theme='light'] .leave-form-textarea,
+[data-theme='light'] .pin-input,
+[data-theme='light'] .filter-btn,
+[data-theme='light'] .leave-filter-select,
+[data-theme='light'] .export-btn,
+[data-theme='light'] .leave-export-btn,
+[data-theme='light'] .filter-select,
+[data-theme='light'] .ep-year-select,
+[data-theme='light'] .table-search-input {
+  background: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+  color: #1E293B !important;
+}
+
+:root:not([data-theme='dark']) .form-group label,
+:root:not([data-theme='dark']) .leave-form-label,
+[data-theme='light'] .form-group label,
+[data-theme='light'] .leave-form-label { color: #374151 !important; }
+
+:root:not([data-theme='dark']) .helper-text,
+:root:not([data-theme='dark']) .leave-helper-text,
+[data-theme='light'] .helper-text,
+[data-theme='light'] .leave-helper-text { color: #94A3B8 !important; }
+
+/* ── Attendance page specifics ───────────────────────────────────── */
+:root:not([data-theme='dark']) .add-attendance-btn,
+:root:not([data-theme='dark']) .face-recognition-btn,
+:root:not([data-theme='dark']) .check-in-btn,
+:root:not([data-theme='dark']) .check-out-btn,
+[data-theme='light'] .add-attendance-btn,
+[data-theme='light'] .face-recognition-btn,
+[data-theme='light'] .check-in-btn,
+[data-theme='light'] .check-out-btn {
+  background: var(--gradient-brand, linear-gradient(135deg,#5B4FF7,#7b6ef9)) !important;
+  color: #fff !important;
+  box-shadow: 0 2px 8px rgba(91,79,247,0.30) !important;
+}
+
+:root:not([data-theme='dark']) .attendance-month-nav,
+[data-theme='light'] .attendance-month-nav {
+  background: #FFFFFF !important;
+  border: 1px solid #E2E8F0 !important;
+}
+
+:root:not([data-theme='dark']) .detail-label,
+[data-theme='light'] .detail-label { color: #64748B !important; }
+:root:not([data-theme='dark']) .detail-value,
+[data-theme='light'] .detail-value { color: #0F172A !important; }
+:root:not([data-theme='dark']) .detail-row,
+[data-theme='light'] .detail-row { border-bottom: 1px solid #F1F5F9 !important; }
+
+:root:not([data-theme='dark']) .camera-container,
+:root:not([data-theme='dark']) .pin-verification-container,
+[data-theme='light'] .camera-container,
+[data-theme='light'] .pin-verification-container {
+  background: #FFFFFF !important;
+  border: 1px solid #E2E8F0 !important;
+}
+
+:root:not([data-theme='dark']) .camera-instructions,
+[data-theme='light'] .camera-instructions {
+  background: #F8FAFC !important;
+  border: 1px solid #E2E8F0 !important;
+}
+
+:root:not([data-theme='dark']) .camera-instructions p,
+[data-theme='light'] .camera-instructions p { color: #64748B !important; }
+
+/* ── Leave page specifics ────────────────────────────────────────── */
+:root:not([data-theme='dark']) .leave-balance-section,
+:root:not([data-theme='dark']) .leave-form-section,
+[data-theme='light'] .leave-balance-section,
+[data-theme='light'] .leave-form-section {
+  background: #FFFFFF !important;
+  border: 1px solid #E2E8F0 !important;
+}
+
+:root:not([data-theme='dark']) .leave-type-info,
+[data-theme='light'] .leave-type-info {
+  background: #F8FAFC !important;
+  border: 1px solid #E2E8F0 !important;
+  color: #64748B !important;
+}
+
+/* ── Personal info page ──────────────────────────────────────────── */
+:root:not([data-theme='dark']) .pi-full-name,
+[data-theme='light'] .pi-full-name { color: #0F172A !important; }
+:root:not([data-theme='dark']) .pi-designation,
+[data-theme='light'] .pi-designation { color: #5B4FF7 !important; }
+:root:not([data-theme='dark']) .pi-department,
+[data-theme='light'] .pi-department { color: #64748B !important; }
+:root:not([data-theme='dark']) .pi-info-label,
+[data-theme='light'] .pi-info-label { color: #64748B !important; }
+:root:not([data-theme='dark']) .pi-info-value,
+[data-theme='light'] .pi-info-value { color: #0F172A !important; }
+:root:not([data-theme='dark']) .pi-photo-upload-btn,
+[data-theme='light'] .pi-photo-upload-btn {
+  background: #FFFFFF !important;
+  border: 1px solid #E2E8F0 !important;
+  color: #1E293B !important;
+}
+
+/* ── Payslips page ───────────────────────────────────────────────── */
+:root:not([data-theme='dark']) .ep-page,
+[data-theme='light'] .ep-page {
+  background: var(--page-bg, #F8FAFC) !important;
+  color: #1E293B !important;
+}
+
+:root:not([data-theme='dark']) .ep-loading,
+:root:not([data-theme='dark']) .ep-empty,
+[data-theme='light'] .ep-loading,
+[data-theme='light'] .ep-empty {
+  background: #FFFFFF !important;
+  border: 1px solid #E2E8F0 !important;
+  color: #64748B !important;
+}
+
+:root:not([data-theme='dark']) .ep-row:hover,
+[data-theme='light'] .ep-row:hover { background: #F8FAFC !important; }
+
+/* ── Payslip modal ───────────────────────────────────────────────── */
+:root:not([data-theme='dark']) .ep-slip-section-label,
+[data-theme='light'] .ep-slip-section-label { color: #94A3B8 !important; }
+:root:not([data-theme='dark']) .ep-slip-item,
+[data-theme='light'] .ep-slip-item { color: #1E293B !important; }
+:root:not([data-theme='dark']) .ep-slip-item span,
+[data-theme='light'] .ep-slip-item span { color: #64748B !important; }
+:root:not([data-theme='dark']) .ep-slip-item.total,
+[data-theme='light'] .ep-slip-item.total { background: #F8FAFC !important; }
+:root:not([data-theme='dark']) .ep-slip-details,
+[data-theme='light'] .ep-slip-details {
+  border-top: 1px solid #E2E8F0 !important;
+  color: #64748B !important;
+}
+
+/* ── Documents page ──────────────────────────────────────────────── */
+:root:not([data-theme='dark']) .my-docs-container,
+:root:not([data-theme='dark']) .docs-section,
+:root:not([data-theme='dark']) .documents-container,
+[data-theme='light'] .my-docs-container,
+[data-theme='light'] .docs-section,
+[data-theme='light'] .documents-container {
+  background: var(--page-bg, #F8FAFC) !important;
+}
+
+:root:not([data-theme='dark']) .docs-header h1,
+[data-theme='light'] .docs-header h1 { color: #0F172A !important; }
+:root:not([data-theme='dark']) .docs-header p,
+[data-theme='light'] .docs-header p { color: #64748B !important; }
+:root:not([data-theme='dark']) .docs-tabs,
+[data-theme='light'] .docs-tabs { border-bottom: 1px solid #E2E8F0 !important; }
+:root:not([data-theme='dark']) .doc-tab,
+[data-theme='light'] .doc-tab { color: #64748B !important; }
+:root:not([data-theme='dark']) .doc-tab.active,
+[data-theme='light'] .doc-tab.active {
+  color: #5B4FF7 !important;
+  border-bottom-color: #5B4FF7 !important;
+}
+:root:not([data-theme='dark']) .doc-info h3,
+[data-theme='light'] .doc-info h3 { color: #0F172A !important; }
+:root:not([data-theme='dark']) .doc-info p,
+[data-theme='light'] .doc-info p { color: #64748B !important; }
+:root:not([data-theme='dark']) .doc-upload-zone,
+[data-theme='light'] .doc-upload-zone {
+  background: #F8FAFC !important;
+  border: 2px dashed #CBD5E1 !important;
+  color: #64748B !important;
+}
+:root:not([data-theme='dark']) .slips-filter-bar,
+[data-theme='light'] .slips-filter-bar {
+  background: #FFFFFF !important;
+  border-bottom: 1px solid #E2E8F0 !important;
+}
+
+/* ── Projects page ───────────────────────────────────────────────── */
+:root:not([data-theme='dark']) .employee-projects,
+[data-theme='light'] .employee-projects {
+  background: var(--page-bg, #F8FAFC) !important;
+  color: #1E293B !important;
+}
+
+:root:not([data-theme='dark']) .employee-projects-card,
+:root:not([data-theme='dark']) .employee-projects-panel,
+[data-theme='light'] .employee-projects-card,
+[data-theme='light'] .employee-projects-panel {
+  background: #FFFFFF !important;
+  border: 1px solid #E2E8F0 !important;
+  color: #1E293B !important;
+}
+
+:root:not([data-theme='dark']) .employee-project-item,
+[data-theme='light'] .employee-project-item {
+  background: #F8FAFC !important;
+  border: 1px solid #E2E8F0 !important;
+}
+
+:root:not([data-theme='dark']) .employee-projects-search,
+:root:not([data-theme='dark']) .employee-projects-toolbar select,
+[data-theme='light'] .employee-projects-search,
+[data-theme='light'] .employee-projects-toolbar select {
+  background: #FFFFFF !important;
+  border: 1px solid #E2E8F0 !important;
+  color: #1E293B !important;
+}
+
+/* ── Grievance / Resignation pages ──────────────────────────────── */
+:root:not([data-theme='dark']) .glass-form,
+[data-theme='light'] .glass-form {
+  background: #FFFFFF !important;
+  border: 1px solid #E2E8F0 !important;
+  color: #1E293B !important;
+}
+
+/* ── Tab buttons (all pages) ─────────────────────────────────────── */
+:root:not([data-theme='dark']) .tab-btn,
+[data-theme='light'] .tab-btn {
+  background: #FFFFFF !important;
+  border: 1px solid #E2E8F0 !important;
+  color: #64748B !important;
+}
+
+:root:not([data-theme='dark']) .tab-btn:hover,
+[data-theme='light'] .tab-btn:hover {
+  background: #F1F5F9 !important;
+  color: #1E293B !important;
+}
+
+:root:not([data-theme='dark']) .tab-btn.active,
+[data-theme='light'] .tab-btn.active {
+  background: var(--color-primary, #5B4FF7) !important;
+  color: #fff !important;
+  border-color: var(--color-primary, #5B4FF7) !important;
+}
+
+/* ── Status badges in light mode ─────────────────────────────────── */
+:root:not([data-theme='dark']) .status-approved,
+:root:not([data-theme='dark']) .leave-status--approved,
+[data-theme='light'] .status-approved,
+[data-theme='light'] .leave-status--approved {
+  background: #ECFDF5 !important;
+  color: #065F46 !important;
+}
+
+:root:not([data-theme='dark']) .status-pending,
+:root:not([data-theme='dark']) .leave-status--pending,
+[data-theme='light'] .status-pending,
+[data-theme='light'] .leave-status--pending {
+  background: #FFFBEB !important;
+  color: #92400E !important;
+}
+
+:root:not([data-theme='dark']) .status-rejected,
+:root:not([data-theme='dark']) .leave-status--rejected,
+[data-theme='light'] .status-rejected,
+[data-theme='light'] .leave-status--rejected {
+  background: #FEF2F2 !important;
+  color: #B91C1C !important;
+}
+
+/* ── View details / action buttons in tables ─────────────────────── */
+:root:not([data-theme='dark']) .view-details-btn,
+[data-theme='light'] .view-details-btn {
+  background: #EFF6FF !important;
+  color: #1D4ED8 !important;
+  border: 1px solid rgba(59,130,246,0.2) !important;
+}
+
+:root:not([data-theme='dark']) .approve-btn,
+[data-theme='light'] .approve-btn {
+  background: #ECFDF5 !important;
+  color: #065F46 !important;
+  border: 1px solid rgba(16,185,129,0.25) !important;
+}
+
+:root:not([data-theme='dark']) .reject-btn,
+[data-theme='light'] .reject-btn {
+  background: #FEF2F2 !important;
+  color: #B91C1C !important;
+  border: 1px solid rgba(239,68,68,0.25) !important;
+}
+
+/* ── Cancel / secondary buttons in light mode ───────────────────── */
+:root:not([data-theme='dark']) .cancel-btn,
+:root:not([data-theme='dark']) .leave-cancel-btn,
+:root:not([data-theme='dark']) .pin-cancel-btn,
+:root:not([data-theme='dark']) .ep-close-modal,
+[data-theme='light'] .cancel-btn,
+[data-theme='light'] .leave-cancel-btn,
+[data-theme='light'] .pin-cancel-btn,
+[data-theme='light'] .ep-close-modal {
+  background: #F1F5F9 !important;
+  border: 1px solid #E2E8F0 !important;
+  color: #1E293B !important;
+}
+
+/* ── Attendance method badges ────────────────────────────────────── */
+:root:not([data-theme='dark']) .face-method,
+[data-theme='light'] .face-method {
+  background: #EFF6FF !important;
+  color: #1D4ED8 !important;
+}
+
+:root:not([data-theme='dark']) .pin-method,
+[data-theme='light'] .pin-method {
+  background: #F5F3FF !important;
+  color: #6D28D9 !important;
+}
+
+:root:not([data-theme='dark']) .manual-method,
+[data-theme='light'] .manual-method {
+  background: #FFFBEB !important;
+  color: #92400E !important;
+}
+
+/* ── Leave type badges ───────────────────────────────────────────── */
+:root:not([data-theme='dark']) .leave-type-badge,
+:root:not([data-theme='dark']) .leave-type-casual,
+[data-theme='light'] .leave-type-badge,
+[data-theme='light'] .leave-type-casual {
+  background: #F5F3FF !important;
+  color: #6D28D9 !important;
+}
+
+:root:not([data-theme='dark']) .leave-type-sick,
+[data-theme='light'] .leave-type-sick {
+  background: #FFFBEB !important;
+  color: #92400E !important;
+}
+
+:root:not([data-theme='dark']) .leave-type-earned,
+[data-theme='light'] .leave-type-earned {
+  background: #ECFDF5 !important;
+  color: #065F46 !important;
+}
+
+/* ── No-data states ──────────────────────────────────────────────── */
+:root:not([data-theme='dark']) .no-data,
+:root:not([data-theme='dark']) .no-employees,
+:root:not([data-theme='dark']) .no-leaves,
+:root:not([data-theme='dark']) .no-docs,
+:root:not([data-theme='dark']) .ep-empty,
+[data-theme='light'] .no-data,
+[data-theme='light'] .no-employees,
+[data-theme='light'] .no-leaves,
+[data-theme='light'] .no-docs,
+[data-theme='light'] .ep-empty { color: #64748B !important; }
+
+/* ── Leave calendar ──────────────────────────────────────────────── */
+:root:not([data-theme='dark']) .leave-calendar-header,
+[data-theme='light'] .leave-calendar-header {
+  background: #F8FAFC !important;
+  border: 1px solid #E2E8F0 !important;
+  color: #1E293B !important;
+}
+
+:root:not([data-theme='dark']) .leave-calendar-day,
+[data-theme='light'] .leave-calendar-day {
+  border-color: #E2E8F0 !important;
+  color: #1E293B !important;
+}
+
+/* ── Work report page ────────────────────────────────────────────── */
+:root:not([data-theme='dark']) .work-report-section,
+:root:not([data-theme='dark']) .work-report-container,
+[data-theme='light'] .work-report-section,
+[data-theme='light'] .work-report-container {
+  background: var(--page-bg, #F8FAFC) !important;
+  color: #1E293B !important;
+}
+
+:root:not([data-theme='dark']) .report-card,
+:root:not([data-theme='dark']) .wr-card,
+[data-theme='light'] .report-card,
+[data-theme='light'] .wr-card {
+  background: #FFFFFF !important;
+  border: 1px solid #E2E8F0 !important;
+  color: #1E293B !important;
+}
+
+/* ── Resignation page ────────────────────────────────────────────── */
+:root:not([data-theme='dark']) .resignation-section,
+:root:not([data-theme='dark']) .resignation-container,
+[data-theme='light'] .resignation-section,
+[data-theme='light'] .resignation-container {
+  background: var(--page-bg, #F8FAFC) !important;
+  color: #1E293B !important;
+}
+
+/* ── Dashboard hardcoded inline warning banner fix ───────────────── */
+:root:not([data-theme='dark']) .emp-forgot-checkout-banner,
+[data-theme='light'] .emp-forgot-checkout-banner {
+  background: #FFFBEB !important;
+  border: 1px solid rgba(245,158,11,0.35) !important;
+  border-left: 4px solid #F59E0B !important;
+}
+
+/* ── Announcement badge: "All read" green chip fix for light mode ── */
+:root:not([data-theme='dark']) .ann-all-read-badge,
+[data-theme='light'] .ann-all-read-badge {
+  background: #D1FAE5 !important;
+  color: #065F46 !important;
+}
+
+/* ── Scrollbar in light mode ─────────────────────────────────────── */
+:root:not([data-theme='dark']) ::-webkit-scrollbar { width: 6px; height: 6px; }
+:root:not([data-theme='dark']) ::-webkit-scrollbar-track { background: #F1F5F9; }
+:root:not([data-theme='dark']) ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 4px; }
+:root:not([data-theme='dark']) ::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+
+/* ─────────────────────────────────────────────────────────────────
+   GLOBAL INPUTS / FORMS
+───────────────────────────────────────────────────────────────── */
+:root:not([data-theme='dark']) input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='submit']):not([type='button']):not([type='file']):not([type='color']),
+:root:not([data-theme='dark']) select,
+:root:not([data-theme='dark']) textarea,
+[data-theme='light'] input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='submit']):not([type='button']):not([type='file']):not([type='color']),
+[data-theme='light'] select,
+[data-theme='light'] textarea {
+  background: #FFFFFF;
+  color: #0F172A;
+  border-color: #E2E8F0;
+}
+:root:not([data-theme='dark']) input::placeholder,
+:root:not([data-theme='dark']) textarea::placeholder,
+[data-theme='light'] input::placeholder,
+[data-theme='light'] textarea::placeholder { color: #94A3B8; }
+:root:not([data-theme='dark']) select option,
+[data-theme='light'] select option {
+  background: #FFFFFF;
+  color: #0F172A;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   GLOBAL HEADINGS (outside dark sidebars)
+───────────────────────────────────────────────────────────────── */
+:root:not([data-theme='dark']) .al-main h1,
+:root:not([data-theme='dark']) .al-main h2,
+:root:not([data-theme='dark']) .al-main h3,
+:root:not([data-theme='dark']) .al-main h4,
+:root:not([data-theme='dark']) .emp-main h1,
+:root:not([data-theme='dark']) .emp-main h2,
+:root:not([data-theme='dark']) .emp-main h3,
+:root:not([data-theme='dark']) .emp-main h4,
+[data-theme='light'] .al-main h1,
+[data-theme='light'] .al-main h2,
+[data-theme='light'] .al-main h3,
+[data-theme='light'] .al-main h4,
+[data-theme='light'] .emp-main h1,
+[data-theme='light'] .emp-main h2,
+[data-theme='light'] .emp-main h3,
+[data-theme='light'] .emp-main h4 {
+  color: var(--theme-text-strong, #111827);
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   GENERAL CARD / PANEL BACKGROUNDS
+   Catches any .card, .panel, .box that still shows dark in light mode
+───────────────────────────────────────────────────────────────── */
+:root:not([data-theme='dark']) .al-main .card,
+:root:not([data-theme='dark']) .emp-main .card,
+[data-theme='light'] .al-main .card,
+[data-theme='light'] .emp-main .card {
+  background: var(--card-bg, #FFFFFF) !important;
+  border-color: var(--card-border, #E2E8F0) !important;
+  color: var(--theme-text, #1E293B) !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   DASHBOARD WIDGETS / STAT CARDS
+───────────────────────────────────────────────────────────────── */
+:root:not([data-theme='dark']) .al-main .stat-card,
+:root:not([data-theme='dark']) .al-main .metric-card,
+:root:not([data-theme='dark']) .al-main .kpi-card,
+:root:not([data-theme='dark']) .emp-main .stat-card,
+:root:not([data-theme='dark']) .emp-main .metric-card,
+[data-theme='light'] .al-main .stat-card,
+[data-theme='light'] .al-main .metric-card,
+[data-theme='light'] .al-main .kpi-card,
+[data-theme='light'] .emp-main .stat-card,
+[data-theme='light'] .emp-main .metric-card {
+  background: #FFFFFF !important;
+  border: 1px solid #E2E8F0 !important;
+  color: #1E293B !important;
+}
+:root:not([data-theme='dark']) .al-main .stat-label,
+:root:not([data-theme='dark']) .al-main .card-label,
+[data-theme='light'] .al-main .stat-label,
+[data-theme='light'] .al-main .card-label { color: #6B7280 !important; }
+:root:not([data-theme='dark']) .al-main .stat-value,
+:root:not([data-theme='dark']) .al-main .card-value,
+[data-theme='light'] .al-main .stat-value,
+[data-theme='light'] .al-main .card-value { color: #111827 !important; }
+
+/* ─────────────────────────────────────────────────────────────────
+   GLASS CARDS / GLASS FORMS  (.glass-form, .glass-card)
+───────────────────────────────────────────────────────────────── */
+:root:not([data-theme='dark']) .glass-form,
+:root:not([data-theme='dark']) .glass-card,
+[data-theme='light'] .glass-form,
+[data-theme='light'] .glass-card {
+  background: #FFFFFF !important;
+  border: 1px solid #E5E7EB !important;
+  color: #1E293B !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06) !important;
+  backdrop-filter: none !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   DROPDOWN / POPUP MENUS
+───────────────────────────────────────────────────────────────── */
+:root:not([data-theme='dark']) .al-main [class*="dropdown"],
+:root:not([data-theme='dark']) .emp-main [class*="dropdown"],
+[data-theme='light'] .al-main [class*="dropdown"],
+[data-theme='light'] .emp-main [class*="dropdown"] {
+  background: #FFFFFF;
+  border-color: #E2E8F0;
+  color: #1E293B;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   SALARY MANAGEMENT  (salary-*, sm-*)
+───────────────────────────────────────────────────────────────── */
+:root:not([data-theme='dark']) .salary-management,
+[data-theme='light'] .salary-management {
+  color: var(--theme-text, #1E293B);
+}
+:root:not([data-theme='dark']) .salary-table-wrap,
+:root:not([data-theme='dark']) .sm-table-wrap,
+[data-theme='light'] .salary-table-wrap,
+[data-theme='light'] .sm-table-wrap {
+  background: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   PERFORMANCE MANAGEMENT  (pm-*, perf-*)
+───────────────────────────────────────────────────────────────── */
+:root:not([data-theme='dark']) .pm-wrapper,
+:root:not([data-theme='dark']) .performance-container,
+[data-theme='light'] .pm-wrapper,
+[data-theme='light'] .performance-container {
+  background: var(--page-bg, #F8FAFC) !important;
+  color: var(--theme-text, #1E293B) !important;
+}
+:root:not([data-theme='dark']) .pm-card,
+:root:not([data-theme='dark']) .perf-card,
+[data-theme='light'] .pm-card,
+[data-theme='light'] .perf-card {
+  background: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+  color: #1E293B !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   HR DASHBOARD  (hrd-*, hr-dash-*)
+───────────────────────────────────────────────────────────────── */
+:root:not([data-theme='dark']) .hr-dashboard-container,
+[data-theme='light'] .hr-dashboard-container {
+  background: var(--page-bg, #F8FAFC) !important;
+  color: var(--theme-text, #1E293B) !important;
+}
+:root:not([data-theme='dark']) .hr-stat-card,
+:root:not([data-theme='dark']) .hr-card,
+[data-theme='light'] .hr-stat-card,
+[data-theme='light'] .hr-card {
+  background: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+  color: #1E293B !important;
+}
+:root:not([data-theme='dark']) .hr-stat-label,
+[data-theme='light'] .hr-stat-label { color: #6B7280 !important; }
+:root:not([data-theme='dark']) .hr-stat-value,
+[data-theme='light'] .hr-stat-value { color: #111827 !important; }
+
+/* ─────────────────────────────────────────────────────────────────
+   ADMIN DASHBOARD  (adm-*, db-*)
+───────────────────────────────────────────────────────────────── */
+:root:not([data-theme='dark']) .db-card,
+:root:not([data-theme='dark']) .adm-card,
+[data-theme='light'] .db-card,
+[data-theme='light'] .adm-card {
+  background: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+  color: #1E293B !important;
+}
+:root:not([data-theme='dark']) .db-stat-label,
+[data-theme='light'] .db-stat-label { color: #6B7280 !important; }
+:root:not([data-theme='dark']) .db-stat-value,
+[data-theme='light'] .db-stat-value { color: #111827 !important; }
+
+/* ─────────────────────────────────────────────────────────────────
+   NOTIFICATIONS  (notif-*)
+───────────────────────────────────────────────────────────────── */
+:root:not([data-theme='dark']) .notif-panel,
+:root:not([data-theme='dark']) .notification-panel,
+[data-theme='light'] .notif-panel,
+[data-theme='light'] .notification-panel {
+  background: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.10) !important;
+}
+:root:not([data-theme='dark']) .notif-item,
+:root:not([data-theme='dark']) .notification-item,
+[data-theme='light'] .notif-item,
+[data-theme='light'] .notification-item {
+  background: #FFFFFF !important;
+  border-bottom-color: #F1F5F9 !important;
+  color: #1E293B !important;
+}
+:root:not([data-theme='dark']) .notif-item:hover,
+[data-theme='light'] .notif-item:hover { background: #F8FAFC !important; }
+:root:not([data-theme='dark']) .notif-title,
+[data-theme='light'] .notif-title { color: #0F172A !important; }
+:root:not([data-theme='dark']) .notif-time,
+:root:not([data-theme='dark']) .notif-meta,
+[data-theme='light'] .notif-time,
+[data-theme='light'] .notif-meta { color: #64748B !important; }
+
+/* ─────────────────────────────────────────────────────────────────
+   MODULE MANAGEMENT  (mm-*)
+───────────────────────────────────────────────────────────────── */
+:root:not([data-theme='dark']) .mm-page,
+[data-theme='light'] .mm-page {
+  background: var(--page-bg, #F8FAFC) !important;
+  color: var(--theme-text, #1E293B) !important;
+}
+:root:not([data-theme='dark']) .mm-table-wrap,
+[data-theme='light'] .mm-table-wrap {
+  background: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+}
+:root:not([data-theme='dark']) .mm-modal,
+[data-theme='light'] .mm-modal {
+  background: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+  color: #1E293B !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   ATTENDANCE/LEAVE/SALARY MANAGEMENT TABLE AREAS
+───────────────────────────────────────────────────────────────── */
+:root:not([data-theme='dark']) .attendance-table-wrap,
+:root:not([data-theme='dark']) .leave-table-wrap,
+:root:not([data-theme='dark']) .salary-table-wrap,
+[data-theme='light'] .attendance-table-wrap,
+[data-theme='light'] .leave-table-wrap,
+[data-theme='light'] .salary-table-wrap {
+  background: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   ENSURE ICONS ARE VISIBLE IN LIGHT MODE
+   react-icons inherit color from parent - make sure parents have dark text
+───────────────────────────────────────────────────────────────── */
+:root:not([data-theme='dark']) .al-main svg,
+:root:not([data-theme='dark']) .emp-main svg,
+[data-theme='light'] .al-main svg,
+[data-theme='light'] .emp-main svg {
+  /* Don't force color on icons - let them inherit from parent correctly */
+}
+/* But fix any icons that are explicitly white */
+:root:not([data-theme='dark']) .al-main [class*="icon"]:not(.al-nav-icon):not(.emp-nav-icon),
+[data-theme='light'] .al-main [class*="icon"]:not(.al-nav-icon):not(.emp-nav-icon) {
+  color: inherit;
+}
