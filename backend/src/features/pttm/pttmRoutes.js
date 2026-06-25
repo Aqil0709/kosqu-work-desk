@@ -441,7 +441,16 @@ router.delete('/milestones/:id', requireModuleAccess('pttm', 'write'), async (re
 router.get('/work-reports', async (req, res) => {
   try {
     const tenantId = req.user.tenant_id;
+    const loggedInUserId = req.user?.id;
+    const roleOrPosition = req.user?.position || req.user?.role;
+
     const { project_id, user_id, date_from, date_to } = req.query;
+
+    // Team Lead scope: only reports that belong to their assigned hierarchy (team lead → projects).
+    // We scope by projects where the logged-in user is the team lead.
+    // This guarantees hierarchy-based filtering while preserving all existing query params.
+    const isTeamLead = roleOrPosition === 'team_lead' || roleOrPosition === 'team lead' || roleOrPosition === 'team_lead';
+
     let sql = `
       SELECT wr.*,
         TRIM(CONCAT(COALESCE(u.first_name,''),' ',COALESCE(u.last_name,''))) AS user_name,
@@ -452,15 +461,27 @@ router.get('/work-reports', async (req, res) => {
       LEFT JOIN projects p ON p.id = wr.project_id
       LEFT JOIN users rv ON rv.id = wr.reviewed_by
       WHERE wr.tenant_id = ?`;
+
     const params = [tenantId];
+
+    if (isTeamLead && loggedInUserId) {
+      // Team lead can only see reports under projects they lead.
+      // Keep this as a strict project ownership filter to avoid leaking other teams.
+      sql += ' AND wr.project_id IN (SELECT pr.id FROM projects pr WHERE pr.tenant_id = ? AND pr.team_lead_id = ?)';
+      params.push(tenantId, loggedInUserId);
+    }
+
     if (project_id) { sql += ' AND wr.project_id = ?'; params.push(project_id); }
     if (user_id) { sql += ' AND wr.user_id = ?'; params.push(user_id); }
     if (date_from) { sql += ' AND wr.report_date >= ?'; params.push(date_from); }
     if (date_to) { sql += ' AND wr.report_date <= ?'; params.push(date_to); }
+
     sql += ' ORDER BY wr.report_date DESC, wr.created_at DESC';
     const [rows] = await pool.execute(sql, params);
     return res.json({ success: true, reports: rows });
-  } catch (err) { return res.status(500).json({ success: false, message: err.message }); }
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
 });
 
 router.post('/work-reports', requireModuleAccess('pttm', 'write'), async (req, res) => {
@@ -1178,7 +1199,22 @@ router.get('/projects/:id/activity', async (req, res) => {
 router.get('/hierarchy/tree', async (req, res) => {
   try {
     const tenantId = req.user.tenant_id;
-    const { client_id, team_lead_id: tlFilter, project_id } = req.query;
+    const loggedInUserId = req.user?.id;
+    const roleOrPosition = req.user?.position || req.user?.role;
+
+    let { client_id, team_lead_id: tlFilter, project_id } = req.query;
+
+    const isTeamLead = roleOrPosition === 'team_lead' || roleOrPosition === 'team lead' || roleOrPosition === 'team_lead';
+
+    // Team Lead scope: never allow cross-team hierarchy.
+    // Override tlFilter with logged-in user id and keep tenant isolation.
+    if (isTeamLead && loggedInUserId) {
+      tlFilter = loggedInUserId;
+      // client_id is intentionally ignored for scoping; the SQL filter below
+      // ensures only the logged-in team's projects are returned.
+      // (UI may or may not provide client selection.)
+      client_id = client_id || null;
+    }
 
     // Fetch all projects with their leads and client
     let projSql = `
@@ -1204,6 +1240,7 @@ router.get('/hierarchy/tree', async (req, res) => {
     projSql += ' ORDER BY p.client_id, p.team_lead_id, p.id';
 
     const [projects] = await pool.execute(projSql, params);
+
 
     // Fetch all active members for these projects
     const projectIds = projects.map(p => p.id);

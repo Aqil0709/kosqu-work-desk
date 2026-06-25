@@ -23,6 +23,9 @@ const EMPTY = {
   tech_stack: [],
 };
 
+// Fixed Select Styling to ensure dropdown text is always visible
+const selectStyle = { color: 'var(--theme-text-strong, #0F172A)', backgroundColor: 'var(--card-bg, #FFFFFF)' };
+
 export default function ProjectForm({ project = null, onSuccess, onCancel, onSave, onClose }) {
   const [form, setForm]       = useState(project ? { ...EMPTY, ...project, member_ids: [] } : { ...EMPTY });
   const [clients, setClients] = useState([]);
@@ -57,7 +60,7 @@ export default function ProjectForm({ project = null, onSuccess, onCancel, onSav
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
   const _onSuccess = () => { onSuccess?.(); onSave?.(); };
-  const _onCancel  = () => { onCancel?.();  onClose?.(); };
+  const _onCancel  = () => { onCancel?.();  onClose?.(); }; // Used by Close X and Cancel buttons
 
   const validate = () => {
     const e = {};
@@ -116,9 +119,12 @@ export default function ProjectForm({ project = null, onSuccess, onCancel, onSav
     set('member_ids', ids);
   };
 
-  const filteredUsers = users.filter(u =>
-    `${u.first_name} ${u.last_name}`.toLowerCase().includes(memberSearch.toLowerCase())
-  );
+  // Fixed the search filter to safely handle missing names
+  const filteredUsers = users.filter(u => {
+    const fullName = `${u.first_name || u.name || ''} ${u.last_name || ''}`;
+    return fullName.toLowerCase().includes(memberSearch.toLowerCase());
+  });
+  
   const selectedMembers = users.filter(u => form.member_ids.includes(u.id));
 
   return (
@@ -133,7 +139,8 @@ export default function ProjectForm({ project = null, onSuccess, onCancel, onSav
               <p>Fill in the details to {isEdit ? 'update' : 'set up'} your project</p>
             </div>
           </div>
-          <button className="pf-close-btn" onClick={onCancel}><X size={18} /></button>
+          {/* Using _onCancel to fix window not closing */}
+          <button className="pf-close-btn" onClick={_onCancel}><X size={18} /></button>
         </div>
 
         <form onSubmit={handleSubmit} className="pf-body">
@@ -163,7 +170,8 @@ export default function ProjectForm({ project = null, onSuccess, onCancel, onSav
             <div className={`pf-field ${errors.client_id ? 'pf-field--error' : ''}`}>
               <label>Client *</label>
               <div className="pf-select-wrap">
-                <select value={form.client_id} onChange={e => set('client_id', e.target.value)}>
+                {/* Added inline styling for select visibility */}
+                <select style={selectStyle} value={form.client_id} onChange={e => set('client_id', e.target.value)}>
                   <option value="">— Select Client —</option>
                   {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
@@ -197,7 +205,7 @@ export default function ProjectForm({ project = null, onSuccess, onCancel, onSav
               <div className="pf-field">
                 <label>Status</label>
                 <div className="pf-select-wrap">
-                  <select value={form.status} onChange={e => set('status', e.target.value)}>
+                  <select style={selectStyle} value={form.status} onChange={e => set('status', e.target.value)}>
                     {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
                   <ChevronDown size={14} className="pf-select-icon" />
@@ -226,7 +234,7 @@ export default function ProjectForm({ project = null, onSuccess, onCancel, onSav
               <div className="pf-field">
                 <label>Billing Type</label>
                 <div className="pf-select-wrap">
-                  <select value={form.billing_type} onChange={e => set('billing_type', e.target.value)}>
+                  <select style={selectStyle} value={form.billing_type} onChange={e => set('billing_type', e.target.value)}>
                     {BILLINGS.map(b => <option key={b} value={b}>{b === 't&m' ? 'Time & Material' : b.charAt(0).toUpperCase() + b.slice(1)}</option>)}
                   </select>
                   <ChevronDown size={14} className="pf-select-icon" />
@@ -252,11 +260,11 @@ export default function ProjectForm({ project = null, onSuccess, onCancel, onSav
               <div className="pf-field">
                 <label>Team Lead</label>
                 <div className="pf-select-wrap">
-                  <select value={form.team_lead_id} onChange={e => set('team_lead_id', e.target.value)}>
+                  <select style={selectStyle} value={form.team_lead_id} onChange={e => set('team_lead_id', e.target.value)}>
                     <option value="">— Select Team Lead —</option>
                     {users.map(u => (
                       <option key={u.id} value={u.id}>
-                        {u.first_name} {u.last_name} {u.position ? `· ${u.position}` : ''}
+                        {u.first_name || u.name} {u.last_name || ''} {u.position ? `· ${u.position}` : ''}
                       </option>
                     ))}
                   </select>
@@ -266,11 +274,11 @@ export default function ProjectForm({ project = null, onSuccess, onCancel, onSav
               <div className="pf-field">
                 <label>Project Lead</label>
                 <div className="pf-select-wrap">
-                  <select value={form.project_lead_id} onChange={e => set('project_lead_id', e.target.value)}>
+                  <select style={selectStyle} value={form.project_lead_id} onChange={e => set('project_lead_id', e.target.value)}>
                     <option value="">— Select Project Lead —</option>
                     {users.map(u => (
                       <option key={u.id} value={u.id}>
-                        {u.first_name} {u.last_name} {u.position ? `· ${u.position}` : ''}
+                        {u.first_name || u.name} {u.last_name || ''} {u.position ? `· ${u.position}` : ''}
                       </option>
                     ))}
                   </select>
@@ -280,19 +288,26 @@ export default function ProjectForm({ project = null, onSuccess, onCancel, onSav
             </div>
 
             {/* Multi-select member picker */}
+            {/* Multi-select member picker */}
             <div className="pf-field">
               <label>Team Members</label>
               <div className="pf-member-picker">
-                {selectedMembers.map(u => (
-                  <span key={u.id} className="pf-member-chip">
-                    <span className="pf-chip-avatar">{(u.first_name[0] || '') + (u.last_name[0] || '')}</span>
-                    {u.first_name} {u.last_name}
-                    <button type="button" onClick={() => toggleMember(u.id)}><X size={11} /></button>
-                  </span>
-                ))}
+                {selectedMembers.map(u => {
+                  // Bulletproof initials generator
+                  const first = u.first_name || u.name || '';
+                  const last = u.last_name || '';
+                  const initials = (first.charAt(0) + last.charAt(0)).toUpperCase() || '?';
+
+                  return (
+                    <span key={u.id} className="pf-member-chip">
+                      <span className="pf-chip-avatar">{initials}</span>
+                      {first} {last}
+                      <button type="button" onClick={() => toggleMember(u.id)}><X size={11} /></button>
+                    </span>
+                  );
+                })}
                 <div className="pf-member-add-wrap" style={{ position: 'relative' }}>
-                  <button type="button" className="pf-add-member-btn"
-                    onClick={() => setShowMemberDrop(d => !d)}>
+                  <button type="button" className="pf-add-member-btn" onClick={() => setShowMemberDrop(d => !d)}>
                     <Plus size={13} /> Add Member
                   </button>
                   {showMemberDrop && (
@@ -300,15 +315,22 @@ export default function ProjectForm({ project = null, onSuccess, onCancel, onSav
                       <input autoFocus placeholder="Search..." value={memberSearch}
                         onChange={e => setMemberSearch(e.target.value)} />
                       <div className="pf-member-list">
-                        {filteredUsers.map(u => (
-                          <label key={u.id} className="pf-member-option">
-                            <input type="checkbox" checked={form.member_ids.includes(u.id)}
-                              onChange={() => toggleMember(u.id)} />
-                            <span className="pf-chip-avatar sm">{(u.first_name[0]||'') + (u.last_name[0]||'')}</span>
-                            <span>{u.first_name} {u.last_name}</span>
-                            {u.position && <span className="pf-member-pos">{u.position}</span>}
-                          </label>
-                        ))}
+                        {filteredUsers.map(u => {
+                           // Bulletproof initials generator for dropdown
+                           const first = u.first_name || u.name || '';
+                           const last = u.last_name || '';
+                           const initials = (first.charAt(0) + last.charAt(0)).toUpperCase() || '?';
+
+                           return (
+                            <label key={u.id} className="pf-member-option">
+                              <input type="checkbox" checked={form.member_ids.includes(u.id)}
+                                onChange={() => toggleMember(u.id)} />
+                              <span className="pf-chip-avatar sm">{initials}</span>
+                              <span>{first} {last}</span>
+                              {u.position && <span className="pf-member-pos">{u.position}</span>}
+                            </label>
+                           );
+                        })}
                         {filteredUsers.length === 0 && <div className="pf-no-results">No users found</div>}
                       </div>
                       <button type="button" className="pf-done-btn"
@@ -344,7 +366,8 @@ export default function ProjectForm({ project = null, onSuccess, onCancel, onSav
 
           {/* Footer */}
           <div className="pf-footer">
-            <button type="button" className="pf-cancel-btn" onClick={onCancel}>Cancel</button>
+            {/* Using _onCancel to fix window not closing */}
+            <button type="button" className="pf-cancel-btn" onClick={_onCancel}>Cancel</button>
             <button type="submit" className="pf-submit-btn" disabled={saving}>
               {saving ? <><Loader2 size={15} className="pf-spin" /> Saving…</> : (isEdit ? 'Update Project' : 'Create Project')}
             </button>

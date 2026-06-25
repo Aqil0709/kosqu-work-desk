@@ -90,7 +90,6 @@ function getChainIds(nodeId, edges) {
   return ids;
 }
 
-// ── Selected user preview card (shown below a user-select dropdown) ──────────
 function SelectedUserCard({ userId, allUsers }) {
   if (!userId) return null;
   const u = allUsers.find(x => String(x.id) === String(userId));
@@ -118,7 +117,6 @@ function SelectedUserCard({ userId, allUsers }) {
   );
 }
 
-// ── UserSelect — select with preview card ─────────────────────────────────────
 function UserSelect({ value, onChange, allUsers, placeholder = '— Select Employee —' }) {
   return (
     <div>
@@ -143,7 +141,6 @@ const TYPE_META = {
   memberNode:      { label: 'Team Member',   color: '#6366f1' },
 };
 
-// ── Reusable Modal Shell ────────────────────────────────────────────────────────
 function Modal({ title, onClose, children, accentColor = '#2563eb', size = 'md' }) {
   const widths = { sm: 420, md: 540, lg: 680 };
   return (
@@ -184,7 +181,6 @@ function ModalActions({ onCancel, onSubmit, submitting, danger, submitLabel = 'S
   );
 }
 
-// ── Change Project Status Modal ────────────────────────────────────────────────
 function ChangeStatusModal({ node, onClose, onRefresh }) {
   const [status, setStatus] = useState(node.data.status || 'Planning');
   const [submitting, setSubmitting] = useState(false);
@@ -233,7 +229,6 @@ function ChangeStatusModal({ node, onClose, onRefresh }) {
   );
 }
 
-// ── Edit Project Modal ─────────────────────────────────────────────────────────
 function EditProjectModal({ node, allUsers, clients, onClose, onRefresh }) {
   const d = node.data;
   const [form, setForm] = useState({
@@ -318,7 +313,6 @@ function EditProjectModal({ node, allUsers, clients, onClose, onRefresh }) {
   );
 }
 
-// ── Add Member to Project Modal ────────────────────────────────────────────────
 function AddMemberModal({ node, allUsers, onClose, onRefresh }) {
   const [userId, setUserId]   = useState('');
   const [role, setRole]       = useState('member');
@@ -363,7 +357,6 @@ function AddMemberModal({ node, allUsers, onClose, onRefresh }) {
   );
 }
 
-// ── Transfer Member Modal ──────────────────────────────────────────────────────
 function TransferMemberModal({ node, allProjects, onClose, onRefresh }) {
   const [targetProjectId, setTargetProjectId] = useState('');
   const [submitting, setSubmitting]           = useState(false);
@@ -413,7 +406,6 @@ function TransferMemberModal({ node, allProjects, onClose, onRefresh }) {
   );
 }
 
-// ── Remove Member Modal ────────────────────────────────────────────────────────
 function RemoveMemberModal({ node, onClose, onRefresh }) {
   const [submitting, setSubmitting] = useState(false);
   const [msg, setMsg]               = useState('');
@@ -446,7 +438,6 @@ function RemoveMemberModal({ node, onClose, onRefresh }) {
   );
 }
 
-// ── Change Project Lead Modal ──────────────────────────────────────────────────
 function ChangeProjectLeadModal({ node, allUsers, onClose, onRefresh }) {
   const [userId, setUserId]         = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -458,14 +449,12 @@ function ChangeProjectLeadModal({ node, allUsers, onClose, onRefresh }) {
     if (!pid) return setMsg('No project ID.');
     setSubmitting(true); setMsg('');
     try {
-      // Update project_lead_id on project
       const res = await axios.get(`${API}/api/pttm/projects/${pid}`, { headers: auth() });
       const current = res.data.project || {};
       await axios.put(`${API}/api/pttm/projects/${pid}`, {
         ...current,
         project_lead_id: userId,
       }, { headers: auth() });
-      // Also add to project_members as project_lead
       await axios.post(`${API}/api/pttm/projects/${pid}/members`, {
         user_id: userId, role: 'project_lead',
       }, { headers: auth() });
@@ -495,7 +484,6 @@ function ChangeProjectLeadModal({ node, allUsers, onClose, onRefresh }) {
   );
 }
 
-// ── Change Team Lead Modal ─────────────────────────────────────────────────────
 function ChangeTeamLeadModal({ node, allUsers, onClose, onRefresh }) {
   const [userId, setUserId]         = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -542,7 +530,6 @@ function ChangeTeamLeadModal({ node, allUsers, onClose, onRefresh }) {
   );
 }
 
-// ── Add Project to Client Modal ────────────────────────────────────────────────
 function AddProjectModal({ node, allUsers, onClose, onRefresh }) {
   const isClient = node.type === 'clientNode';
   const clientId = isClient ? node.data.clientId : node.data.clientId;
@@ -620,7 +607,6 @@ function AddProjectModal({ node, allUsers, onClose, onRefresh }) {
   );
 }
 
-// ── Archive / Close / Delete Project Modals ───────────────────────────────────
 function ProjectLifecycleModal({ node, targetStatus, onClose, onRefresh }) {
   const [submitting, setSubmitting] = useState(false);
   const [msg, setMsg]               = useState('');
@@ -667,7 +653,6 @@ function ProjectLifecycleModal({ node, targetStatus, onClose, onRefresh }) {
   );
 }
 
-// ── Detail side drawer ─────────────────────────────────────────────────────────
 function DetailDrawer({ node, rawEdges, rawNodes, onClose, onAction, allUsers, allProjects, clients }) {
   if (!node) return null;
   const d    = node.data;
@@ -879,11 +864,12 @@ function HierarchyFlow({
     return () => document.removeEventListener('fullscreenchange', handler);
   }, []);
 
+  // UPDATED: Fixed auto-zoom shrinking the canvas by limiting minZoom during fitView
   useEffect(() => {
     if (nodes.length > 0) {
-      setTimeout(() => fitView({ padding: 0.25, duration: 600, maxZoom: 1.2 }), 100);
+      setTimeout(() => fitView({ padding: 0.2, duration: 600, minZoom: 0.75, maxZoom: 1.2 }), 100);
     }
-  }, [nodes.length]);
+  }, [nodes.length, fitView]);
 
   return (
     <div className="hpage-canvas" ref={canvasRef}>
@@ -908,15 +894,15 @@ function HierarchyFlow({
           nodeTypes={NODE_TYPES}
           onNodeClick={onNodeClick}
           onPaneClick={onPaneClick}
-          defaultViewport={{ x: 60, y: 60, zoom: 1.2 }}
-          minZoom={0.05}
-          maxZoom={3}
-          panOnDrag
-          panOnScroll={false}
-          zoomOnScroll
-          zoomOnPinch
-          nodesDraggable
-          elementsSelectable
+          defaultViewport={{ x: 60, y: 60, zoom: 1 }}
+          minZoom={0.3}            // Increased minimum zoom so nodes don't vanish
+          maxZoom={2}
+          panOnDrag={true}
+          panOnScroll={true}       // ENABLED: Scrolling mouse natively scrolls the page!
+          zoomOnScroll={false}     // DISABLED: Scrolling mouse no longer zooms in/out!
+          zoomOnPinch={true}
+          nodesDraggable={true}
+          elementsSelectable={true}
           proOptions={{ hideAttribution: true }}
         >
           <Background color="#d1d9e8" gap={28} size={1.5} variant="dots" />
@@ -928,8 +914,8 @@ function HierarchyFlow({
             pannable
           />
           <Panel position="bottom-right" style={{ display: 'flex', flexDirection: 'column', gap: 8, marginRight: 18, marginBottom: 60 }}>
-            <button className="hpage-ctrl-btn" onClick={() => zoomIn()}               title="Zoom In"><ZoomIn size={16} /></button>
-            <button className="hpage-ctrl-btn" onClick={() => zoomOut()}              title="Zoom Out"><ZoomOut size={16} /></button>
+            <button className="hpage-ctrl-btn" onClick={() => zoomIn()}              title="Zoom In"><ZoomIn size={16} /></button>
+            <button className="hpage-ctrl-btn" onClick={() => zoomOut()}             title="Zoom Out"><ZoomOut size={16} /></button>
             <button className="hpage-ctrl-btn" onClick={() => fitView({ padding: 0.12, duration: 400 })} title="Fit Screen"><Maximize2 size={16} /></button>
             <button className="hpage-ctrl-btn" onClick={toggleFullscreen} title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}>
               {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} style={{ opacity: 0.6 }} />}
@@ -954,7 +940,6 @@ function HierarchyFlow({
   );
 }
 
-// ── Main exported page ─────────────────────────────────────────────────────────
 export default function HierarchyPage() {
   const [rawNodes, setRawNodes]   = useState([]);
   const [rawEdges, setRawEdges]   = useState([]);
@@ -973,8 +958,7 @@ export default function HierarchyPage() {
   const [chainIds,      setChainIds]     = useState(null);
   const [stats,         setStats]        = useState({ projects: 0, members: 0, teamLeads: 0 });
 
-  // Modal state
-  const [modal, setModal] = useState(null); // { type, node }
+  const [modal, setModal] = useState(null); 
 
   const openModal  = (type, node) => setModal({ type, node });
   const closeModal = () => setModal(null);
@@ -1006,7 +990,6 @@ export default function HierarchyPage() {
     });
   }, []);
 
-  // Load clients, users, and all projects on mount
   useEffect(() => {
     (async () => {
       try {
@@ -1016,7 +999,6 @@ export default function HierarchyPage() {
           axios.get(`${API}/api/pttm/projects`, { headers: auth() }),
         ]);
         setClients(clientsRes.data.clients || []);
-        // Handle both {users:[]} and plain array response shapes
         const usersPayload = usersRes.data;
         setAllUsers(Array.isArray(usersPayload) ? usersPayload : (usersPayload?.users || []));
         setAllProjects(projectsRes.data.projects || []);
@@ -1036,9 +1018,11 @@ export default function HierarchyPage() {
     setChainIds(null);
     setSelectedNode(null);
     try {
+      const params = {};
+      if (clientId) params.client_id = clientId;
       const res = await axios.get(`${API}/api/pttm/hierarchy/tree`, {
         headers: auth(),
-        params: { client_id: clientId },
+        params: Object.keys(params).length ? params : undefined,
       });
 
       const rNodes = res.data.nodes || [];
@@ -1064,7 +1048,6 @@ export default function HierarchyPage() {
     }
   }, [applyVisuals, applyEdgeVisuals]);
 
-  // Re-apply visuals on search / chain changes
   useEffect(() => {
     if (!rawNodes.length) return;
     const visualNodes = applyVisuals(rawNodes, rawEdges, chainIds, search);
@@ -1093,13 +1076,11 @@ export default function HierarchyPage() {
 
   const handleRefresh = () => {
     fetchTree(filterClient);
-    // Refresh project list for transfer modal
     axios.get(`${API}/api/pttm/projects`, { headers: auth() })
       .then(r => setAllProjects(r.data.projects || []))
       .catch(() => {});
   };
 
-  // Handle action dispatched from DetailDrawer
   const handleAction = useCallback((action, node) => {
     if (action === 'noop') return;
     openModal(action, node);
@@ -1113,7 +1094,6 @@ export default function HierarchyPage() {
   return (
     <div className="hpage-root">
 
-      {/* ── Client Selector Banner ── */}
       <div className="hpage-client-banner">
         <div className="hpage-client-banner-label">
           <Building2 size={16} />
@@ -1146,7 +1126,6 @@ export default function HierarchyPage() {
         )}
       </div>
 
-      {/* ── Stats + Legend (only when a client is selected and data exists) ── */}
       {filterClient && rawNodes.length > 0 && (
         <div className="hpage-statsbar">
           <div className="hpage-stat-group">
@@ -1175,7 +1154,6 @@ export default function HierarchyPage() {
         </div>
       )}
 
-      {/* ── Search toolbar (only after client selected + data) ── */}
       {filterClient && rawNodes.length > 0 && (
         <div className="hpage-toolbar">
           <div className="hpage-search-wrap">
@@ -1198,10 +1176,8 @@ export default function HierarchyPage() {
         </div>
       )}
 
-      {/* ── Edge legend ── */}
       {filterClient && rawNodes.length > 0 && <EdgeLegend />}
 
-      {/* ── Loading ── */}
       {loading && (
         <div className="hpage-loading">
           <Loader2 size={40} className="hpage-spin" />
@@ -1209,7 +1185,6 @@ export default function HierarchyPage() {
         </div>
       )}
 
-      {/* ── Error ── */}
       {!loading && error && (
         <div className="hpage-error">
           <AlertCircle size={36} />
@@ -1218,7 +1193,6 @@ export default function HierarchyPage() {
         </div>
       )}
 
-      {/* ── React Flow canvas ── */}
       {!loading && !error && (
         <ReactFlowProvider>
           <HierarchyFlow
@@ -1241,69 +1215,29 @@ export default function HierarchyPage() {
         </ReactFlowProvider>
       )}
 
-      {/* ── Action Modals ── */}
       {modal?.type === 'change-status' && (
-        <ChangeStatusModal
-          node={modal.node}
-          onClose={closeModal}
-          onRefresh={onModalRefresh}
-        />
+        <ChangeStatusModal node={modal.node} onClose={closeModal} onRefresh={onModalRefresh} />
       )}
       {modal?.type === 'edit-project' && (
-        <EditProjectModal
-          node={modal.node}
-          allUsers={allUsers}
-          clients={clients}
-          onClose={closeModal}
-          onRefresh={onModalRefresh}
-        />
+        <EditProjectModal node={modal.node} allUsers={allUsers} clients={clients} onClose={closeModal} onRefresh={onModalRefresh} />
       )}
       {modal?.type === 'add-member' && (
-        <AddMemberModal
-          node={modal.node}
-          allUsers={allUsers}
-          onClose={closeModal}
-          onRefresh={onModalRefresh}
-        />
+        <AddMemberModal node={modal.node} allUsers={allUsers} onClose={closeModal} onRefresh={onModalRefresh} />
       )}
       {modal?.type === 'transfer-member' && (
-        <TransferMemberModal
-          node={modal.node}
-          allProjects={allProjects}
-          onClose={closeModal}
-          onRefresh={onModalRefresh}
-        />
+        <TransferMemberModal node={modal.node} allProjects={allProjects} onClose={closeModal} onRefresh={onModalRefresh} />
       )}
       {modal?.type === 'remove-member' && (
-        <RemoveMemberModal
-          node={modal.node}
-          onClose={closeModal}
-          onRefresh={onModalRefresh}
-        />
+        <RemoveMemberModal node={modal.node} onClose={closeModal} onRefresh={onModalRefresh} />
       )}
       {modal?.type === 'change-pl' && (
-        <ChangeProjectLeadModal
-          node={modal.node}
-          allUsers={allUsers}
-          onClose={closeModal}
-          onRefresh={onModalRefresh}
-        />
+        <ChangeProjectLeadModal node={modal.node} allUsers={allUsers} onClose={closeModal} onRefresh={onModalRefresh} />
       )}
       {(modal?.type === 'change-tl' || modal?.type === 'change-pl-from-lead') && (
-        <ChangeTeamLeadModal
-          node={modal.node}
-          allUsers={allUsers}
-          onClose={closeModal}
-          onRefresh={onModalRefresh}
-        />
+        <ChangeTeamLeadModal node={modal.node} allUsers={allUsers} onClose={closeModal} onRefresh={onModalRefresh} />
       )}
       {modal?.type === 'add-project' && (
-        <AddProjectModal
-          node={modal.node}
-          allUsers={allUsers}
-          onClose={closeModal}
-          onRefresh={onModalRefresh}
-        />
+        <AddProjectModal node={modal.node} allUsers={allUsers} onClose={closeModal} onRefresh={onModalRefresh} />
       )}
       {modal?.type === 'archive-project' && (
         <ProjectLifecycleModal node={modal.node} targetStatus="Archived"     onClose={closeModal} onRefresh={onModalRefresh} />

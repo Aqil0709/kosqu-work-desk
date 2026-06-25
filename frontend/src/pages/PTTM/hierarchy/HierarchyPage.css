@@ -6,10 +6,10 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  min-height: 0;
+  min-height: 750px; /* UPDATED: Forces the component to take up proper vertical space */
   background: var(--page-bg, #f4f6fb);
   position: relative;
-  overflow: hidden;
+  overflow: hidden; /* Keep hidden so ReactFlow handles internal scrolling correctly */
 }
 
 /* ── Client Selector Banner ─────────────────────── */
@@ -277,8 +277,6 @@
 }
 .hpage-refresh-btn:hover { border-color: #6366f1; color: #6366f1; background: #6366f108; }
 
-/* .hpage-hint-bar removed — replaced by hpage-hint-inline in toolbar */
-
 /* ── Edge legend ────────────────────────────────── */
 .hpage-edge-legend {
   display: flex;
@@ -304,7 +302,7 @@
 /* ── Canvas ─────────────────────────────────────── */
 .hpage-canvas {
   flex: 1;
-  min-height: 0;
+  min-height: 500px; /* UPDATED: Ensures canvas explicitly resists being squished */
   position: relative;
 }
 

@@ -16,6 +16,9 @@
 .shift-management-section,
 .project-management-section,
 .client-management-section,
+.pttm-container, /* PTTM main container */
+.hierarchy-view, /* Specific hierarchy view container */
+.app-shell, /* PTTM shell */
 .service-management-section,
 .expense-management,
 .billing-management,
@@ -34,6 +37,17 @@
 .audit-log-section {
   background: transparent !important;
   min-height: unset !important;
+}
+
+/* FIX: Ensure flex containers that hold full-height elements like graphs can expand. */
+.project-management-section,
+.employee-management-section, /* Added to fix hierarchy graph height */
+.pttm-container,
+.app-shell,
+.hierarchy-view {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important; /* This forces the container to fill its parent, allowing child elements with height: 100% (like a graph) to render correctly. */
 }
 
 /* ════════════════════════════════════════════════════════════════════

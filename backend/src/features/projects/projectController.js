@@ -21,7 +21,8 @@ const projectController = {
       if (!project) {
         return res.status(404).json({ error: 'Project not found' });
       }
-      res.json(project);
+      // FIXED: Wrapped the response so frontend `res.data.project` works correctly
+      res.json({ success: true, project: project, data: project });
     } catch (error) {
       console.error('Error fetching project:', error);
       res.status(500).json({ error: 'Failed to fetch project' });
