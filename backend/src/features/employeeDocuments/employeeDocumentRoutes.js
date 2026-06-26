@@ -31,4 +31,7 @@ router.delete('/my/:id', docController.deleteMyDocument);
 router.get('/', requireModuleAccess('employee_management', 'read'), docController.getAllDocuments);
 router.get('/employee/:employeeId', requireModuleAccess('employee_management', 'read'), docController.getEmployeeDocuments);
 
+// Secure time-limited signed download — no extra auth needed (token IS the credential)
+router.get('/download/:token', docController.secureDownload);
+
 module.exports = router;

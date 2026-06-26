@@ -2,8 +2,13 @@ const { pool } = require('../config/db');
 const { getIndiaDate, getIndiaTime } = require('../utils/indiaTime');
 const { sendNotification, sendToMany, getHRAndAdmins } = require('../features/notifications/notificationHelper');
 
+const RemindersModel = require('../features/notesReminders/notesRemindersModel').RemindersModel;
+const { applyDueScheduledChanges } = require('../features/teamLead/teamLeadSchema');
+const { runSlaMonitor } = require('../features/approval/approvalEngine');
+
 // Track last run date per job to avoid duplicate sends on the same day
-const lastRun = { absentNotif: null, workReportReminder: null };
+const lastRun = { absentNotif: null, workReportReminder: null, tlScheduled: null };
+let lastReminderCheck = null; // ISO timestamp
 
 // Mirrors the logic in POST /api/attendance/notify-absents
 // Runs across ALL tenants
@@ -119,6 +124,41 @@ const startDailyNotificationScheduler = (logger) => {
     if (hh === 18 && mm >= 0 && mm < 5 && lastRun.workReportReminder !== today) {
       lastRun.workReportReminder = today;
       await runWorkReportReminders(logger);
+    }
+
+    // Apply due scheduled TL changes at midnight (00:00–00:04 IST)
+    if (hh === 0 && mm >= 0 && mm < 5 && lastRun.tlScheduled !== today) {
+      lastRun.tlScheduled = today;
+      try {
+        const applied = await applyDueScheduledChanges();
+        if (applied > 0) logger.info(`[TL Scheduler] Applied ${applied} scheduled Team Lead change(s).`);
+      } catch (e) {
+        logger.error(`[TL Scheduler] Error applying scheduled changes: ${e.message}`);
+      }
+    }
+
+    // Run approval SLA monitor every 15 minutes
+    const nowIsoHM = new Date().toISOString().slice(0, 15); // YYYY-MM-DDTHH:M
+    if (!global._lastSlaTick || global._lastSlaTick !== nowIsoHM) {
+      global._lastSlaTick = nowIsoHM;
+      runSlaMonitor().catch(e => logger.error(`[ApprovalSLA] ${e.message}`));
+    }
+
+    // Fire due reminders every 5 minutes
+    const nowIso = new Date().toISOString().slice(0, 16);
+    if (nowIso !== lastReminderCheck) {
+      lastReminderCheck = nowIso;
+      try {
+        const due = await RemindersModel.getDue();
+        for (const r of due) {
+          await sendNotification(r.tenant_id, r.employee_id, { title: `⏰ ${r.title}`, message: r.description || 'You have a reminder.', type: 'general' });
+          await RemindersModel.markSent(r.id);
+          if (r.repeat_type !== 'none') await RemindersModel.scheduleNext(r);
+        }
+        if (due.length > 0) logger.info(`[Reminders] Sent ${due.length} reminder(s).`);
+      } catch (e) {
+        logger.error(`[Reminders] Error processing: ${e.message}`);
+      }
     }
   };
 

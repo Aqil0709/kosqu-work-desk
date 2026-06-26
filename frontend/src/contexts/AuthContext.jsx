@@ -1,5 +1,5 @@
 // src/contexts/AuthContext.jsx
-import { createContext, useState, useContext, useEffect } from 'react';
+import { createContext, useState, useContext, useEffect, useRef } from 'react';
 import { authAPI } from '../services/api';
 
 const AuthContext = createContext();
@@ -13,88 +13,78 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser]                   = useState(null);
+  const [loading, setLoading]             = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [forcePasswordReset, setForcePasswordReset] = useState(false);
+  const refreshTimerRef = useRef(null);
 
   // admin and hr both land on /admin (HR accesses HR modules, not system settings)
-  const isAdmin = user?.position === 'admin' || user?.position === 'hr';
+  const isAdmin  = user?.position === 'admin' || user?.position === 'hr';
   const isClient = user?.position === 'client';
 
-  const isTokenExpired = (token) => {
-    if (!token) return true;
-    try {
-      const base64Url = token.split('.')[1];
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const payload = JSON.parse(atob(base64));
-      return payload.exp * 1000 < Date.now();
-    } catch {
-      return true;
-    }
+  /* ── silent token refresh every 13 min (access token lives 15 min) ─── */
+  const scheduleRefresh = () => {
+    if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
+    refreshTimerRef.current = setTimeout(async () => {
+      try {
+        const res = await authAPI.refresh();
+        if (res.data?.token) {
+          // token returned for backward compat with API clients; cookie already updated
+        }
+        scheduleRefresh();
+      } catch {
+        // refresh failed → access token expired, redirect to login
+        logout({ redirect: true });
+      }
+    }, 13 * 60 * 1000);
   };
 
   useEffect(() => {
     checkAuthStatus();
-  }, []);
-
-  useEffect(() => {
-    const syncSession = () => {
-      const token = localStorage.getItem('token');
-      const userData = localStorage.getItem('user');
-
-      if (!token || !userData || isTokenExpired(token)) {
-        setUser(null);
-        setIsAuthenticated(false);
-        return;
-      }
-
-      try {
-        setUser(JSON.parse(userData));
-        setIsAuthenticated(true);
-      } catch {
-        setUser(null);
-        setIsAuthenticated(false);
-      }
+    return () => {
+      if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
     };
-
-    window.addEventListener('storage', syncSession);
-    return () => window.removeEventListener('storage', syncSession);
   }, []);
 
   const checkAuthStatus = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const userData = localStorage.getItem('user');
-
-      if (token && userData && !isTokenExpired(token)) {
-        const parsedUser = JSON.parse(userData);
-        setUser(parsedUser);
+      // Call /profile — it reads the HttpOnly access_token cookie automatically.
+      // If the cookie is missing / expired the server returns 401.
+      const response = await authAPI.getProfile();
+      const profileUser = response.data?.user || response.data?.data;
+      if (profileUser) {
+        setUser(profileUser);
         setIsAuthenticated(true);
-        setForcePasswordReset(localStorage.getItem('forcePasswordReset') === '1');
-
-        try {
-          const response = await authAPI.getProfile();
-          const profileUser = response.data?.user || response.data?.data;
-          if (profileUser) {
-            setUser(profileUser);
-            localStorage.setItem('user', JSON.stringify(profileUser));
-          }
-        } catch (err) {
-          console.error('Profile verification failed:', err);
-          if (err.response?.status === 401) {
-            logout({ redirect: false });
-          }
-        }
-      } else if (token && isTokenExpired(token)) {
-        logout({ redirect: false });
+        // Keep localStorage user for non-security data (position, name, modules)
+        localStorage.setItem('user', JSON.stringify(profileUser));
+        scheduleRefresh();
       } else {
         setUser(null);
         setIsAuthenticated(false);
       }
-    } catch (error) {
-      console.error('Auth check failed:', error);
-      logout({ redirect: false });
+    } catch (err) {
+      // 401 → try to silently refresh
+      if (err.response?.status === 401) {
+        try {
+          await authAPI.refresh();
+          // retry profile once
+          const response = await authAPI.getProfile();
+          const profileUser = response.data?.user || response.data?.data;
+          if (profileUser) {
+            setUser(profileUser);
+            setIsAuthenticated(true);
+            localStorage.setItem('user', JSON.stringify(profileUser));
+            scheduleRefresh();
+            return;
+          }
+        } catch {
+          // both failed → not logged in
+        }
+      }
+      setUser(null);
+      setIsAuthenticated(false);
+      localStorage.removeItem('user');
     } finally {
       setLoading(false);
     }
@@ -105,18 +95,23 @@ export const AuthProvider = ({ children }) => {
       const response = await authAPI.login(credentials);
       const { token, user: userData, forcePasswordReset } = response.data;
 
-      if (!token || !userData) {
+      if (!userData) {
         return { success: false, message: 'Invalid server response' };
       }
 
-      localStorage.setItem('token', token);
+      // Cookies are set server-side (HttpOnly). Keep only non-sensitive user data in localStorage.
       localStorage.setItem('user', JSON.stringify(userData));
+      // token still returned for backward compat; store for API header fallback
+      if (token) {
+        localStorage.setItem('token', token);
+      }
       localStorage.setItem('forcePasswordReset', forcePasswordReset ? '1' : '0');
 
       setUser(userData);
       setIsAuthenticated(true);
       setForcePasswordReset(!!forcePasswordReset);
       setLoading(false);
+      scheduleRefresh();
 
       return { success: true, user: userData, forcePasswordReset: !!forcePasswordReset };
     } catch (error) {
@@ -125,7 +120,13 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = ({ redirect = true } = {}) => {
+  const logout = async ({ redirect = true } = {}) => {
+    try {
+      // Tell server to revoke refresh token and clear cookies
+      await authAPI.logout();
+    } catch { /* ignore — clear client state regardless */ }
+
+    if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     localStorage.removeItem('forcePasswordReset');

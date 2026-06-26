@@ -40,7 +40,7 @@ const registerSchema = Joi.object({
   phone:       Joi.string().max(20).optional().allow('', null),
   position:    Joi.string().max(80).optional().allow('', null),
   password:    Joi.string().min(6).max(100).required(),
-  tenant_id:   Joi.number().integer().positive().optional(),
+  // tenant_id is intentionally excluded — always derived from authenticated caller's token
 });
 
 const changePasswordSchema = Joi.object({

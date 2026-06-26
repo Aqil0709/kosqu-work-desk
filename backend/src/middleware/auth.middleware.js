@@ -1,16 +1,32 @@
 const jwt = require('jsonwebtoken');
 const sendResponse = require('../utils/response');
 
+/**
+ * Extract JWT from:
+ *  1. HttpOnly cookie `access_token` (preferred — secure)
+ *  2. Authorization: Bearer <token> header (API clients / backward compat)
+ */
+const extractToken = (req) => {
+  // Cookie-based (HttpOnly, set by the server on login)
+  if (req.cookies && req.cookies.access_token) {
+    return req.cookies.access_token;
+  }
+  // Bearer token (API clients, mobile, backward compat)
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    return authHeader.split(' ')[1];
+  }
+  return null;
+};
+
 // JWT verification middleware
 const verifyToken = (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  const token = extractToken(req);
+
+  if (!token) {
     return sendResponse(res, 401, false, 'No token provided', null);
   }
-  
-  const token = authHeader.split(' ')[1];
-  
+
   try {
     const secret = process.env.JWT_SECRET;
     if (!secret) {
@@ -37,5 +53,6 @@ const authMiddleware = (req, res, next) => verifyToken(req, res, next);
 
 module.exports = {
   verifyToken,
-  authMiddleware
+  authMiddleware,
+  extractToken,
 };

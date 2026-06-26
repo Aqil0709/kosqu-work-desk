@@ -300,51 +300,50 @@ const DeclarationForm  = ({ initialEmployee = null }) => {
   };
 
   return (
-    <div style={{ padding: "30px", background: "var(--theme-bg-muted,#f8fafc)", minHeight: "100vh" }}>
+    <div className="epf-container">
       {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-        <h2 style={{ fontSize: "24px", fontWeight: "bold", color: "var(--theme-text-strong,#1e293b)", display: "flex", alignItems: "center", gap: "10px", margin: 0 }}>
+      <div className="epf-header-card">
+        <h2 className="epf-card-title">
           <HiOutlineDocumentText size={28} color="#4f46e5" />
           EPF Form 11 (Revised)
         </h2>
         <button 
           onClick={() => { resetForm(); setShowModal(true); }} 
-          style={{ background: "#4f46e5", color: "var(--card-bg,#fff)", border: "none", padding: "10px 20px", borderRadius: "8px", fontWeight: "bold", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}
+          className="btn btn-primary"
         >
           <HiOutlinePlus size={20} /> Add Information
         </button>
       </div>
 
       {/* Table */}
-      <div style={{ background: "var(--card-bg,#fff)", borderRadius: "12px", boxShadow: "0 4px 6px rgba(0,0,0,0.05)", overflow: "hidden" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
+      <div className="epf-form-card">
+        <table className="epf-table">
           <thead>
-            <tr style={{ background: "var(--theme-bg-muted,#f1f5f9)", color: "var(--theme-text,#475569)", fontSize: "0.9rem" }}>
-              <th style={{ padding: "16px", borderBottom: "1px solid #e2e8f0" }}>Member Name</th>
-              <th style={{ padding: "16px", borderBottom: "1px solid #e2e8f0" }}>Email</th>
-              <th style={{ padding: "16px", borderBottom: "1px solid #e2e8f0" }}>Mobile</th>
-              <th style={{ padding: "16px", borderBottom: "1px solid #e2e8f0" }}>AADHAR</th>
-              <th style={{ padding: "16px", borderBottom: "1px solid #e2e8f0" }}>Created Date</th>
-              <th style={{ padding: "16px", borderBottom: "1px solid #e2e8f0", textAlign: "center" }}>Actions</th>
+            <tr>
+              <th>Member Name</th>
+              <th>Email</th>
+              <th>Mobile</th>
+              <th>AADHAR</th>
+              <th>Created Date</th>
+              <th style={{ textAlign: "center" }}>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {loading ? (
-              <tr><td colSpan="6" style={{ textAlign: "center", padding: "40px", color: "var(--theme-text-muted,#64748b)" }}>Loading...</td></tr>
-            ) : savedForms.length > 0 ? (
+            {loading && <tr><td colSpan="6" className="epf-loading">Loading...</td></tr>}
+            {!loading && savedForms.length > 0 ? (
               savedForms.map(form => (
-                <tr key={form.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                  <td style={{ padding: "16px", fontWeight: "bold", color: "var(--theme-text,#334155)" }}>{form.form_data?.nameOfMember || 'N/A'}</td>
-                  <td style={{ padding: "16px", color: "var(--theme-text-muted,#64748b)" }}>{form.form_data?.emailId || 'N/A'}</td>
-                  <td style={{ padding: "16px", color: "var(--theme-text-muted,#64748b)" }}>{form.form_data?.mobileNo || 'N/A'}</td>
-                  <td style={{ padding: "16px", color: "var(--theme-text-muted,#64748b)" }}>{form.form_data?.aadharNumber ? `****${form.form_data.aadharNumber.slice(-4)}` : 'N/A'}</td>
-                  <td style={{ padding: "16px", color: "var(--theme-text-muted,#64748b)" }}>{new Date(form.created_at).toLocaleDateString('en-GB')}</td>
-                  <td style={{ padding: "16px", textAlign: "center" }}>
-                    <div style={{ display: "flex", justifyContent: "center", gap: "8px" }}>
+                <tr key={form.id}>
+                  <td className="epf-card-details">{form.form_data?.nameOfMember || 'N/A'}</td>
+                  <td className="epf-card-details">{form.form_data?.emailId || 'N/A'}</td>
+                  <td className="epf-card-details">{form.form_data?.mobileNo || 'N/A'}</td>
+                  <td className="epf-card-details">{form.form_data?.aadharNumber ? `****${form.form_data.aadharNumber.slice(-4)}` : 'N/A'}</td>
+                  <td className="epf-card-details">{new Date(form.created_at).toLocaleDateString('en-GB')}</td>
+                  <td>
+                    <div className="epf-actions">
                       <button 
                         onClick={() => handleViewPDF(form.form_data)} 
                         title="View PDF" 
-                        style={{ padding: "6px", background: "var(--theme-bg-muted,#f1f5f9)", border: "none", borderRadius: "4px", cursor: "pointer", color: "#4f46e5" }}
+                        className="epf-action-btn view"
                         disabled={isGenerating}
                       >
                         <HiOutlineEye size={18} />
@@ -352,45 +351,41 @@ const DeclarationForm  = ({ initialEmployee = null }) => {
                       <button 
                         onClick={() => handleDownload(form.form_data)} 
                         title="Download PDF" 
-                        style={{ padding: "6px", background: "var(--theme-bg-muted,#f1f5f9)", border: "none", borderRadius: "4px", cursor: "pointer", color: "#10b981" }}
+                        className="epf-action-btn download"
                         disabled={isGenerating}
                       >
                         <HiOutlineArrowDownTray size={18} />
                       </button>
-                      <button onClick={() => handleEdit(form)} title="Edit" style={{ padding: "6px", background: "var(--theme-bg-muted,#f1f5f9)", border: "none", borderRadius: "4px", cursor: "pointer", color: "#f59e0b" }}>
+                      <button onClick={() => handleEdit(form)} title="Edit" className="epf-action-btn edit">
                         <HiOutlinePencil size={18} />
                       </button>
-                      <button onClick={() => handleDelete(form.id)} title="Delete" style={{ padding: "6px", background: "var(--theme-bg-muted,#f1f5f9)", border: "none", borderRadius: "4px", cursor: "pointer", color: "#b91c1c" }}>
+                      <button onClick={() => handleDelete(form.id)} title="Delete" className="epf-action-btn delete">
                         <HiOutlineTrash size={18} />
                       </button>
                     </div>
                     </td>
                  </tr>
               ))
-            ) : (
-              <tr><td colSpan="6" style={{ textAlign: "center", padding: "40px", color: "var(--theme-text-muted,#64748b)" }}>No forms found. Click "Add Information" to create a new EPF declaration form.</td></tr>
-            )}
+            ) : (!loading && <tr><td colSpan="6" className="epf-empty">No forms found. Click "Add Information" to create a new EPF declaration form.</td></tr>)}
           </tbody>
         </table>
       </div>
 
       {/* Modal for Add/Edit Form */}
       {showModal && (
-        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.5)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 9999 }}>
-          <div style={{ background: "var(--card-bg,#fff)", padding: "24px", borderRadius: "12px", width: "800px", maxWidth: "90%", maxHeight: "90vh", overflowY: "auto", position: "relative" }}>
-            <button onClick={() => setShowModal(false)} style={{ position: "absolute", top: 14, right: 14, background: "none", border: "none", fontSize: 22, cursor: "pointer", color: "#9ca3af", lineHeight: 1 }}>×</button>
-            <h3 style={{ margin: "0 0 20px 0", color: "var(--theme-text-strong,#1e293b)", borderBottom: "1px solid #e2e8f0", paddingBottom: "10px" }}>
-              {editingForm ? "Edit EPF Declaration Form" : "Add New EPF Declaration Form"}
-            </h3>
-            
-            <form onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" }}>
+        <div className="epf-modal-overlay">
+          <div className="epf-modal">
+            <div className="epf-modal-header">
+              <h3>{editingForm ? "Edit EPF Declaration Form" : "Add New EPF Declaration Form"}</h3>
+              <button onClick={() => setShowModal(false)} className="epf-modal-close">×</button>
+            </div>
+            <form className="epf-modal-body" onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
+              <div className="epf-form-grid">
                 {/* Select Employee */}
-                <div style={{ gridColumn: "span 2" }}>
-                  <label style={{ display: "block", marginBottom: "8px", fontWeight: "bold", fontSize: "14px", color: "var(--theme-text,#334155)" }}>Select Employee *</label>
+                <div className="epf-form-field span-2">
+                  <label>Select Employee *</label>
                   <select 
                     required 
-                    style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #cbd5e1" }} 
                     value={selectedEmployeeId} 
                     onChange={(e) => handleEmployeeSelect(parseInt(e.target.value) || e.target.value)}
                   >
@@ -404,27 +399,25 @@ const DeclarationForm  = ({ initialEmployee = null }) => {
                 </div>
 
                 {/* Name of Member */}
-                <div style={{ gridColumn: "span 2" }}>
-                  <label style={{ display: "block", marginBottom: "8px", fontWeight: "bold", fontSize: "14px" }}>1. Name of the member *</label>
+                <div className="epf-form-field span-2">
+                  <label>1. Name of the member *</label>
                   <input 
                     type="text" 
                     required
-                    style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1" }} 
                     value={formData.nameOfMember}
                     onChange={(e) => handleInputChange('nameOfMember', e.target.value)}
                   />
                 </div>
 
                 {/* Father's / Spouse's Name */}
-                <div style={{ gridColumn: "span 2" }}>
-                  <label style={{ display: "block", marginBottom: "8px", fontWeight: "bold", fontSize: "14px" }}>2. Father's / Spouse's Name</label>
-                  <div style={{ display: "flex", gap: "16px", marginBottom: "8px" }}>
+                <div className="epf-form-field span-2">
+                  <label>2. Father's / Spouse's Name</label>
+                  <div className="radio-group">
                     <label><input type="radio" name="relation" value="father" checked={formData.selectedRelation === 'father'} onChange={() => handleInputChange('selectedRelation', 'father')} /> Father</label>
                     <label><input type="radio" name="relation" value="spouse" checked={formData.selectedRelation === 'spouse'} onChange={() => handleInputChange('selectedRelation', 'spouse')} /> Spouse</label>
                   </div>
                   <input 
                     type="text" 
-                    style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1" }} 
                     placeholder={formData.selectedRelation === 'father' ? "Father's name" : "Spouse's name"}
                     value={formData.selectedRelation === 'father' ? formData.fatherName : formData.spouseName}
                     onChange={(e) => handleInputChange(formData.selectedRelation === 'father' ? 'fatherName' : 'spouseName', e.target.value)}
@@ -432,22 +425,22 @@ const DeclarationForm  = ({ initialEmployee = null }) => {
                 </div>
 
                 {/* Date of Birth, Gender, Marital Status */}
-                <div>
-                  <label style={{ display: "block", marginBottom: "8px", fontWeight: "bold", fontSize: "14px" }}>3. Date of Birth *</label>
-                  <input type="date" required style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1" }} value={formData.dateOfBirth} onChange={(e) => handleInputChange('dateOfBirth', e.target.value)} />
+                <div className="epf-form-field">
+                  <label>3. Date of Birth *</label>
+                  <input type="date" required value={formData.dateOfBirth} onChange={(e) => handleInputChange('dateOfBirth', e.target.value)} />
                 </div>
-                <div>
-                  <label style={{ display: "block", marginBottom: "8px", fontWeight: "bold", fontSize: "14px" }}>4. Gender</label>
-                  <select style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1" }} value={formData.gender} onChange={(e) => handleInputChange('gender', e.target.value)}>
+                <div className="epf-form-field">
+                  <label>4. Gender</label>
+                  <select value={formData.gender} onChange={(e) => handleInputChange('gender', e.target.value)}>
                     <option value="">Select</option>
                     <option value="Male">Male</option>
                     <option value="Female">Female</option>
                     <option value="Transgender">Transgender</option>
                   </select>
                 </div>
-                <div>
-                  <label style={{ display: "block", marginBottom: "8px", fontWeight: "bold", fontSize: "14px" }}>5. Marital Status</label>
-                  <select style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1" }} value={formData.maritalStatus} onChange={(e) => handleInputChange('maritalStatus', e.target.value)}>
+                <div className="epf-form-field">
+                  <label>5. Marital Status</label>
+                  <select value={formData.maritalStatus} onChange={(e) => handleInputChange('maritalStatus', e.target.value)}>
                     <option value="">Select</option>
                     <option value="Married">Married</option>
                     <option value="Unmarried">Unmarried</option>
@@ -458,65 +451,65 @@ const DeclarationForm  = ({ initialEmployee = null }) => {
                 </div>
 
                 {/* Email and Mobile */}
-                <div>
-                  <label style={{ display: "block", marginBottom: "8px", fontWeight: "bold", fontSize: "14px" }}>6(a). Email ID *</label>
-                  <input type="email" required style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1" }} value={formData.emailId} onChange={(e) => handleInputChange('emailId', e.target.value)} />
+                <div className="epf-form-field">
+                  <label>6(a). Email ID *</label>
+                  <input type="email" required value={formData.emailId} onChange={(e) => handleInputChange('emailId', e.target.value)} />
                 </div>
-                <div>
-                  <label style={{ display: "block", marginBottom: "8px", fontWeight: "bold", fontSize: "14px" }}>6(b). Mobile No. *</label>
-                  <input type="tel" required style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1" }} value={formData.mobileNo} onChange={(e) => handleInputChange('mobileNo', e.target.value)} />
+                <div className="epf-form-field">
+                  <label>6(b). Mobile No. *</label>
+                  <input type="tel" required value={formData.mobileNo} onChange={(e) => handleInputChange('mobileNo', e.target.value)} />
                 </div>
 
                 {/* Previous Employment */}
-                <div>
-                  <label style={{ display: "block", marginBottom: "8px", fontWeight: "bold", fontSize: "14px" }}>7. Earlier member of EPF Scheme, 1952?</label>
-                  <div style={{ display: "flex", gap: "16px" }}>
+                <div className="epf-form-field">
+                  <label>7. Earlier member of EPF Scheme, 1952?</label>
+                  <div className="radio-group">
                     <label><input type="radio" name="wasEPF" value="yes" checked={formData.wasEPFMember === 'yes'} onChange={() => handleInputChange('wasEPFMember', 'yes')} /> Yes</label>
                     <label><input type="radio" name="wasEPF" value="no" checked={formData.wasEPFMember === 'no'} onChange={() => handleInputChange('wasEPFMember', 'no')} /> No</label>
                   </div>
                 </div>
-                <div>
-                  <label style={{ display: "block", marginBottom: "8px", fontWeight: "bold", fontSize: "14px" }}>8. Earlier member of EPS, 1995?</label>
-                  <div style={{ display: "flex", gap: "16px" }}>
+                <div className="epf-form-field">
+                  <label>8. Earlier member of EPS, 1995?</label>
+                  <div className="radio-group">
                     <label><input type="radio" name="wasEPS" value="yes" checked={formData.wasEPSMember === 'yes'} onChange={() => handleInputChange('wasEPSMember', 'yes')} /> Yes</label>
                     <label><input type="radio" name="wasEPS" value="no" checked={formData.wasEPSMember === 'no'} onChange={() => handleInputChange('wasEPSMember', 'no')} /> No</label>
                   </div>
                 </div>
 
                 {/* AADHAR and PAN */}
-                <div>
-                  <label style={{ display: "block", marginBottom: "8px", fontWeight: "bold", fontSize: "14px" }}>AADHAR Number *</label>
-                  <input type="text" required placeholder="12 digits" style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1" }} value={formData.aadharNumber} onChange={(e) => handleInputChange('aadharNumber', e.target.value)} />
+                <div className="epf-form-field">
+                  <label>AADHAR Number *</label>
+                  <input type="text" required placeholder="12 digits" value={formData.aadharNumber} onChange={(e) => handleInputChange('aadharNumber', e.target.value)} />
                 </div>
-                <div>
-                  <label style={{ display: "block", marginBottom: "8px", fontWeight: "bold", fontSize: "14px" }}>PAN Number</label>
-                  <input type="text" placeholder="ABCDE1234F" style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1" }} value={formData.panNumber} onChange={(e) => handleInputChange('panNumber', e.target.value.toUpperCase())} />
+                <div className="epf-form-field">
+                  <label>PAN Number</label>
+                  <input type="text" placeholder="ABCDE1234F" value={formData.panNumber} onChange={(e) => handleInputChange('panNumber', e.target.value.toUpperCase())} />
                 </div>
 
                 {/* Undertaking Date and Place */}
-                <div>
-                  <label style={{ display: "block", marginBottom: "8px", fontWeight: "bold", fontSize: "14px" }}>Undertaking Date</label>
-                  <input type="date" style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1" }} value={formData.undertakingDate} onChange={(e) => handleInputChange('undertakingDate', e.target.value)} />
+                <div className="epf-form-field">
+                  <label>Undertaking Date</label>
+                  <input type="date" value={formData.undertakingDate} onChange={(e) => handleInputChange('undertakingDate', e.target.value)} />
                 </div>
-                <div>
-                  <label style={{ display: "block", marginBottom: "8px", fontWeight: "bold", fontSize: "14px" }}>Place *</label>
-                  <input type="text" required style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1" }} value={formData.undertakingPlace} onChange={(e) => handleInputChange('undertakingPlace', e.target.value)} />
+                <div className="epf-form-field">
+                  <label>Place *</label>
+                  <input type="text" required value={formData.undertakingPlace} onChange={(e) => handleInputChange('undertakingPlace', e.target.value)} />
                 </div>
 
                 {/* PF and UAN Numbers */}
-                <div>
-                  <label style={{ display: "block", marginBottom: "8px", fontWeight: "bold", fontSize: "14px" }}>PF Number</label>
-                  <input type="text" style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1" }} value={formData.pfNumber} onChange={(e) => handleInputChange('pfNumber', e.target.value)} />
+                <div className="epf-form-field">
+                  <label>PF Number</label>
+                  <input type="text" value={formData.pfNumber} onChange={(e) => handleInputChange('pfNumber', e.target.value)} />
                 </div>
-                <div>
-                  <label style={{ display: "block", marginBottom: "8px", fontWeight: "bold", fontSize: "14px" }}>UAN Number</label>
-                  <input type="text" style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1" }} value={formData.uanNumber} onChange={(e) => handleInputChange('uanNumber', e.target.value)} />
+                <div className="epf-form-field">
+                  <label>UAN Number</label>
+                  <input type="text" value={formData.uanNumber} onChange={(e) => handleInputChange('uanNumber', e.target.value)} />
                 </div>
               </div>
 
-              <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "20px" }}>
-                <button type="button" onClick={() => { setShowModal(false); resetForm(); }} style={{ padding: "8px 16px", background: "var(--theme-bg-muted,#f1f5f9)", color: "var(--theme-text,#475569)", border: "none", borderRadius: "6px", cursor: "pointer" }}>Cancel</button>
-                <button type="submit" disabled={isGenerating} style={{ padding: "8px 16px", background: "#4f46e5", color: "var(--card-bg,#fff)", border: "none", borderRadius: "6px", cursor: "pointer", opacity: isGenerating ? 0.7 : 1 }}>
+              <div className="epf-form-actions">
+                <button type="button" onClick={() => { setShowModal(false); resetForm(); }} className="btn btn-secondary">Cancel</button>
+                <button type="submit" disabled={isGenerating} className="btn btn-primary">
                   {isGenerating ? 'Saving...' : (editingForm ? 'Update Form' : 'Save Form')}
                 </button>
               </div>

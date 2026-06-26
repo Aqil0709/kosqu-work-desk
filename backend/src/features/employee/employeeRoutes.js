@@ -187,7 +187,7 @@ router.get('/my-team', async (req, res) => {
        FROM employee_details ed
        JOIN users u ON u.id = ed.employee_id
        LEFT JOIN departments d ON d.id = ed.department_id
-       WHERE ed.tenant_id = ? AND ed.team_lead_id = ?
+       WHERE ed.tenant_id = ? AND COALESCE(ed.reports_to_user_id, ed.team_lead_id) = ?
          AND LOWER(COALESCE(ed.status,'active')) NOT IN ('inactive','deleted')
        ORDER BY u.first_name ASC`,
       [tenantId, userId]
@@ -299,7 +299,9 @@ router.get('/:id/documents', requireModuleAccess('employee_management', 'read'),
 });
 
 // POST /api/employees/:id/cv — upload CV for an employee (admin)
-router.post('/:id/cv', requireModuleAccess('employee_management', 'write'), cvUpload.single('cv'), async (req, res) => {
+// NOTE: /my/cv is defined later and must be reached via next() when id === 'my'
+router.post('/:id/cv', (req, res, next) => req.params.id === 'my' ? next('route') : next(),
+  requireModuleAccess('employee_management', 'write'), cvUpload.single('cv'), async (req, res) => {
   try {
     const { pool } = require('../../config/db');
     const tenantId = req.user.tenant_id;
@@ -327,7 +329,8 @@ router.post('/:id/cv', requireModuleAccess('employee_management', 'write'), cvUp
 });
 
 // GET /api/employees/:id/cv — get CV path for an employee
-router.get('/:id/cv', requireModuleAccess('employee_management', 'read'), async (req, res) => {
+router.get('/:id/cv', (req, res, next) => req.params.id === 'my' ? next('route') : next(),
+  requireModuleAccess('employee_management', 'read'), async (req, res) => {
   try {
     const { pool } = require('../../config/db');
     const tenantId = req.user.tenant_id;
@@ -369,7 +372,12 @@ router.get('/:id/id-card', requireModuleAccess('employee_management', 'read'), a
 });
 
 // POST /api/employees/my/cv — employee uploads their own CV
-router.post('/my/cv', cvUpload.single('cv'), async (req, res) => {
+router.post('/my/cv', (req, res, next) => {
+  cvUpload.single('cv')(req, res, (err) => {
+    if (err) return res.status(400).json({ success: false, message: err.message });
+    next();
+  });
+}, async (req, res) => {
   try {
     const { pool } = require('../../config/db');
     const tenantId = req.user.tenant_id;
@@ -482,14 +490,21 @@ const aadhaarUpload = multer({
   storage: aadhaarStorage,
   limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
-    const allowed = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
-    if (allowed.includes(file.mimetype)) cb(null, true);
-    else cb(new Error('Only PDF, JPG, PNG files are allowed'));
+    const ext = path.extname(file.originalname).toLowerCase();
+    const allowedExts = ['.pdf', '.jpg', '.jpeg', '.png'];
+    const allowedMimes = ['image/jpeg', 'image/png', 'image/jpg', 'image/pjpeg', 'application/pdf'];
+    if (allowedExts.includes(ext) || allowedMimes.includes(file.mimetype)) cb(null, true);
+    else cb(new Error('Only PDF, JPG, or PNG files are allowed'));
   }
 });
 
 // POST /api/employees/my/aadhaar — employee uploads own Aadhaar
-router.post('/my/aadhaar', aadhaarUpload.single('aadhaar'), async (req, res) => {
+router.post('/my/aadhaar', (req, res, next) => {
+  aadhaarUpload.single('aadhaar')(req, res, (err) => {
+    if (err) return res.status(400).json({ success: false, message: err.message });
+    next();
+  });
+}, async (req, res) => {
   try {
     const { pool } = require('../../config/db');
     const userId = req.user.id;
@@ -536,14 +551,21 @@ const panUpload = multer({
   storage: panStorage,
   limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
-    const allowed = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
-    if (allowed.includes(file.mimetype)) cb(null, true);
-    else cb(new Error('Only PDF, JPG, PNG files are allowed'));
+    const ext = path.extname(file.originalname).toLowerCase();
+    const allowedExts = ['.pdf', '.jpg', '.jpeg', '.png'];
+    const allowedMimes = ['image/jpeg', 'image/png', 'image/jpg', 'image/pjpeg', 'application/pdf'];
+    if (allowedExts.includes(ext) || allowedMimes.includes(file.mimetype)) cb(null, true);
+    else cb(new Error('Only PDF, JPG, or PNG files are allowed'));
   }
 });
 
 // POST /api/employees/my/pan — employee uploads own PAN
-router.post('/my/pan', panUpload.single('pan'), async (req, res) => {
+router.post('/my/pan', (req, res, next) => {
+  panUpload.single('pan')(req, res, (err) => {
+    if (err) return res.status(400).json({ success: false, message: err.message });
+    next();
+  });
+}, async (req, res) => {
   try {
     const { pool } = require('../../config/db');
     const userId = req.user.id;

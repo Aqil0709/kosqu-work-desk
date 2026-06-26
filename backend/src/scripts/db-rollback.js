@@ -41,6 +41,13 @@ function parseFileArg() {
 }
 
 async function run() {
+  // CRITICAL: Add production environment guard
+  if (process.env.NODE_ENV === 'production') {
+    console.error('❌ DANGER: This script cannot be run in a production environment.');
+    console.error('   To override, you must unset NODE_ENV before running.');
+    process.exit(1);
+  }
+
   // --list mode
   if (process.argv.includes('--list')) {
     const files = fs.existsSync(BACKUPS_DIR)

@@ -9,30 +9,36 @@ const leaveController = {
     getAllLeaves: async (req, res) => {
         try {
             const position = req.user.position;
+            const { page, limit } = parsePagination(req.query);
             const filters = {
                 status: req.query.status || 'all',
                 leave_type: req.query.leave_type || 'all',
                 employee_id: req.query.employeeId || req.query.employee_id || null,
                 start_date: req.query.start_date || null,
                 end_date: req.query.end_date || null,
+                page,
+                limit,
             };
 
-            // Team lead sees only their team's leaves
-            if (position === 'team_lead') {
+            if (position === 'team_lead' || req.user.is_team_lead) {
                 filters.team_lead_user_id = req.user.id;
             }
 
-            const allLeaves = await Leave.getAll(req.tenantId, filters);
-            const stats = await Leave.getStatistics(req.tenantId);
-            const { page, limit, offset } = parsePagination(req.query);
-            const total = allLeaves.length;
-            const leaveData = allLeaves.slice(offset, offset + limit);
+            const [result, stats] = await Promise.all([
+                Leave.getAll(req.tenantId, filters),
+                Leave.getStatistics(req.tenantId),
+            ]);
 
             res.json({
                 success: true,
-                leaves: leaveData,
+                leaves: result.rows,
                 statistics: stats,
-                pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+                pagination: {
+                    page: result.page,
+                    limit: result.limit,
+                    total: result.total,
+                    totalPages: Math.ceil(result.total / result.limit),
+                },
             });
         } catch (error) {
             console.error('Get leaves error:', error);
@@ -77,7 +83,9 @@ const leaveController = {
             const user_id = req.user.id;
 
             const [employeeRows] = await pool.execute(
-                `SELECT ed.id as emp_code, ed.team_lead_id, ed.reporting_manager_id, ed.client_id,
+                `SELECT ed.id as emp_code, ed.team_lead_id,
+                        COALESCE(ed.reports_to_user_id, ed.team_lead_id) AS reports_to_user_id,
+                        ed.reporting_manager_id, ed.client_id,
                         u.first_name, u.last_name
                  FROM employee_details ed
                  JOIN users u ON u.id = ed.employee_id
@@ -91,7 +99,8 @@ const leaveController = {
                 });
             }
 
-            const { emp_code: employee_id, team_lead_id, reporting_manager_id, client_id, first_name, last_name } = employeeRows[0];
+            const { emp_code: employee_id, reporting_manager_id, client_id, first_name, last_name } = employeeRows[0];
+            const team_lead_id = employeeRows[0].reports_to_user_id || employeeRows[0].team_lead_id;
 
             if (!description || !start_date || !end_date) {
                 return res.status(400).json({ message: 'Description, start date, and end date are required' });
@@ -101,6 +110,8 @@ const leaveController = {
                 return res.status(400).json({ message: 'End date cannot be before start date' });
             }
 
+            const isHrApplyingLeave = req.user.position === 'hr';
+
             const leaveId = await Leave.create(req.tenantId, {
                 employee_id,
                 leave_type: leave_type || 'Casual',
@@ -109,32 +120,63 @@ const leaveController = {
                 end_date
             });
 
+            // For HR leaves: set approval_level to 'admin' so only Admin can approve
+            if (isHrApplyingLeave) {
+                await pool.execute(
+                    `UPDATE leave_requests
+                     SET approval_level = 'admin', tl_status = 'skipped', client_status = 'skipped'
+                     WHERE leave_id = ? AND tenant_id = ?`,
+                    [leaveId, req.tenantId]
+                );
+            }
+
+            // Log audit trail
+            try {
+                await pool.execute(
+                    `INSERT INTO leave_audit_log (tenant_id, leave_id, actor_id, actor_role, action, remarks)
+                     VALUES (?, ?, ?, ?, 'submitted', ?)`,
+                    [req.tenantId, leaveId, user_id, req.user.position, `${leave_type || 'Casual'} leave applied for ${start_date} to ${end_date}`]
+                );
+            } catch (_) {}
+
             // Notify TL, reporting manager, HR/admins, and client portal users
             try {
-                const adminHrIds = await getHRAndAdmins(req.tenantId);
-
-                let clientUserIds = [];
-                if (client_id) {
-                    const [clientRows] = await pool.execute(
-                        `SELECT id FROM users WHERE tenant_id = ? AND client_ref_id = ? AND is_active = 1`,
-                        [req.tenantId, client_id]
+                let recipientIds = [];
+                if (isHrApplyingLeave) {
+                    // HR leave: notify Admin only
+                    const [adminRows] = await pool.execute(
+                        `SELECT id FROM users WHERE tenant_id = ? AND position = 'admin' AND is_active = 1`,
+                        [req.tenantId]
                     );
-                    clientUserIds = clientRows.map(r => r.id);
+                    recipientIds = adminRows.map(r => r.id);
+                } else {
+                    const adminHrIds = await getHRAndAdmins(req.tenantId);
+                    let clientUserIds = [];
+                    if (client_id) {
+                        const [clientRows] = await pool.execute(
+                            `SELECT id FROM users WHERE tenant_id = ? AND client_ref_id = ? AND is_active = 1`,
+                            [req.tenantId, client_id]
+                        );
+                        clientUserIds = clientRows.map(r => r.id);
+                    }
+                    recipientIds = [
+                        team_lead_id,
+                        reporting_manager_id,
+                        ...adminHrIds,
+                        ...clientUserIds,
+                    ];
                 }
 
-                const recipientIds = [
-                    team_lead_id,
-                    reporting_manager_id,
-                    ...adminHrIds,
-                    ...clientUserIds,
-                ].filter(id => id != null && id !== user_id);
+                recipientIds = [...new Set(recipientIds.filter(id => id != null && Number(id) !== Number(user_id)))];
 
-                await sendToMany(req.tenantId, recipientIds, {
-                    title: 'Leave Request Pending',
-                    message: `${first_name} ${last_name} has applied for ${leave_type || 'Casual'} leave from ${start_date} to ${end_date}. Please review and approve.`,
-                    type: 'leave',
-                    related_id: leaveId,
-                });
+                if (recipientIds.length) {
+                    await sendToMany(req.tenantId, recipientIds, {
+                        title: 'Leave Request Pending',
+                        message: `${first_name} ${last_name} has applied for ${leave_type || 'Casual'} leave from ${start_date} to ${end_date}. Please review and approve.`,
+                        type: 'leave',
+                        related_id: leaveId,
+                    });
+                }
             } catch (_) {}
 
             res.status(201).json({
@@ -177,15 +219,15 @@ const leaveController = {
                         CAST(ed.employee_id AS UNSIGNED) as emp_user_id
                  FROM leave_requests lr
                  JOIN employee_details ed ON ed.id = lr.employee_id AND ed.tenant_id = lr.tenant_id
-                 WHERE lr.id = ? AND lr.tenant_id = ? LIMIT 1`,
+                 WHERE lr.leave_id = ? AND lr.tenant_id = ? LIMIT 1`,
                 [leaveId, req.tenantId]
             );
 
             const [adminEmployeeRows] = await pool.execute(
                 `SELECT ed.id as employee_id
                  FROM employee_details ed
-                 WHERE ed.employee_id = ?`,
-                [user_id]
+                 WHERE ed.employee_id = ? AND ed.tenant_id = ?`,
+                [user_id, req.tenantId]
             );
 
             const approved_by = adminEmployeeRows.length > 0
@@ -227,15 +269,15 @@ const leaveController = {
                         CAST(ed.employee_id AS UNSIGNED) as emp_user_id
                  FROM leave_requests lr
                  JOIN employee_details ed ON ed.id = lr.employee_id AND ed.tenant_id = lr.tenant_id
-                 WHERE lr.id = ? AND lr.tenant_id = ? LIMIT 1`,
+                 WHERE lr.leave_id = ? AND lr.tenant_id = ? LIMIT 1`,
                 [leaveId, req.tenantId]
             );
 
             const [adminEmployeeRows] = await pool.execute(
                 `SELECT ed.id as employee_id
                  FROM employee_details ed
-                 WHERE ed.employee_id = ?`,
-                [user_id]
+                 WHERE ed.employee_id = ? AND ed.tenant_id = ?`,
+                [user_id, req.tenantId]
             );
 
             const approved_by = adminEmployeeRows.length > 0
@@ -363,10 +405,10 @@ const leaveController = {
         try {
             const user_id = req.user.id;
             const [employeeRows] = await pool.execute(
-                `SELECT ed.id as employee_id 
-                FROM employee_details ed 
-                WHERE ed.employee_id = ?`,
-                [user_id]
+                `SELECT ed.id as employee_id
+                FROM employee_details ed
+                WHERE ed.employee_id = ? AND ed.tenant_id = ?`,
+                [user_id, req.tenantId]
             );
 
             if (employeeRows.length === 0) {

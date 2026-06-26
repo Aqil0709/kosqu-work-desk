@@ -3,27 +3,21 @@ const { query } = require('../../config/db');
 
 const findAllUsers = async () => {
   return query(`
-    SELECT u.id, u.tenant_id, u.first_name, u.last_name, u.email, u.phone, 
-           u.position, u.is_active, u.created_at, u.updated_at,
-           ud.date_of_birth, ud.joining_date, ud.address, ud.emergency_contact,
-           ud.salary, ud.status, ud.bank_account_number, ud.ifsc_code, 
-           ud.pan_number, ud.aadhar_number
-    FROM users u
-    LEFT JOIN user_details ud ON u.id = ud.user_id
-    ORDER BY u.id DESC
+    SELECT id, tenant_id, first_name, last_name, email, phone,
+           position, is_active, created_at, updated_at, profile_photo
+    FROM users
+    ORDER BY id DESC
   `);
 };
 
 const findUserById = async (id) => {
   const rows = await query(`
-    SELECT u.id, u.tenant_id, u.first_name, u.last_name, u.email, u.phone, 
-           u.position, u.password_hash, u.is_active, u.created_at, u.updated_at,
-           ud.date_of_birth, ud.joining_date, ud.address, ud.emergency_contact,
-           ud.bank_account_number, ud.ifsc_code, ud.pan_number, ud.aadhar_number,
-           ud.salary, ud.status, ud.department_id
-    FROM users u
-    LEFT JOIN user_details ud ON u.id = ud.user_id
-    WHERE u.id = ?
+    SELECT id, tenant_id, first_name, last_name, email, phone,
+           position, password_hash, is_active, created_at, updated_at,
+           profile_photo, force_password_reset, temp_password_issued,
+           first_login_completed, failed_login_attempts, is_locked
+    FROM users
+    WHERE id = ?
   `, [id]);
   return rows[0] || null;
 };
@@ -191,12 +185,10 @@ const updateUserPassword = async (userId, passwordHash) => {
 
 const getUsersByTenant = async (tenantId) => {
   const rows = await query(`
-    SELECT u.id, u.first_name, u.last_name, u.email, u.phone, u.position, u.is_active,
-           ud.position as job_position, ud.salary, ud.status
-    FROM users u
-    LEFT JOIN user_details ud ON u.id = ud.user_id
-    WHERE u.tenant_id = ?
-    ORDER BY u.id DESC
+    SELECT id, first_name, last_name, email, phone, position, is_active, profile_photo
+    FROM users
+    WHERE tenant_id = ?
+    ORDER BY id DESC
   `, [tenantId]);
   return rows;
 };

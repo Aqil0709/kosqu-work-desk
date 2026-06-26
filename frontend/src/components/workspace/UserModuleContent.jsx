@@ -14,12 +14,16 @@ import EmployeeWorkReport     from '../../pages/employees/EmployeeWorkReport';
 import EmployeeResignation    from '../../pages/employees/EmployeeResignation';
 import EmployeeLeads          from '../../pages/employees/EmployeeLeads';
 import EmployeeDocuments      from '../../pages/employees/EmployeeDocuments';
-import EmployeeDeclaration    from '../../pages/employees/EmployeeDeclaration';
 import EmployeeOnboarding     from '../../pages/employees/EmployeeOnboarding';
 import EmployeeGrievance      from '../../pages/employees/EmployeeGrievance';
 import EmployeeProjects       from '../../pages/employees/EmployeeProjects';
 import TLWorkReports          from '../../pages/employees/TLWorkReports';
 import PTTMContainer          from '../../pages/PTTM/PTTMContainer';
+import EmployeeCalendar       from '../../pages/employees/EmployeeCalendar';
+import EmployeeNotes          from '../../pages/employees/EmployeeNotes';
+import EmployeeWFH            from '../../pages/employees/EmployeeWFH';
+import EmployeeAIChat         from '../../pages/employees/EmployeeAIChat';
+import ChangePassword         from '../../pages/Settings/ChangePassword';
 
 const UserModuleContent = ({ activeTab, navigateToTab, DashboardComponent }) => {
   const { user } = useAuth();
@@ -39,9 +43,13 @@ const UserModuleContent = ({ activeTab, navigateToTab, DashboardComponent }) => 
     'employee-resignation':  <EmployeeResignation />,
     'employee-leads':        <EmployeeLeads />,
     'employee-documents':    <EmployeeDocuments />,
-    'employee-declaration':  <EmployeeDeclaration />,
     'employee-onboarding':   <EmployeeOnboarding />,
     'employee-grievance':    <EmployeeGrievance />,
+    'employee-calendar':     <EmployeeCalendar />,
+    'employee-notes':        <EmployeeNotes />,
+    'employee-wfh':          <EmployeeWFH />,
+    'employee-ai-chat':      <EmployeeAIChat />,
+    'change-password':       <ChangePassword />,
   };
 
   // Conditional employee tabs

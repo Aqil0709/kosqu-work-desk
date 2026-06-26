@@ -59,55 +59,54 @@ const attendanceController = {
     getAllAttendance: async (req, res) => {
         try {
             const { date, status, start_date, end_date, department } = req.query;
-
-
-            // Get today's date in the correct format
             const today = getIndiaDate();
-            let targetDate = date || today;
-
+            const targetDate = date || today;
+            const { page, limit } = parsePagination(req.query);
 
             const filters = {
                 date: targetDate,
                 status: status || 'all',
                 start_date: start_date,
                 end_date: end_date,
-                department: department
+                department: department,
+                page,
+                limit,
             };
 
-            // Team lead sees only their team's attendance
             if (req.user.position === 'team_lead') {
                 filters.team_lead_user_id = req.user.id;
             }
 
-            // Wrap in try-catch to prevent crashes
-            let attendanceData = [];
-            let stats = { total: 0, present: 0, delayed: 0, half_day: 0, on_leave: 0, absent: 0, pending: 0 };
+            let result  = { rows: [], total: 0, page, limit };
+            let stats   = { total: 0, present: 0, delayed: 0, half_day: 0, on_leave: 0, absent: 0, pending: 0 };
 
             try {
-                attendanceData = await Attendance.getAll(req.tenantId, filters);
-                stats = await Attendance.getStatistics(req.tenantId, targetDate);
+                [result, stats] = await Promise.all([
+                    Attendance.getAll(req.tenantId, filters),
+                    Attendance.getStatistics(req.tenantId, targetDate),
+                ]);
             } catch (dbError) {
                 console.error('Database error in getAllAttendance:', dbError);
             }
 
-            const { page, limit, offset } = parsePagination(req.query);
-            const total = (attendanceData || []).length;
-            const pageData = (attendanceData || []).slice(offset, offset + limit);
-
             res.json({
                 success: true,
-                attendance: pageData,
+                attendance: result.rows,
                 statistics: stats,
-                pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+                pagination: {
+                    page: result.page,
+                    limit: result.limit,
+                    total: result.total,
+                    totalPages: Math.ceil(result.total / result.limit),
+                },
             });
         } catch (error) {
             console.error('Get attendance error:', error);
-            // Always return a valid response, never crash
             res.status(200).json({
                 success: false,
                 message: 'Error fetching attendance data',
                 attendance: [],
-                statistics: { total: 0, present: 0, delayed: 0, half_day: 0, on_leave: 0, absent: 0, pending: 0 }
+                statistics: { total: 0, present: 0, delayed: 0, half_day: 0, on_leave: 0, absent: 0, pending: 0 },
             });
         }
     },
@@ -132,8 +131,8 @@ const attendanceController = {
             const userId = req.user.id;
 
             const [employees] = await pool.execute(
-                'SELECT id, employee_id FROM employee_details WHERE employee_id = ?',
-                [userId]
+                'SELECT id, employee_id FROM employee_details WHERE employee_id = ? AND tenant_id = ?',
+                [userId, req.tenantId]
             );
 
             if (employees.length === 0) {
@@ -161,8 +160,8 @@ const attendanceController = {
             const userId = req.user.id;
 
             const [employees] = await pool.execute(
-                'SELECT id, employee_id FROM employee_details WHERE employee_id = ?',
-                [userId]
+                'SELECT id, employee_id FROM employee_details WHERE employee_id = ? AND tenant_id = ?',
+                [userId, req.tenantId]
             );
 
             if (employees.length === 0) {

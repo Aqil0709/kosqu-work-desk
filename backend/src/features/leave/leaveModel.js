@@ -380,7 +380,7 @@ const Leave = {
         }
     },
 
-    // Get leaves by employee ID
+    // Get leaves by employee ID (includes full workflow stage data)
     getByEmployeeId: async (tenantId, employeeId) => {
         try {
             const query = `
@@ -396,15 +396,33 @@ const Leave = {
                          WHEN LOWER(lr.status)='approved' THEN 'Approved'
                          WHEN LOWER(lr.status)='rejected' THEN 'Rejected'
                          ELSE lr.status END as status,
+                    lr.approval_level,
+                    lr.tl_status,
+                    lr.tl_approved_by,
+                    lr.tl_approved_at,
+                    lr.tl_remarks,
+                    lr.client_status,
+                    lr.client_approved_by,
+                    lr.client_approved_at,
+                    lr.client_remarks,
+                    lr.hr_status,
+                    lr.hr_approved_by,
+                    lr.hr_approved_at,
+                    lr.hr_remarks,
+                    lr.rejection_reason,
                     lr.approved_by,
                     lr.approved_at,
                     lr.created_at,
-                    lr.updated_at
+                    lr.updated_at,
+                    CONCAT(tl.first_name, ' ', tl.last_name) as tl_approver_name,
+                    CONCAT(hr_u.first_name, ' ', hr_u.last_name) as hr_approver_name
                 FROM leave_requests lr
-                WHERE lr.employee_id = ? AND lr.tenant_id = ?
+                LEFT JOIN users tl ON tl.id = lr.tl_approved_by
+                LEFT JOIN users hr_u ON hr_u.id = lr.hr_approved_by
+                WHERE lr.employee_id = ? AND lr.tenant_id = ? AND lr.deleted_at IS NULL
                 ORDER BY lr.created_at DESC
             `;
-            
+
             const [rows] = await pool.execute(query, [employeeId, tenantId]);
             return rows;
         } catch (error) {
@@ -416,7 +434,7 @@ const Leave = {
     // Get all leave requests (for admin)
     getAll: async (tenantId, filters = {}) => {
         try {
-            let query = `
+            const baseSelect = `
                 SELECT
                     lr.leave_id,
                     lr.employee_id,
@@ -443,47 +461,63 @@ const Leave = {
                 JOIN users u ON ed.employee_id = u.id
                 WHERE lr.tenant_id = ?
             `;
-            
+
             const params = [tenantId];
 
+            let whereClause = '';
+
             if (filters.employee_id) {
-                query += ' AND lr.employee_id = ?';
+                whereClause += ' AND lr.employee_id = ?';
                 params.push(filters.employee_id);
             }
 
             if (filters.status && filters.status !== 'all') {
-                query += ' AND LOWER(lr.status) = LOWER(?)';
+                whereClause += ' AND LOWER(lr.status) = LOWER(?)';
                 params.push(filters.status);
             }
 
             if (filters.leave_type && filters.leave_type !== 'all') {
-                query += ' AND lr.leave_type = ?';
+                whereClause += ' AND lr.leave_type = ?';
                 params.push(filters.leave_type);
             }
 
             if (filters.start_date) {
-                query += ' AND lr.start_date >= ?';
+                whereClause += ' AND lr.start_date >= ?';
                 params.push(filters.start_date);
             }
 
             if (filters.end_date) {
-                query += ' AND lr.end_date <= ?';
+                whereClause += ' AND lr.end_date <= ?';
                 params.push(filters.end_date);
             }
 
-            // Team lead filter: only see employees whose team_lead_id is this user
             if (filters.team_lead_user_id) {
-                query += ' AND ed.team_lead_id = ?';
+                whereClause += ' AND COALESCE(ed.reports_to_user_id, ed.team_lead_id) = ?';
                 params.push(filters.team_lead_user_id);
             }
 
-            query += ' ORDER BY lr.created_at DESC, FIELD(lr.status, "Pending", "Approved", "Rejected")';
+            const orderClause = ' ORDER BY lr.created_at DESC, FIELD(lr.status, "Pending", "Approved", "Rejected")';
 
-            const [rows] = await pool.execute(query, params);
-            return rows || [];
+            // SQL-level pagination — never fetch the whole table
+            const page  = Math.max(1, Number(filters.page  || 1));
+            const limit = Math.min(200, Math.max(1, Number(filters.limit || 50)));
+            const offset = (page - 1) * limit;
+
+            const dataQuery  = baseSelect + whereClause + orderClause + ` LIMIT ? OFFSET ?`;
+            const countQuery = `SELECT COUNT(*) AS total FROM leave_requests lr JOIN employee_details ed ON lr.employee_id = ed.id WHERE lr.tenant_id = ?` + whereClause;
+
+            const dataParams  = [...params, limit, offset];
+            const countParams = [tenantId, ...params.slice(1)]; // same WHERE params minus the pagination ones
+
+            const [[countRow], [rows]] = await Promise.all([
+                pool.execute(countQuery, countParams),
+                pool.execute(dataQuery, dataParams),
+            ]);
+
+            return { rows: rows || [], total: countRow[0]?.total || 0, page, limit };
         } catch (error) {
             console.error('Error in Leave.getAll:', error);
-            return [];
+            return { rows: [], total: 0, page: 1, limit: 50 };
         }
     },
 

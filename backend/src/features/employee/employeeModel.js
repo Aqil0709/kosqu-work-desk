@@ -15,6 +15,7 @@ const employeeDetailSelectColumns = `
           ed.shift_id,
           ed.reporting_manager_id,
           ed.team_lead_id,
+          COALESCE(ed.reports_to_user_id, ed.team_lead_id) AS reports_to_user_id,
           ed.client_id,
           ed.salary,
           ed.salary as ctc,
@@ -100,6 +101,8 @@ const Employee = {
           u.email,
           u.phone,
           u.is_active,
+          u.is_team_lead,
+          u.position as system_role,
           u.profile_photo,
           u.created_at,
 ${employeeDetailSelectColumns},
@@ -110,7 +113,7 @@ ${employeeDetailSelectColumns},
         JOIN users u ON u.id = ed.employee_id AND u.tenant_id = ed.tenant_id
         LEFT JOIN departments d ON ed.department_id = d.id
         LEFT JOIN users rm ON rm.id = ed.reporting_manager_id
-        LEFT JOIN users tl ON tl.id = ed.team_lead_id
+        LEFT JOIN users tl ON tl.id = COALESCE(ed.reports_to_user_id, ed.team_lead_id)
         WHERE ed.tenant_id = ?
       `;
       const params = [tenantId];
@@ -329,7 +332,7 @@ ${employeeDetailSelectColumns},
           u.id as user_id,
           ed.id as employee_id,
           u.first_name, u.last_name, u.email, u.phone,
-          u.is_active, u.profile_photo, u.created_at,
+          u.is_active, u.is_team_lead, u.position as system_role, u.profile_photo, u.created_at,
 ${employeeDetailSelectColumns},
           d.name as department_name,
           CONCAT(rm.first_name, ' ', rm.last_name) as reporting_manager_name,
@@ -338,7 +341,7 @@ ${employeeDetailSelectColumns},
         JOIN users u ON u.id = ed.employee_id AND u.tenant_id = ed.tenant_id
         LEFT JOIN departments d ON ed.department_id = d.id
         LEFT JOIN users rm ON rm.id = ed.reporting_manager_id
-        LEFT JOIN users tl ON tl.id = ed.team_lead_id
+        LEFT JOIN users tl ON tl.id = COALESCE(ed.reports_to_user_id, ed.team_lead_id)
         WHERE ed.id = ? AND u.tenant_id = ?`,
         [id, tenantId]
       );
@@ -356,7 +359,7 @@ ${employeeDetailSelectColumns},
           u.id as user_id,
           ed.id as employee_id,
           u.first_name, u.last_name, u.email, u.phone,
-          u.is_active, u.profile_photo, u.created_at,
+          u.is_active, u.is_team_lead, u.position as system_role, u.profile_photo, u.created_at,
 ${employeeDetailSelectColumns},
           d.name as department_name,
           CONCAT(rm.first_name, ' ', rm.last_name) as reporting_manager_name,
@@ -365,7 +368,7 @@ ${employeeDetailSelectColumns},
         JOIN users u ON u.id = ed.employee_id AND u.tenant_id = ed.tenant_id
         LEFT JOIN departments d ON ed.department_id = d.id
         LEFT JOIN users rm ON rm.id = ed.reporting_manager_id
-        LEFT JOIN users tl ON tl.id = ed.team_lead_id
+        LEFT JOIN users tl ON tl.id = COALESCE(ed.reports_to_user_id, ed.team_lead_id)
         WHERE u.id = ? AND u.tenant_id = ?`,
         [userId, tenantId]
       );

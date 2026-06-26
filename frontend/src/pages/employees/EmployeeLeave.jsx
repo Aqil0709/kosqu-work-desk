@@ -42,73 +42,114 @@ const WorkflowModal = ({ leave, onClose }) => {
     return isNaN(dt) ? null : dt.toLocaleString('en-IN', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit', hour12:true });
   };
 
-  const finalStatus = leave.status?.toLowerCase();
+  const finalStatus = (leave.status || '').toLowerCase();
+  const approvalLevel = leave.approval_level || 'tl';
 
+  // Determine each stage status intelligently
+  const tlStatus = leave.tl_status || 'pending';
+  const clientStatus = leave.client_status || (tlStatus === 'skipped' ? 'skipped' : 'pending');
+  const hrStatus = leave.hr_status || (finalStatus === 'approved' ? 'approved' : finalStatus === 'rejected' ? 'rejected' : 'pending');
+
+  // Build stages — show client stage only if not skipped, or show as skipped with note
   const stages = [
     {
       label: 'Employee',
-      role: 'You submitted this request',
+      role: 'Leave request submitted',
       status: 'done',
       timestamp: fmtDate(leave.created_at),
       icon: '👤',
+      remarks: null,
     },
     {
       label: 'Team Lead',
       role: 'Team Lead Review',
-      status: leave.tl_status || (leave.tl_approved_at ? 'approved' : finalStatus === 'pending' ? 'pending' : finalStatus === 'approved' ? 'approved' : 'pending'),
+      status: tlStatus,
       timestamp: fmtDate(leave.tl_approved_at),
-      comment: leave.tl_comment || null,
+      approverName: leave.tl_approver_name || null,
+      remarks: leave.tl_remarks || null,
       icon: '👔',
     },
     {
-      label: 'Client / PM',
-      role: 'Project Manager / Client Approval',
-      status: leave.pl_status || (leave.pl_approved_at ? 'approved' : finalStatus === 'pending' ? 'pending' : finalStatus === 'approved' ? 'approved' : 'pending'),
-      timestamp: fmtDate(leave.pl_approved_at),
-      comment: leave.pl_comment || null,
+      label: 'Client',
+      role: 'Client Approval',
+      status: clientStatus,
+      timestamp: fmtDate(leave.client_approved_at),
+      approverName: null,
+      remarks: leave.client_remarks || null,
       icon: '🏢',
+      skipped: clientStatus === 'skipped',
     },
     {
       label: 'HR / Admin',
       role: 'Final HR Decision',
-      status: finalStatus === 'approved' ? 'approved' : finalStatus === 'rejected' ? 'rejected' : 'pending',
-      timestamp: fmtDate(leave.approved_at || leave.updated_at),
-      comment: leave.admin_comment || leave.hr_comment || null,
+      status: hrStatus,
+      timestamp: fmtDate(leave.hr_approved_at || leave.approved_at),
+      approverName: leave.hr_approver_name || null,
+      remarks: leave.hr_remarks || leave.rejection_reason || null,
       icon: '✅',
     },
   ];
 
-  const stageColor = (s) => s === 'approved' || s === 'done' ? '#10b981' : s === 'rejected' ? '#ef4444' : 'var(--theme-text-muted,#94a3b8)';
-  const stageBg    = (s) => s === 'approved' || s === 'done' ? '#dcfce7' : s === 'rejected' ? '#fee2e2' : 'var(--theme-bg-muted,#f1f5f9)';
+  const stageColor = (s) => {
+    if (s === 'approved' || s === 'done') return '#10b981';
+    if (s === 'rejected') return '#ef4444';
+    if (s === 'skipped') return '#94a3b8';
+    return '#f59e0b';
+  };
+  const stageBg = (s) => {
+    if (s === 'approved' || s === 'done') return '#dcfce7';
+    if (s === 'rejected') return '#fee2e2';
+    if (s === 'skipped') return '#f1f5f9';
+    return '#fef3c7';
+  };
+  const stageLabel = (s) => {
+    if (s === 'done') return 'Submitted';
+    if (s === 'skipped') return 'Not Required';
+    if (s === 'pending') return 'Awaiting';
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  };
+
+  const overallColor = finalStatus === 'approved' ? '#10b981' : finalStatus === 'rejected' ? '#ef4444' : '#f59e0b';
 
   return (
-    <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.48)', zIndex:9100, display:'flex', alignItems:'center', justifyContent:'center', padding:20 }}>
-      <div style={{ background:'var(--card-bg,#fff)', borderRadius:16, width:'100%', maxWidth:500, boxShadow:'0 8px 40px rgba(0,0,0,.18)', overflow:'hidden' }}>
+    <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.52)', zIndex:9100, display:'flex', alignItems:'center', justifyContent:'center', padding:16 }}>
+      <div style={{ background:'var(--card-bg,#fff)', borderRadius:18, width:'100%', maxWidth:520, boxShadow:'0 12px 48px rgba(0,0,0,.22)', overflow:'hidden', maxHeight:'90vh', display:'flex', flexDirection:'column' }}>
+
         {/* Header */}
-        <div style={{ background:'linear-gradient(135deg,#4F46E5,#3B82F6)', padding:'18px 22px', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+        <div style={{ background:'linear-gradient(135deg,#4F46E5,#3B82F6)', padding:'18px 22px', display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 }}>
           <div>
-            <p style={{ margin:0, fontSize:11, color:'rgba(255,255,255,.75)', fontWeight:700, textTransform:'uppercase', letterSpacing:'.05em' }}>Leave Approval Workflow</p>
-            <h3 style={{ margin:'2px 0 0', fontSize:16, fontWeight:800, color:'#fff' }}>{leave.leave_type} Leave -- {leave.total_days} day(s)</h3>
+            <p style={{ margin:0, fontSize:10.5, color:'rgba(255,255,255,.75)', fontWeight:700, textTransform:'uppercase', letterSpacing:'.06em' }}>Leave Approval Timeline</p>
+            <h3 style={{ margin:'3px 0 0', fontSize:16, fontWeight:800, color:'#fff' }}>
+              {leave.leave_type} Leave &mdash; {leave.total_days || 1} day(s)
+            </h3>
           </div>
-          <button onClick={onClose} style={{ background:'rgba(255,255,255,.15)', border:'none', borderRadius:8, color:'#fff', fontSize:18, cursor:'pointer', width:32, height:32, display:'flex', alignItems:'center', justifyContent:'center' }}>✕</button>
+          <button onClick={onClose} style={{ background:'rgba(255,255,255,.18)', border:'none', borderRadius:8, color:'#fff', fontSize:18, cursor:'pointer', width:33, height:33, display:'flex', alignItems:'center', justifyContent:'center', lineHeight:1 }}>✕</button>
         </div>
 
-        {/* Leave summary */}
-        <div style={{ padding:'14px 22px', borderBottom:'1px solid var(--card-border,#e2e8f0)', display:'flex', gap:18, flexWrap:'wrap' }}>
+        {/* Leave summary strip */}
+        <div style={{ padding:'12px 22px', borderBottom:'1px solid var(--card-border,#e2e8f0)', display:'flex', gap:22, flexWrap:'wrap', background:'var(--card-bg-subtle,#f8fafc)', flexShrink:0 }}>
           {[
             { l:'From', v: leave.start_date ? new Date(leave.start_date).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : '--' },
             { l:'To',   v: leave.end_date   ? new Date(leave.end_date).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : '--' },
-            { l:'Status', v: leave.status||'--', color: String(leave.status||'').toLowerCase()==='approved'?'#10b981':String(leave.status||'').toLowerCase()==='rejected'?'#ef4444':'#f59e0b' },
+            { l:'Overall', v: (leave.status||'Pending').charAt(0).toUpperCase()+(leave.status||'Pending').slice(1), color: overallColor },
+            { l:'Stage', v: approvalLevel === 'done' ? 'Complete' : approvalLevel.toUpperCase() },
           ].map(({ l, v, color }) => (
             <div key={l}>
-              <p style={{ margin:0, fontSize:11, fontWeight:700, color:'var(--theme-text-muted,#64748b)', textTransform:'uppercase' }}>{l}</p>
+              <p style={{ margin:0, fontSize:10.5, fontWeight:700, color:'var(--theme-text-muted,#64748b)', textTransform:'uppercase' }}>{l}</p>
               <p style={{ margin:'2px 0 0', fontSize:13, fontWeight:700, color: color || 'var(--theme-text-strong,#0f172a)' }}>{v}</p>
             </div>
           ))}
         </div>
 
-        {/* Workflow stages */}
-        <div style={{ padding:'20px 22px', display:'flex', flexDirection:'column', gap:0 }}>
+        {/* Rejection reason banner */}
+        {leave.rejection_reason && (
+          <div style={{ margin:'12px 22px 0', padding:'10px 14px', background:'#fee2e2', borderRadius:10, borderLeft:'4px solid #ef4444', fontSize:13, color:'#b91c1c', fontWeight:600, flexShrink:0 }}>
+            ❌ Rejection Reason: {leave.rejection_reason}
+          </div>
+        )}
+
+        {/* Workflow stages — scrollable */}
+        <div style={{ padding:'20px 22px', display:'flex', flexDirection:'column', gap:0, overflowY:'auto', flex:1 }}>
           {stages.map((stage, i) => {
             const clr  = stageColor(stage.status);
             const bg   = stageBg(stage.status);
@@ -116,21 +157,35 @@ const WorkflowModal = ({ leave, onClose }) => {
             return (
               <div key={i} style={{ display:'flex', gap:14, position:'relative' }}>
                 {/* Connector line */}
-                {!last && <div style={{ position:'absolute', left:19, top:38, width:2, height:'calc(100% - 10px)', background:stageColor(stages[i+1].status) === 'var(--theme-text-muted,#94a3b8)' ? 'var(--card-border,#e2e8f0)' : stageColor(stages[i+1].status)+'44', zIndex:0 }} />}
-                {/* Icon */}
-                <div style={{ width:38, height:38, borderRadius:'50%', background:bg, border:`2px solid ${clr}`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, flexShrink:0, zIndex:1 }}>
-                  {stage.icon}
+                {!last && (
+                  <div style={{ position:'absolute', left:18, top:40, width:2, height:'calc(100% - 12px)',
+                    background: stageColor(stages[i+1].status) + '55', zIndex:0 }} />
+                )}
+                {/* Circle icon */}
+                <div style={{ width:37, height:37, borderRadius:'50%', background:bg, border:`2.5px solid ${clr}`,
+                  display:'flex', alignItems:'center', justifyContent:'center', fontSize:15, flexShrink:0, zIndex:1 }}>
+                  {stage.status === 'rejected' ? '✕' : stage.status === 'skipped' ? '—' : stage.icon}
                 </div>
-                <div style={{ flex:1, paddingBottom: last ? 0 : 20 }}>
-                  <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:2 }}>
+                <div style={{ flex:1, paddingBottom: last ? 0 : 22 }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:7, marginBottom:2 }}>
                     <span style={{ fontSize:13.5, fontWeight:700, color:'var(--theme-text-strong,#0f172a)' }}>{stage.label}</span>
-                    <span style={{ padding:'2px 8px', borderRadius:999, fontSize:10.5, fontWeight:700, background:bg, color:clr, textTransform:'capitalize' }}>{stage.status}</span>
+                    <span style={{ padding:'2px 9px', borderRadius:999, fontSize:10.5, fontWeight:700, background:bg, color:clr }}>
+                      {stageLabel(stage.status)}
+                    </span>
                   </div>
-                  <p style={{ margin:'2px 0 0', fontSize:12, color:'var(--theme-text-muted,#64748b)' }}>{stage.role}</p>
-                  {stage.timestamp && <p style={{ margin:'3px 0 0', fontSize:11.5, color:'var(--theme-text-muted,#64748b)' }}>🕐 {stage.timestamp}</p>}
-                  {stage.comment && (
-                    <div style={{ marginTop:6, padding:'7px 10px', background:'var(--theme-bg-muted,#f8fafc)', borderRadius:7, borderLeft:`3px solid ${clr}`, fontSize:12, color:'var(--theme-text,#334155)', fontStyle:'italic' }}>
-                      "{stage.comment}"
+                  <p style={{ margin:'1px 0 0', fontSize:12, color:'var(--theme-text-muted,#64748b)' }}>{stage.role}</p>
+                  {stage.approverName && (
+                    <p style={{ margin:'2px 0 0', fontSize:12, color:'var(--theme-text-muted,#64748b)' }}>
+                      By: <strong>{stage.approverName}</strong>
+                    </p>
+                  )}
+                  {stage.timestamp && (
+                    <p style={{ margin:'2px 0 0', fontSize:11.5, color:'var(--theme-text-muted,#64748b)' }}>🕐 {stage.timestamp}</p>
+                  )}
+                  {stage.remarks && (
+                    <div style={{ marginTop:7, padding:'7px 11px', background:'var(--theme-bg-muted,#f8fafc)', borderRadius:8,
+                      borderLeft:`3px solid ${clr}`, fontSize:12, color:'var(--theme-text,#334155)', fontStyle:'italic' }}>
+                      "{stage.remarks}"
                     </div>
                   )}
                 </div>
@@ -138,8 +193,9 @@ const WorkflowModal = ({ leave, onClose }) => {
             );
           })}
         </div>
-        <div style={{ padding:'0 22px 18px', textAlign:'right' }}>
-          <button className="btn-secondary" onClick={onClose}>Close</button>
+
+        <div style={{ padding:'0 22px 18px', textAlign:'right', flexShrink:0, borderTop:'1px solid var(--card-border,#e2e8f0)', paddingTop:12 }}>
+          <button onClick={onClose} style={{ padding:'8px 22px', borderRadius:9, background:'#4F46E5', color:'#fff', border:'none', fontWeight:700, fontSize:13, cursor:'pointer' }}>Close</button>
         </div>
       </div>
     </div>

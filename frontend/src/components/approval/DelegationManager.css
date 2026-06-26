@@ -1,0 +1,24 @@
+.delegation { padding: 24px; max-width: 900px; margin: 0 auto; }
+.delegation h2 { margin: 0 0 6px; font-size: 1.4rem; font-weight: 700; color: #1a1a2e; }
+.delegation__help { color: #6c757d; font-size: 0.9rem; margin: 0 0 24px; }
+.delegation__form { background: #fff; border: 1.5px solid #e9ecef; border-radius: 12px; padding: 20px; margin-bottom: 24px; }
+.delegation__form h3 { margin: 0 0 16px; font-size: 1rem; font-weight: 700; color: #1a1a2e; }
+.delegation__grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-bottom: 16px; }
+@media (max-width: 600px) { .delegation__grid { grid-template-columns: 1fr; } }
+.delegation__field { display: flex; flex-direction: column; gap: 4px; }
+.delegation__field--full { grid-column: 1 / -1; }
+.delegation__field label { font-size: 0.82rem; font-weight: 600; color: #495057; }
+.delegation__field label span { color: #dc3545; }
+.delegation__field input, .delegation__field select { padding: 7px 10px; border: 1.5px solid #dee2e6; border-radius: 7px; font-size: 0.88rem; background: #fff; font-family: inherit; }
+.delegation__btn { padding: 9px 22px; background: #0d6efd; color: #fff; border: none; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; }
+.delegation__btn:disabled { opacity: 0.6; }
+.delegation__section { margin-bottom: 24px; }
+.delegation__section h3 { font-size: 0.95rem; font-weight: 700; color: #495057; margin: 0 0 12px; }
+.delegation__row { display: flex; align-items: center; gap: 12px; background: #fff; border: 1.5px solid #e9ecef; border-radius: 10px; padding: 14px 16px; margin-bottom: 8px; flex-wrap: wrap; }
+.delegation__row--active { border-color: #198754; }
+.delegation__row--expired { opacity: 0.6; }
+.delegation__row-info { flex: 1; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.delegation__badge { background: #e9ecef; color: #495057; font-size: 0.72rem; font-weight: 600; padding: 2px 8px; border-radius: 20px; }
+.delegation__row-dates { font-size: 0.82rem; color: #6c757d; }
+.delegation__reason { margin-left: 6px; }
+.delegation__revoke-btn { padding: 5px 14px; background: #f8d7da; color: #842029; border: none; border-radius: 7px; font-size: 0.82rem; font-weight: 600; cursor: pointer; }

@@ -14,7 +14,6 @@ const EMPLOYEE_FORBIDDEN_MODULES = [
   'holiday_management',
   'ai_document_generator',
   'offer_letters',
-  'declarations',
   'resignations',
   'salary_slips',
   'experience_letters',
@@ -27,6 +26,12 @@ const EMPLOYEE_FORBIDDEN_MODULES = [
   'quotation_management',
   'services',
   'service_management',
+  'declarations',
+  'asset_management',
+  'recruitment',
+  'onboarding',
+  'grievance',
+  'lead_management',
 ];
 
 const MODULE_DEFINITIONS = [
@@ -40,7 +45,6 @@ const MODULE_DEFINITIONS = [
   ['holiday_management', 'Holiday Management', 17],
   ['ai_document_generator', 'AI Document Generator', 18],
   ['offer_letters', 'Offer Letters', 19],
-  ['declarations', 'Declaration Forms', 20],
   ['resignations', 'Resignation Requests', 21],
   ['salary_slips', 'Salary Slips', 22],
   ['experience_letters', 'Experience Letters', 23],
@@ -56,10 +60,28 @@ const MODULE_DEFINITIONS = [
   ['performance_management', 'Performance Management', 25],
   ['mom_management', 'Minutes of Meeting', 26],
   ['work_reports', 'Work Reports', 27],
+  ['declarations', 'Declaration Forms', 28],
+  ['asset_management', 'Asset Management', 29],
+  ['recruitment', 'Recruitment / ATS', 30],
+  ['onboarding', 'Onboarding / Offboarding', 31],
+  ['grievance', 'Grievance & POSH', 32],
+  ['lead_management', 'Leads Management', 33],
   ['pttm', 'PTTM', 80],
   ['employee_attendance', 'My Attendance & Leave', 100],
   ['employee_expense', 'My Expense', 101],
   ['employee_projects', 'My Projects & Tasks', 102],
+  // Employee self-service modules (also available to HR as "My Portal")
+  ['my_personal_info',    'My Personal Info',     110],
+  ['my_payslips',         'My Payslips',          111],
+  ['my_work_report',      'My Work Report',       112],
+  ['my_leads',            'My Leads',             113],
+  ['my_documents',        'My Documents',         114],
+  ['my_onboarding',       'My Onboarding',        115],
+  ['my_grievance',        'My Grievance',         116],
+  ['my_resignation',      'My Resignation',       117],
+  ['my_calendar',         'My Calendar',          118],
+  ['my_wfh',              'My WFH Requests',      119],
+  ['my_notes',            'Notes & Reminders',    120],
 ];
 
 const MANAGEABLE_MODULES = MODULE_DEFINITIONS.map(([moduleKey]) => moduleKey);
@@ -173,6 +195,57 @@ const moduleAccessModel = {
     }
 
     const accessMap = await this.getUserAccessMap(userId, tenantId);
+
+    // HR: auto-provision all HR admin modules + all employee self-service modules
+    // This runs on every login to ensure HR always has the full set.
+    if (userPosition === 'hr') {
+      const HR_MODULES = [
+        // HR admin modules
+        'hr','hr_dashboard','employee_management','attendance_management','leave_management',
+        'shift_management','salary_management','holiday_management','ai_document_generator',
+        'offer_letters','resignations','salary_slips','experience_letters','increment_letters',
+        'performance_management','mom_management','work_reports','declarations','asset_management',
+        'recruitment','onboarding','grievance','lead_management','pttm',
+        // Employee self-service modules (HR as employee)
+        'employee_attendance','employee_expense','employee_projects',
+        'my_personal_info','my_payslips','my_work_report','my_leads','my_documents',
+        'my_onboarding','my_grievance','my_resignation','my_calendar','my_wfh','my_notes',
+      ];
+      const missing = HR_MODULES.filter(k => !accessMap[k] || accessMap[k] === 'none');
+      if (missing.length > 0) {
+        for (const moduleKey of missing) {
+          await query(
+            `INSERT INTO user_module_access (user_id, tenant_id, module_key, access_level)
+             VALUES (?, ?, ?, 'write')
+             ON DUPLICATE KEY UPDATE access_level = 'write'`,
+            [userId, tenantId, moduleKey]
+          ).catch(() => {});
+          accessMap[moduleKey] = 'write';
+        }
+      }
+    }
+
+    // TL auto-provision: if user has is_team_lead=true in DB, ensure they always have TL modules
+    // This is a safety net — the primary provisioning happens via teamLeadSchema.provisionTLModules
+    const TL_MODULES_SET = [
+      'leave_management', 'work_reports', 'attendance_management',
+      'mom_management', 'performance_management', 'employee_projects', 'pttm',
+    ];
+    if (userPosition === 'team_lead') {
+      // position='team_lead' is legacy; keep backward compatibility
+      const missing = TL_MODULES_SET.filter(k => !accessMap[k] || accessMap[k] === 'none');
+      if (missing.length > 0) {
+        for (const moduleKey of missing) {
+          await query(
+            `INSERT INTO user_module_access (user_id, tenant_id, module_key, access_level)
+             VALUES (?, ?, ?, 'write')
+             ON DUPLICATE KEY UPDATE access_level = 'write'`,
+            [userId, tenantId, moduleKey]
+          ).catch(() => {});
+          accessMap[moduleKey] = 'write';
+        }
+      }
+    }
 
     const isEmployee = userPosition === 'employee';
     if (isEmployee) {

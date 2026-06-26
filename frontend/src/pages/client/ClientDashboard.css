@@ -150,6 +150,98 @@
   text-align: center;
 }
 
+/* ── Sections ── */
+.cd-section { margin-top: 28px; }
+.cd-section-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--theme-text-strong, #0f172a);
+  margin: 0 0 14px;
+}
+
+/* ── Responsible Persons ── */
+.cd-persons-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+.cd-person-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-radius: 10px;
+  border: 1px solid var(--theme-border, #e2e8f0);
+  background: var(--card-bg, #fff);
+  min-width: 220px;
+}
+.cd-person-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #6366f1;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+.cd-person-name  { font-weight: 700; font-size: 0.9rem; color: var(--theme-text-strong, #0f172a); }
+.cd-person-role  { font-size: 0.75rem; color: #6366f1; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+.cd-person-email { font-size: 0.78rem; color: var(--theme-text-muted, #64748b); margin-top: 2px; }
+
+/* ── Table ── */
+.cd-projects-table-wrap { overflow-x: auto; border-radius: 10px; border: 1px solid var(--theme-border, #e2e8f0); }
+.cd-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+.cd-table th {
+  background: var(--theme-bg-subtle, #f8fafc);
+  color: var(--theme-text-muted, #64748b);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 0.72rem;
+  padding: 10px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--theme-border, #e2e8f0);
+}
+.cd-table td {
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--theme-border-light, #f1f5f9);
+  color: var(--theme-text, #334155);
+}
+.cd-table tbody tr:last-child td { border-bottom: none; }
+.cd-table tbody tr:hover td { background: var(--theme-hover, #f8fafc); }
+
+/* ── Quick Links ── */
+.cd-quick-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.cd-quick-btn {
+  padding: 10px 18px;
+  border-radius: 8px;
+  border: 1px solid var(--theme-border, #e2e8f0);
+  background: var(--card-bg, #fff);
+  color: var(--theme-text-strong, #0f172a);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.cd-quick-btn:hover {
+  background: #f0f9ff;
+  border-color: #6366f1;
+  color: #6366f1;
+}
+
 @media (max-width: 900px) {
   .cd-stats { grid-template-columns: repeat(2, 1fr); }
 }

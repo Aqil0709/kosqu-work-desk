@@ -147,7 +147,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #5B4FF7, #e893c0 66%, #f8d1e8 100%);
+  background: linear-gradient(135deg, #5B4FF7, #e893c0 66%, #f8d1e8 100%);
   flex-shrink: 0;
 }
 

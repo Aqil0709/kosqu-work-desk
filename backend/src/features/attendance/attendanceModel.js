@@ -1,144 +1,81 @@
-    // backend/models/attendanceModel.js
-    const {pool }= require('../../config/db');
-    const { getIndiaDate, getIndiaDateTime } = require('../../utils/indiaTime');
- // Helper function to calculate status based on check-in time and shift
-    const calculateStatus = (checkInTime, shiftCheckInTimeStr, date, gracePeriodMinutes = 15) => {
-        const [hours, minutes] = shiftCheckInTimeStr.split(':');
-        const shiftCheckInTime = new Date(date);
-        shiftCheckInTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
-        
-        const gracePeriod = new Date(shiftCheckInTime.getTime() + gracePeriodMinutes * 60000);
-        
-        if (checkInTime > gracePeriod) {
-            return 'Delayed';
-        }
-        return 'Present';
-    };
-
-    // Helper function to get late streak - Get consecutive late days before current date
-    async function getLateStreak(connection, tenantId, employeeId, currentDate) {
-        try {
-            const [rows] = await connection.execute(
-                `SELECT status, date FROM tb_attendance 
-                WHERE tenant_id = ? AND employee_id = ? 
-                AND date < ? 
-                ORDER BY date DESC 
-                LIMIT 3`,
-                [tenantId, employeeId, currentDate]
-            );
-            
-            let streak = 0;
-            for (const record of rows) {
-                if (record.status === 'Delayed') {
-                    streak++;
-                } else {
-                    break;
-                }
-            }
-            
-          
-            return streak;
-        } catch (error) {
-            console.error('Error calculating late streak:', error);
-            return 0;
-        }
-    }
-
-    // Helper function to check if employee should be marked half day
-    async function checkHalfDayStatus(connection, tenantId, employeeId, currentDate, currentStatus, checkInTime, checkOutTime) {
-        try {
-            // Check 1: If current status is Delayed and has 2 or more consecutive late days (making it 3 total including today)
-            const lateStreak = await getLateStreak(connection, tenantId, employeeId, currentDate);
-            
-            if (currentStatus === 'Delayed' && lateStreak >= 2) {
-                
-                return { isHalfDay: true, reason: '3 consecutive late days' };
-            }
-            
-            // Check 2: If worked hours are less than 4 hours
-            if (checkInTime && checkOutTime) {
-                const checkIn = new Date(checkInTime);
-                const checkOut = new Date(checkOutTime);
-                const workedHours = (checkOut - checkIn) / (1000 * 60 * 60);
-                
-                if (workedHours < 4 && workedHours > 0) {
-                  return { isHalfDay: true, reason: `Worked only ${workedHours.toFixed(1)} hours` };
-                }
-            }
-            
-            return { isHalfDay: false, reason: null };
-        } catch (error) {
-            console.error('Error checking half day status:', error);
-            return { isHalfDay: false, reason: null };
-        }
-    }
-
-   // backend/models/attendanceModel.js - Fix helper function
+// backend/models/attendanceModel.js
+const { pool } = require('../../config/db');
+const { getIndiaDate, getIndiaDateTime } = require('../../utils/indiaTime');
 
 async function getEmployeeShiftForDateHelper(connection, tenantId, employeeId, date) {
     try {
-        // employeeId here is the VARCHAR id from employee_details (e.g., "EMP001")
-        
-        // First check for specific shift assignment on that date
-        const [specificShift] = await connection.execute(
-            `SELECT s.shift_id, s.shift_name, s.check_in_time, s.check_out_time, s.grace_period_minutes
-            FROM tb_employee_shifts es
-            JOIN tb_shifts s ON es.shift_id = s.shift_id
-            WHERE es.employee_id = ? AND es.assigned_date = ? AND s.tenant_id = ?
-            LIMIT 1`,
-            [employeeId, date, tenantId]
-        );
-        
-        if (specificShift.length > 0) {
-            return specificShift[0];
-        }
-        
-        // If no specific assignment, get employee's default shift
+        // 1. wfm_roster_assignments/wfm_shift_templates not available — skip roster lookup
+
+        // 2. If no roster, fall back to the employee's default shift from the old system
         const [defaultShift] = await connection.execute(
-            `SELECT s.shift_id, s.shift_name, s.check_in_time, s.check_out_time, s.grace_period_minutes
+            `SELECT
+                s.shift_id as id,
+                s.shift_id as shift_template_id,
+                s.tenant_id,
+                s.shift_name as name,
+                s.check_in_time as start_time,
+                s.check_out_time as end_time,
+                s.grace_period_minutes,
+                15 as late_mark_after_minutes,
+                3 as half_day_on_late_count,
+                8.00 as min_hours_for_full_day,
+                4.00 as min_hours_for_half_day,
+                s.is_default
             FROM employee_details ed
             JOIN tb_shifts s ON ed.default_shift_id = s.shift_id
-            WHERE ed.id = ? AND ed.tenant_id = ? AND s.tenant_id = ?`,
-            [employeeId, tenantId, tenantId]  // FIXED: Use ed.id = employeeId
+            WHERE ed.id = ? AND ed.tenant_id = ?`,
+            [employeeId, tenantId]
         );
-        
+
         if (defaultShift.length > 0) {
-            return defaultShift[0];
+            return { ...defaultShift[0], isFromRoster: false };
         }
-        
-        // Finally, get system default shift
+
+        // 3. Fall back to the tenant's default from the old system.
         const [systemDefault] = await connection.execute(
-            `SELECT shift_id, shift_name, check_in_time, check_out_time, grace_period_minutes
-            FROM tb_shifts 
-            WHERE tenant_id = ? AND is_default = TRUE 
-            LIMIT 1`,
+            `SELECT
+                s.shift_id as id,
+                s.shift_id as shift_template_id,
+                s.tenant_id,
+                s.shift_name as name,
+                s.check_in_time as start_time,
+                s.check_out_time as end_time,
+                s.grace_period_minutes,
+                15 as late_mark_after_minutes,
+                3 as half_day_on_late_count,
+                8.00 as min_hours_for_full_day,
+                4.00 as min_hours_for_half_day,
+                s.is_default
+            FROM tb_shifts s
+            WHERE s.tenant_id = ? AND s.is_default = TRUE LIMIT 1`,
             [tenantId]
         );
-        
-        return systemDefault[0] || null;
+
+        if (systemDefault.length > 0) {
+            return { ...systemDefault[0], isFromRoster: false, isTenantDefault: true };
+        }
+
+        return null;
     } catch (error) {
         console.error('Error getting employee shift:', error);
         return null;
     }
 }
 
-    const Attendance = {
+const Attendance = {
 
 getAll: async (tenantId, filters = {}) => {
     try {
-       
-        
         if (!tenantId) {
-            
-            return [];
+            return { rows: [], total: 0, page: 1, limit: 50 };
         }
-        
-        let query = `
-            SELECT 
+
+        const baseSelect = `
+            SELECT
                 a.attendance_id,
                 a.employee_id,
                 ed.id as hr_employee_code,
-                ed.employee_id as user_id,
+                u.id as user_id,
                 COALESCE(CONCAT(u.first_name, " ", u.last_name), "Unknown") as employee_name,
                 s.shift_name,
                 a.date,
@@ -147,7 +84,12 @@ getAll: async (tenantId, filters = {}) => {
                 a.status,
                 a.is_half_day,
                 a.worked_hours,
+                a.late_minutes,
+                a.early_exit_minutes,
+                a.overtime_minutes,
+                a.undertime_minutes,
                 a.remarks,
+                a.deduction_reason,
                 a.approved_by,
                 a.check_in_latitude,
                 a.check_in_longitude,
@@ -157,81 +99,88 @@ getAll: async (tenantId, filters = {}) => {
                 a.created_at
             FROM tb_attendance a
             LEFT JOIN employee_details ed ON a.employee_id = ed.id
-            LEFT JOIN users u ON ed.employee_id = u.id
+            LEFT JOIN users u ON ed.user_id = u.id
             LEFT JOIN tb_shifts s ON a.shift_id = s.shift_id
-            WHERE 1=1
+            WHERE a.tenant_id = ?
         `;
-        
-        const params = [];
 
-        query += ` AND (ed.tenant_id = ? OR ed.tenant_id IS NULL)`;
-        params.push(tenantId);
+        const params = [tenantId];
+        let whereClause = '';
 
         if (filters.start_date && filters.end_date) {
-            query += ' AND a.date BETWEEN ? AND ?';
+            whereClause += ' AND a.date BETWEEN ? AND ?';
             params.push(filters.start_date, filters.end_date);
         } else if (filters.date) {
-            query += ' AND a.date = ?';
+            whereClause += ' AND a.date = ?';
             params.push(filters.date);
         } else {
             const today = getIndiaDate();
-            query += ' AND a.date = ?';
+            whereClause += ' AND a.date = ?';
             params.push(today);
         }
 
         if (filters.status && filters.status !== 'all') {
-            query += ' AND a.status = ?';
+            whereClause += ' AND a.status = ?';
             params.push(filters.status);
         }
 
         if (filters.department) {
-            query += ' AND ed.department_id = ?';
+            whereClause += ' AND ed.department_id = ?';
             params.push(filters.department);
         }
 
-        // Team lead filter: only their direct reports
         if (filters.team_lead_user_id) {
-            query += ' AND ed.team_lead_id = ?';
+            whereClause += ' AND ed.team_lead_id = ?';
             params.push(filters.team_lead_user_id);
         }
 
-        query += ' ORDER BY a.date DESC, u.first_name, u.last_name';
+        const orderClause = ' ORDER BY a.date DESC, u.first_name, u.last_name';
 
-        const [rows] = await pool.execute(query, params);
-       
-        
-        return rows;
+        const page  = Math.max(1, Number(filters.page  || 1));
+        const limit = Math.min(500, Math.max(1, Number(filters.limit || 100)));
+        const offset = (page - 1) * limit;
+
+        const dataQuery  = baseSelect + whereClause + orderClause + ' LIMIT ? OFFSET ?';
+        const countQuery = `SELECT COUNT(*) AS total FROM tb_attendance a LEFT JOIN employee_details ed ON a.employee_id = ed.id WHERE a.tenant_id = ?` + whereClause;
+
+        const dataParams  = [...params, limit, offset];
+        const countParams = [tenantId, ...params.slice(1)];
+
+        const [[countRow], [rows]] = await Promise.all([
+            pool.execute(countQuery, countParams),
+            pool.execute(dataQuery, dataParams),
+        ]);
+
+        return { rows: rows || [], total: countRow[0]?.total || 0, page, limit };
     } catch (error) {
         console.error('Error in Attendance.getAll:', error);
-        return [];
+        return { rows: [], total: 0, page: 1, limit: 100 };
     }
 },      // Get attendance statistics
        // Get attendance statistics - FIXED VERSION
 getStatistics: async (tenantId, date = null) => {
     try {
         const targetDate = date || getIndiaDate();
-        
+
         const query = `
             SELECT 
                 COUNT(*) as total,
-                COALESCE(SUM(CASE WHEN LOWER(TRIM(a.status)) = 'present' THEN 1 ELSE 0 END), 0) as present,
-                COALESCE(SUM(CASE WHEN LOWER(TRIM(a.status)) IN ('delayed', 'late') THEN 1 ELSE 0 END), 0) as \`delayed\`,
-                COALESCE(SUM(CASE WHEN LOWER(TRIM(a.status)) IN ('half day', 'half-day') OR a.is_half_day = 1 THEN 1 ELSE 0 END), 0) as half_day,
-                COALESCE(SUM(CASE WHEN LOWER(TRIM(a.status)) IN ('present', 'delayed', 'late', 'half day', 'half-day') OR a.is_half_day = 1 THEN 1 ELSE 0 END), 0) as present_like,
-                COALESCE(SUM(CASE WHEN LOWER(TRIM(a.status)) IN ('on leave', 'leave') THEN 1 ELSE 0 END), 0) as on_leave,
-                COALESCE(SUM(CASE WHEN LOWER(TRIM(a.status)) = 'absent' THEN 1 ELSE 0 END), 0) as absent,
-                COALESCE(SUM(CASE WHEN LOWER(TRIM(a.status)) = 'pending' THEN 1 ELSE 0 END), 0) as pending
+                SUM(CASE WHEN a.status = 'Present' THEN 1 ELSE 0 END) as present,
+                SUM(CASE WHEN a.is_late = 1 THEN 1 ELSE 0 END) as delayed,
+                SUM(CASE WHEN a.is_half_day = 1 THEN 1 ELSE 0 END) as half_day,
+                SUM(CASE WHEN a.status = 'On Leave' THEN 1 ELSE 0 END) as on_leave,
+                SUM(CASE WHEN a.status = 'Absent' THEN 1 ELSE 0 END) as absent,
+                SUM(CASE WHEN a.status = 'Pending' THEN 1 ELSE 0 END) as pending
             FROM tb_attendance a
-            LEFT JOIN employee_details ed ON a.employee_id = ed.id
-            WHERE a.date = ? AND (a.tenant_id = ? OR ed.tenant_id = ?)
+            WHERE a.date = ? AND a.tenant_id = ?
         `;
-        
-        const [rows] = await pool.execute(query, [targetDate, tenantId, tenantId]);
-        return rows[0] || { total: 0, present: 0, delayed: 0, half_day: 0, present_like: 0, on_leave: 0, absent: 0, pending: 0 };
+
+        const [rows] = await pool.execute(query, [targetDate, tenantId]);
+        return rows[0] || { total: 0, present: 0, delayed: 0, half_day: 0, on_leave: 0, absent: 0, pending: 0 };
     } catch (error) {
         console.error('Error in Attendance.getStatistics:', error);
         // Return default values instead of throwing
-        return { total: 0, present: 0, delayed: 0, half_day: 0, present_like: 0, on_leave: 0, absent: 0, pending: 0 };
+        return { total: 0, present: 0, delayed: 0, half_day: 0, on_leave: 0, absent: 0, pending: 0 };
     }
 },
 
@@ -239,11 +188,11 @@ getStatistics: async (tenantId, date = null) => {
 getEmployeeHistory: async (tenantId, employeeId) => {
     try {
         const query = `
-            SELECT 
+            SELECT
                 a.attendance_id as history_id,
                 a.employee_id,
                 a.date,
-                CONCAT(a.status, IFNULL(CONCAT(" - ", a.remarks), "")) as description,
+                a.remarks as description,
                 a.status,
                 DATE_FORMAT(a.created_at, "%Y-%m-%d") as created_date,
                 TIME_FORMAT(a.check_in, "%H:%i") as check_in_time,
@@ -255,7 +204,7 @@ getEmployeeHistory: async (tenantId, employeeId) => {
             FROM tb_attendance a
             LEFT JOIN tb_shifts s ON a.shift_id = s.shift_id
             JOIN employee_details ed ON a.employee_id = ed.id
-            WHERE a.employee_id = ? AND ed.tenant_id = ?
+            WHERE a.employee_id = ? AND a.tenant_id = ?
             ORDER BY a.date DESC
             LIMIT 50
         `;
@@ -295,10 +244,9 @@ getEmployeeHistory: async (tenantId, employeeId) => {
         approve: async (tenantId, attendanceId, approvedByEmployeeId) => {
             try {
                 const [result] = await pool.execute(
-                    `UPDATE tb_attendance a 
-                    JOIN employee_details ed ON a.employee_id = ed.id
+                    `UPDATE tb_attendance a
                     SET a.status = 'Present', a.approved_by = ?, a.approved_at = ? 
-                    WHERE a.attendance_id = ? AND ed.tenant_id = ?`,
+                    WHERE a.attendance_id = ? AND a.tenant_id = ?`,
                     [approvedByEmployeeId, getIndiaDateTime(), attendanceId, tenantId]
                 );
 
@@ -317,10 +265,9 @@ getEmployeeHistory: async (tenantId, employeeId) => {
         reject: async (tenantId, attendanceId, approvedByEmployeeId, remarks) => {
             try {
                 const [result] = await pool.execute(
-                    `UPDATE tb_attendance a
-                    JOIN employee_details ed ON a.employee_id = ed.id 
+                    `UPDATE tb_attendance a 
                     SET a.status = 'Absent', a.remarks = ?, a.approved_by = ?, a.approved_at = ? 
-                    WHERE a.attendance_id = ? AND ed.tenant_id = ?`,
+                    WHERE a.attendance_id = ? AND a.tenant_id = ?`,
                     [remarks, approvedByEmployeeId, getIndiaDateTime(), attendanceId, tenantId]
                 );
 
@@ -354,9 +301,9 @@ getEmployeeHistory: async (tenantId, employeeId) => {
 checkExists: async (tenantId, employeeId, date) => {
     try {
         const [rows] = await pool.execute(
-            `SELECT a.attendance_id FROM tb_attendance a
+            `SELECT a.* FROM tb_attendance a
             WHERE a.employee_id = ? AND a.date = ? AND a.tenant_id = ?`,
-            [employeeId, date, tenantId]  // employeeId is the VARCHAR id
+            [employeeId, date, tenantId]
         );
         return rows.length > 0;
     } catch (error) {
@@ -386,14 +333,16 @@ create: async (tenantId, attendanceData) => {
         const employeeSalary = eCheck[0].salary || 0;
 
         // Get shift for the employee
-        const shiftInfo = await getEmployeeShiftForDateHelper(connection, tenantId, employeeIdString, attendanceData.date);
-        
+        let shiftInfo = await getEmployeeShiftForDateHelper(connection, tenantId, employeeIdString, attendanceData.date);
+
+        // If no shift is configured, proceed without late/deduction calculations
         if (!shiftInfo) {
-            throw new Error('No shift available for assignment.');
+            shiftInfo = { start_time: null, grace_period_minutes: 15, id: null, shift_template_id: null };
         }
 
-        const shiftId = shiftInfo.shift_id;
-        const shiftCheckInTime = shiftInfo.check_in_time;
+        const shiftId = shiftInfo.isFromRoster ? null : (shiftInfo.id || shiftInfo.shift_template_id);
+        const shiftTemplateId = shiftInfo.id || shiftInfo.shift_template_id;
+        const shiftCheckInTime = shiftInfo.start_time;
         const gracePeriodMinutes = shiftInfo.grace_period_minutes || 15;
 
         // Calculate status based on check-in time
@@ -557,7 +506,7 @@ create: async (tenantId, attendanceData) => {
 
       // backend/models/attendanceModel.js
 
-updateCheckOut: async (tenantId, employeeId, date, checkOutTime, latitude = null, longitude = null, remarks = null) => {
+updateCheckOut: async (tenantId, employeeId, date, checkOutTime, latitude = null, longitude = null, newRemarks = null) => {
     const connection = await pool.getConnection();
     
     try {
@@ -565,61 +514,68 @@ updateCheckOut: async (tenantId, employeeId, date, checkOutTime, latitude = null
         
         // Get existing attendance record
         const [attendance] = await connection.execute(
-            `SELECT a.* FROM tb_attendance a
+            `SELECT a.*, s.check_out_time as old_end_time
+            FROM tb_attendance a
+            LEFT JOIN tb_shifts s ON a.shift_id = s.shift_id
             WHERE a.employee_id = ? AND a.date = ? AND a.tenant_id = ?`,
             [employeeId, date, tenantId]
         );
         
         if (attendance.length === 0) {
-            throw new Error('Attendance record not found');
+            throw new Error('Check-in record not found for today.');
         }
         
         const record = attendance[0];
         const checkInTime = record.check_in;
-        
-        // Calculate worked hours
+        const shift = record; // The joined shift template data
+
+        // --- Calculations ---
         const checkIn = new Date(checkInTime);
         const checkOut = new Date(checkOutTime);
         const workedHours = parseFloat(((checkOut - checkIn) / (1000 * 60 * 60)).toFixed(2));
-        
-        let status = record.status;
-        let isHalfDay = record.is_half_day || false;
-        
-        // Check if worked hours are less than 4 (half day)
-        if (workedHours < 4 && workedHours > 0 && status !== 'Half Day') {
-            isHalfDay = true;
-            status = 'Half Day';
-            
-            // Get employee salary for deduction
-            const [empCheck] = await connection.execute(
-                'SELECT salary FROM employee_details WHERE id = ? AND tenant_id = ?',
-                [employeeId, tenantId]
-            );
-            
-            if (empCheck.length > 0) {
-                const dailySalary = empCheck[0].salary / 30;
-                const deductionAmount = dailySalary * 0.5;
-                
-                await connection.execute(
-                    `UPDATE tb_attendance 
-                    SET should_deduct_salary = 1, deduction_amount = ?, deduction_reason = ?
-                    WHERE employee_id = ? AND date = ? AND tenant_id = ?`,
-                    [deductionAmount, `Worked only ${workedHours} hours - Half day deduction`, employeeId, date, tenantId]
-                );
-            }
+
+        const endTimeStr = shift.end_time || shift.old_end_time;
+        const [endHours, endMinutes] = endTimeStr.split(':');
+        const expectedCheckOut = new Date(date);
+        expectedCheckOut.setHours(parseInt(endHours, 10), parseInt(endMinutes, 10), 0, 0);
+
+        const timeDiffMinutes = (checkOut - expectedCheckOut) / 60000;
+        const earlyExitMinutes = timeDiffMinutes < 0 ? Math.abs(Math.round(timeDiffMinutes)) : 0;
+        const overtimeMinutes = timeDiffMinutes > 0 ? Math.round(timeDiffMinutes) : 0;
+
+        const isHalfDay = workedHours > 0 && workedHours < (shift.min_hours_for_half_day || 4);
+        const undertimeMinutes = Math.max(0, ((shift.min_hours_for_full_day || 8) * 60) - (workedHours * 60));
+
+        let finalRemarks = record.remarks;
+        if (newRemarks) {
+            finalRemarks = finalRemarks ? `${finalRemarks} | ${newRemarks}` : newRemarks;
         }
-        
-        const nextRemarks = remarks
-            ? [record.remarks, remarks].filter(Boolean).join(' | ')
+        if (earlyExitMinutes > 0) {
+            finalRemarks = finalRemarks ? `${finalRemarks} | Early exit by ${earlyExitMinutes} mins` : `Early exit by ${earlyExitMinutes} mins`;
+        }
+        if (isHalfDay) {
+            finalRemarks = finalRemarks ? `${finalRemarks} | Half-day` : `Half-day`;
+        }
+
+        const nextRemarks = newRemarks
+            ? [record.remarks, newRemarks].filter(Boolean).join(' | ')
             : record.remarks;
 
         // Update attendance
         await connection.execute(
-            `UPDATE tb_attendance 
-            SET check_out = ?, status = ?, is_half_day = ?, worked_hours = ?, updated_at = ?,
-                check_out_latitude = ?, check_out_longitude = ?, remarks = ?
+            `UPDATE tb_attendance
+            SET check_out = ?, 
+                worked_hours = ?, 
+                is_half_day = ?, 
+                early_exit_minutes = ?, 
+                overtime_minutes = ?, 
+                undertime_minutes = ?,
+                remarks = ?,
+                check_out_latitude = ?, 
+                check_out_longitude = ?, 
+                updated_at = ?
             WHERE employee_id = ? AND date = ? AND tenant_id = ?`,
-            [checkOutTime, status, isHalfDay ? 1 : 0, workedHours, getIndiaDateTime(), latitude, longitude, nextRemarks, employeeId, date, tenantId]
+            [checkOutTime, workedHours, isHalfDay, earlyExitMinutes, overtimeMinutes, undertimeMinutes, finalRemarks, latitude, longitude, getIndiaDateTime(), employeeId, date, tenantId]
         );
         
         await connection.commit();
@@ -628,8 +584,7 @@ updateCheckOut: async (tenantId, employeeId, date, checkOutTime, latitude = null
             date: date, 
             check_out: checkOutTime,
             worked_hours: workedHours,
-            status: status,
-            is_half_day: isHalfDay
+            is_half_day: isHalfDay,
         };
     } catch (error) {
         await connection.rollback();
@@ -645,9 +600,10 @@ updateCheckOut: async (tenantId, employeeId, date, checkOutTime, latitude = null
 getByEmployeeAndDate: async (tenantId, employeeId, date) => {
     try {
         const [rows] = await pool.execute(
-            `SELECT a.* FROM tb_attendance a
+            `SELECT a.*, s.shift_name FROM tb_attendance a
+            LEFT JOIN tb_shifts s ON a.shift_id = s.shift_id
             WHERE a.employee_id = ? AND a.date = ? AND a.tenant_id = ?`,
-            [employeeId, date, tenantId]  // employeeId is already the VARCHAR id
+            [employeeId, date, tenantId]
         );
         return rows[0];
     } catch (error) {
@@ -655,76 +611,6 @@ getByEmployeeAndDate: async (tenantId, employeeId, date) => {
         throw error;
     }
 },
-
-        // Mark check-in
-        markCheckIn: async (tenantId, employeeId, checkInTime, status = 'Present') => {
-            const connection = await pool.getConnection();
-            
-            try {
-                await connection.beginTransaction();
-
-                // Verify employee exists
-                const [eCheck] = await connection.execute(
-                    'SELECT id FROM employee_details WHERE id = ? AND tenant_id = ?',
-                    [employeeId, tenantId]
-                );
-                if (eCheck.length === 0) throw new Error("Employee not found in tenant");
-
-                const today = getIndiaDate();
-                
-                // Get shift info
-                const shiftInfo = await getEmployeeShiftForDateHelper(connection, tenantId, employeeId, today);
-                
-                if (!shiftInfo) {
-                    throw new Error('No shift available for assignment');
-                }
-
-                const shiftId = shiftInfo.shift_id;
-                const shiftCheckInTime = shiftInfo.check_in_time;
-                const gracePeriodMinutes = shiftInfo.grace_period_minutes || 15;
-
-                let finalStatus = status;
-                if (status === 'Present') {
-                    const checkInDateTime = new Date(checkInTime);
-                    const shiftTime = new Date(today);
-                    const [hours, minutes] = shiftCheckInTime.split(':');
-                    shiftTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
-                    
-                    const gracePeriod = new Date(shiftTime.getTime() + gracePeriodMinutes * 60000);
-                    if (checkInDateTime > gracePeriod) {
-                        finalStatus = 'Delayed';
-                    }
-                }
-                
-                const [existing] = await connection.execute(
-                    'SELECT * FROM tb_attendance WHERE employee_id = ? AND date = ?',
-                    [employeeId, today]
-                );
-
-                if (existing.length > 0) {
-                    await connection.execute(
-                        `UPDATE tb_attendance SET check_in = ?, status = ?, shift_id = ?, updated_at = ?
-                        WHERE employee_id = ? AND date = ?`,
-                        [checkInTime, finalStatus, shiftId, getIndiaDateTime(), employeeId, today]
-                    );
-                } else {
-                    await connection.execute(
-                        `INSERT INTO tb_attendance (tenant_id, employee_id, shift_id, date, check_in, status, created_at)
-                        VALUES (?, ?, ?, ?, ?, ?, ?)`,
-                        [tenantId, employeeId, shiftId, today, checkInTime, finalStatus, getIndiaDateTime()]
-                    );
-                }
-
-                await connection.commit();
-                return { status: finalStatus, shift_id: shiftId };
-            } catch (error) {
-                await connection.rollback();
-                console.error('Error in Attendance.markCheckIn:', error);
-                throw error;
-            } finally {
-                connection.release();
-            }
-        },
 
         // Get monthly percentage
         getMonthlyPercentage: async (tenantId, employeeId, month = null, year = null) => {
@@ -736,13 +622,12 @@ getByEmployeeAndDate: async (tenantId, employeeId, date) => {
                 const query = `
                     SELECT 
                         COUNT(*) as total_records,
-                        SUM(CASE WHEN a.status IN ('Present', 'Delayed') THEN 1 ELSE 0 END) as present_days
+                        SUM(CASE WHEN a.status IN ('Present', 'Delayed', 'Half Day') THEN 1 ELSE 0 END) as present_days
                     FROM tb_attendance a
-                    JOIN employee_details ed ON a.employee_id = ed.id
                     WHERE a.employee_id = ? 
                     AND MONTH(a.date) = ? 
                     AND YEAR(a.date) = ?
-                    AND ed.tenant_id = ?
+                    AND a.tenant_id = ?
                 `;
                 
                 const [rows] = await pool.execute(query, [employeeId, targetMonth, targetYear, tenantId]);
@@ -798,8 +683,7 @@ getByEmployeeAndDate: async (tenantId, employeeId, date) => {
                         COALESCE(SUM(CASE WHEN status = 'Absent' THEN 1 ELSE 0 END), 0) as absent_days,
                         COALESCE(SUM(CASE WHEN status = 'On Leave' THEN 1 ELSE 0 END), 0) as leave_days,
                         COALESCE(SUM(worked_hours), 0) as total_worked_hours,
-                        COALESCE(AVG(worked_hours), 0) as avg_worked_hours,
-                        COALESCE(SUM(is_half_day), 0) as half_day_count
+                        COALESCE(AVG(worked_hours), 0) as avg_worked_hours
                     FROM tb_attendance
                     WHERE tenant_id = ? 
                         AND employee_id = ? 
@@ -807,8 +691,6 @@ getByEmployeeAndDate: async (tenantId, employeeId, date) => {
                         AND YEAR(date) = ?`,
                     [tenantId, employeeId, month, year]
                 );
-                
-               
                 
                 return rows[0] || { 
                     total_days: 0, 

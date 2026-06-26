@@ -32,6 +32,7 @@ const emptyForm = {
   position: '',
   employment_type: '',
   employment_category: 'employee', // v2: intern | consultant | employee
+  is_team_lead: false,              // Leadership flag — separate from role
   experience_years: '',             // v2: experience field
   address: '',
   emergency_contact: '',
@@ -58,6 +59,7 @@ const emptyForm = {
   tds_percentage: '',
   tds_category: '',
   reporting_manager_id: '',
+  team_lead_id: '',
   work_location: '',
   probation_end_date: '',
   // NEW: Consultant fields
@@ -431,6 +433,7 @@ const EmployeeManagement = () => {
     position: data.position || null,
     employment_type: data.employment_type || null,
     employment_category: data.employment_category || 'employee',
+    is_team_lead: data.is_team_lead ? true : false,
     experience_years: data.experience_years === '' ? null : Number(data.experience_years),
     // Payroll & Reporting
     notice_period: data.notice_period || null,
@@ -442,7 +445,8 @@ const EmployeeManagement = () => {
     tds_applicable: data.tds_applicable === true || data.tds_applicable === 'true' ? 1 : 0,
     tds_percentage: data.tds_percentage === '' ? null : Number(data.tds_percentage),
     tds_category: data.tds_category || null,
-    reporting_manager_id: data.reporting_manager_id === '' ? null : Number(data.reporting_manager_id),
+    reporting_manager_id: null,
+    team_lead_id: data.team_lead_id === '' ? null : Number(data.team_lead_id),
     work_location: data.work_location || null,
     probation_end_date: data.probation_end_date || null,
     // Consultant
@@ -546,6 +550,7 @@ const EmployeeManagement = () => {
       position: employee.position || '',
       employment_type: employee.employment_type || '',
       employment_category: employee.employment_category || 'employee',
+      is_team_lead: employee.is_team_lead === true || employee.is_team_lead === 1,
       experience_years: employee.experience_years ?? '',
       // Payroll & Reporting
       notice_period: employee.notice_period || '',
@@ -557,7 +562,8 @@ const EmployeeManagement = () => {
       tds_applicable: Boolean(employee.tds_applicable),
       tds_percentage: employee.tds_percentage ?? '',
       tds_category: employee.tds_category || '',
-      reporting_manager_id: employee.reporting_manager_id ?? '',
+      reporting_manager_id: '',
+      team_lead_id: employee.team_lead_id ?? '',
       work_location: employee.work_location || '',
       probation_end_date: formatDateForInput(employee.probation_end_date),
       // Consultant
@@ -1264,13 +1270,18 @@ const EmployeeManagement = () => {
         <h3 className="section-title">Organizational Details</h3>
         <div className="form-row-three">
           <div className="form-group">
-            <label>Reporting Manager</label>
-            <select name="reporting_manager_id" value={data.reporting_manager_id} onChange={onChange}>
-              <option value="">Select manager</option>
-              {employees.map(emp => (
-                <option key={emp.id} value={emp.id}>{emp.first_name} {emp.last_name} ({emp.position})</option>
-              ))}
+            <label>Reports To (Team Lead)</label>
+            <select name="team_lead_id" value={data.team_lead_id || ''} onChange={onChange}>
+              <option value="">— None / Not Assigned —</option>
+              {employees
+                .filter(emp => emp.is_team_lead === true || emp.is_team_lead === 1)
+                .map(emp => (
+                  <option key={emp.user_id || emp.id} value={emp.user_id || emp.id}>
+                    {emp.first_name} {emp.last_name}{emp.designation ? ` · ${emp.designation}` : ''}
+                  </option>
+                ))}
             </select>
+            <small style={{ color:'#64748b', fontSize:11 }}>Select the Team Lead this employee reports to.</small>
           </div>
           <div className="form-group">
             <label>Work Location</label>
@@ -1281,6 +1292,29 @@ const EmployeeManagement = () => {
               <option value="Hybrid">Hybrid</option>
               <option value="Client Site">Client Site</option>
             </select>
+          </div>
+        </div>
+      </div>
+
+      {/* Leadership section */}
+      <div className="form-section">
+        <h3 className="section-title">Leadership</h3>
+        <div className="form-row-three">
+          <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', userSelect: 'none' }}>
+              <input
+                type="checkbox"
+                name="is_team_lead"
+                checked={!!data.is_team_lead}
+                onChange={onChange}
+                style={{ width: 18, height: 18, accentColor: '#1C47C9' }}
+              />
+              <span style={{ fontWeight: 600, fontSize: '0.95rem' }}>Is Team Lead</span>
+            </label>
+            <small style={{ color: '#64748b', fontSize: 11, marginTop: 4, display: 'block' }}>
+              When enabled: Team Dashboard, Leave Approvals, Team Attendance, Work Reports, MoM, Performance Management will be automatically granted.
+              This employee will appear in the "Reports To" dropdown for other employees.
+            </small>
           </div>
         </div>
       </div>

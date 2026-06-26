@@ -1,5 +1,6 @@
 // const FaceRecognition = require('../utils/faceRecognition');
 const Employee = require('./employeeModel');
+const { provisionTLModules, revokeTLModules, logTLAction } = require('../teamLead/teamLeadSchema');
 const { pool } = require('../../config/db');
 const { employeeListDto, employeeAdminDto, employeeSelfDto, employeeTeamLeadDto } = require('../../utils/responseDto');
 const crypto = require('crypto');
@@ -212,7 +213,8 @@ const employeeController = {
         bonus, incentives, reimbursements, other_deductions,
         probation_end_date, status,
         gst_number, consultant_type, contract_duration, contract_start_date, contract_end_date,
-        stipend_amount, college_name, internship_duration, internship_start_date, internship_end_date, mentor_id
+        stipend_amount, college_name, internship_duration, internship_start_date, internship_end_date, mentor_id,
+        is_team_lead
       } = req.body;
 
       // Validate required fields
@@ -308,7 +310,30 @@ const employeeController = {
         created_by: req.user?.id || null,
       };
 
+      // Enforce: reporting_manager_id must NOT be set; only reports_to_user_id/team_lead_id is used
+      employeeData.reporting_manager_id = null;
+      // Write reports_to_user_id alongside legacy team_lead_id
+      employeeData.reports_to_user_id = team_lead_id || null;
+
       const result = await Employee.create(req.tenantId, employeeData);
+
+      // TL flag: employment_category=team_lead OR explicit is_team_lead=true from form
+      const explicitTlFlag = is_team_lead === true || is_team_lead === 1 || is_team_lead === 'true';
+      const categoryIsTL   = String(employment_category || '').toLowerCase() === 'team_lead';
+      const shouldBeTL     = explicitTlFlag || categoryIsTL;
+
+      if (shouldBeTL && result.user_id) {
+        try {
+          await pool.execute(
+            `UPDATE users SET is_team_lead = 1 WHERE id = ? AND tenant_id = ?`,
+            [result.user_id, req.tenantId]
+          );
+          await provisionTLModules(req.tenantId, result.user_id, req.user?.id);
+          await logTLAction(req.tenantId, req.user?.id, result.user_id, 'promoted', '0', '1', 0, 'Promoted on employee creation');
+        } catch (tlErr) {
+          console.warn('[createEmployee] TL provisioning warning:', tlErr.message);
+        }
+      }
 
       // Handle department associations if using many-to-many
       if (department_id) {
@@ -522,7 +547,8 @@ const employeeController = {
         bonus, incentives, reimbursements, other_deductions,
         probation_end_date,
         gst_number, consultant_type, contract_duration, contract_start_date, contract_end_date,
-        stipend_amount, college_name, internship_duration, internship_start_date, internship_end_date, mentor_id
+        stipend_amount, college_name, internship_duration, internship_start_date, internship_end_date, mentor_id,
+        is_team_lead
       } = req.body;
 
       const missingFields = validateRequiredEmployeeFields(req.body);
@@ -604,8 +630,82 @@ const employeeController = {
         mentor_id: mentor_id || null,
       };
 
+      // Enforce: reporting_manager_id never set from frontend; only reports_to_user_id/team_lead_id
+      employeeData.reporting_manager_id = null;
+      // Keep both columns in sync for backward compatibility
+      employeeData.reports_to_user_id = team_lead_id || null;
+
       const result = await Employee.update(req.tenantId, id, employeeData);
       const updatedEmployeeId = result.employee_id || id;
+
+      // TL detection: use employment_category === 'team_lead' only (not position string match)
+      const newIsTeamLead = String(employment_category || '').toLowerCase() === 'team_lead';
+      const prevIsTeamLead = String(existingEmployee.employment_category || '').toLowerCase() === 'team_lead';
+
+      // Resolve user_id for this employee record
+      const [[empUserRow]] = await pool.execute(
+        `SELECT employee_id AS user_id FROM employee_details WHERE id = ? AND tenant_id = ? LIMIT 1`,
+        [id, req.tenantId]
+      ).catch(() => [[null]]);
+      const targetUserId = empUserRow?.user_id || existingEmployee.user_id;
+
+      if (targetUserId) {
+        if (newIsTeamLead && !prevIsTeamLead) {
+          // Promoted to TL: set is_team_lead=1 + provision modules
+          try {
+            await pool.execute(
+              `UPDATE users SET is_team_lead = 1 WHERE id = ? AND tenant_id = ?`,
+              [targetUserId, req.tenantId]
+            );
+            await provisionTLModules(req.tenantId, targetUserId, req.user?.id);
+            await logTLAction(req.tenantId, req.user?.id, targetUserId, 'promoted', '0', '1', 0, 'Promoted via employee update');
+          } catch (tlErr) {
+            console.warn('[updateEmployee] TL promotion warning:', tlErr.message);
+          }
+        } else if (!newIsTeamLead && prevIsTeamLead) {
+          // Demoted from TL: clear is_team_lead=0 + revoke TL modules
+          try {
+            await pool.execute(
+              `UPDATE users SET is_team_lead = 0 WHERE id = ? AND tenant_id = ?`,
+              [targetUserId, req.tenantId]
+            );
+            await revokeTLModules(req.tenantId, targetUserId);
+            await logTLAction(req.tenantId, req.user?.id, targetUserId, 'demoted', '1', '0', 0, 'Demoted via employee update');
+          } catch (tlErr) {
+            console.warn('[updateEmployee] TL demotion warning:', tlErr.message);
+          }
+        }
+      }
+
+      // Direct is_team_lead toggle from form: overrides employment_category-based logic
+      // This handles the "Is Team Lead" checkbox that's independent of the category field
+      if (targetUserId && is_team_lead !== undefined) {
+        const explicitFlag = is_team_lead === true || is_team_lead === 1 || is_team_lead === 'true';
+        try {
+          const [[currentUser]] = await pool.execute(
+            `SELECT is_team_lead FROM users WHERE id = ? AND tenant_id = ?`,
+            [targetUserId, req.tenantId]
+          ).catch(() => [[null]]);
+          const currentFlag = currentUser?.is_team_lead ? 1 : 0;
+          const targetFlag  = explicitFlag ? 1 : 0;
+
+          if (currentFlag !== targetFlag) {
+            await pool.execute(
+              `UPDATE users SET is_team_lead = ? WHERE id = ? AND tenant_id = ?`,
+              [targetFlag, targetUserId, req.tenantId]
+            );
+            if (targetFlag === 1) {
+              await provisionTLModules(req.tenantId, targetUserId, req.user?.id);
+              await logTLAction(req.tenantId, req.user?.id, targetUserId, 'promoted', '0', '1', 0, 'Promoted via Is Team Lead checkbox');
+            } else {
+              await revokeTLModules(req.tenantId, targetUserId);
+              await logTLAction(req.tenantId, req.user?.id, targetUserId, 'demoted', '1', '0', 0, 'Demoted via Is Team Lead checkbox');
+            }
+          }
+        } catch (tlErr) {
+          console.warn('[updateEmployee] is_team_lead override warning:', tlErr.message);
+        }
+      }
 
       // Update department association if using many-to-many
       if (department_id !== undefined) {

@@ -2,6 +2,7 @@ require('dotenv').config();
 const http = require('http');
 const multer = require('multer');
 const express = require('express');
+const cookieParser = require('cookie-parser');
 const { Server } = require('socket.io');
 const { setIo } = require('./src/socket/socketInstance');
 const { runHrAutomation } = require('./src/services/hrAutomation');
@@ -27,7 +28,7 @@ const deliveryRoutes = require('./src/features/deliverychallan/deliveryRoutes');
 const shiftRoutes = require('./src/features/shift/shiftRoutes');
 const incrementLetterRoutes = require('./src/features/employee/incrementLetterRoutes');
 const experienceLetterRoutes = require('./src/features/employee/experienceLetterRoutes');
-const declarationFormRoutes = require('./src/features/employee/declarationFormRoutes');
+// Tax Declaration removed (Phase 6)
 const resignationRoutes = require('./src/features/employee/resignationRoutes');
 const expenseRoutes = require('./src/features/expense/expenseRoutes');
 const attendanceRoutes = require('./src/features/attendance/attendanceRoutes');
@@ -49,6 +50,8 @@ const leadRoutes = require('./src/features/leads/leadRoutes');
 const { ensureLeadSchema } = require('./src/features/leads/leadSchema');
 const employeeDocumentRoutes = require('./src/features/employeeDocuments/employeeDocumentRoutes');
 const { ensureEmployeeDocumentSchema } = require('./src/features/employeeDocuments/employeeDocumentSchema');
+const teamLeadRoutes = require('./src/features/teamLead/teamLeadRoutes');
+const { ensureTeamLeadSchema } = require('./src/features/teamLead/teamLeadSchema');
 const payrollComplianceRoutes = require('./src/features/payrollCompliance/payrollComplianceRoutes');
 const { ensurePayrollComplianceSchema } = require('./src/features/payrollCompliance/payrollComplianceSchema');
 const recruitmentRoutes = require('./src/features/recruitment/recruitmentRoutes');
@@ -118,8 +121,16 @@ const io = new Server(httpServer, {
 setIo(io);
 
 const _jwtForSocket = require('jsonwebtoken');
+const _cookieParser = require('cookie');
 io.use((socket, next) => {
-  const token = socket.handshake.auth?.token || socket.handshake.query?.token;
+  // Try auth.token (explicit), then cookie (browser), then query param (legacy)
+  let token = socket.handshake.auth?.token || socket.handshake.query?.token;
+  if (!token) {
+    try {
+      const cookies = _cookieParser.parse(socket.handshake.headers.cookie || '');
+      token = cookies.access_token;
+    } catch { /* no cookies */ }
+  }
   if (!token) return next(new Error('Authentication required'));
   try {
     const decoded = _jwtForSocket.verify(token, process.env.JWT_SECRET);
@@ -138,6 +149,7 @@ io.on('connection', (socket) => {
 });
 
 app.use(require('./src/middleware/securityHeaders'));
+app.use(cookieParser());
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 
@@ -253,6 +265,7 @@ const { authLimiter, apiLimiter } = require('./src/middleware/rateLimit');
 
 app.use('/api', apiLimiter);
 app.use('/api/employees', employeeRoutes);
+app.use('/api/team-leads', teamLeadRoutes);
 app.use('/api/auth', (req, res, next) => req.method === 'GET' ? next() : authLimiter(req, res, next), authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/super-admin', superAdminRoutes);
@@ -268,7 +281,7 @@ app.use('/api/expenses', expenseRoutes);
 app.use('/api/projects', require('./src/features/projects/projectRoutes'));
 app.use('/api/increment-letters', incrementLetterRoutes);
 app.use('/api/experience-letters', experienceLetterRoutes);
-app.use('/api/declaration-form', declarationFormRoutes);
+// /api/declaration-form removed (Phase 6)
 app.use('/api/resignation-requests', resignationRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/leaves', leaveRoutes);
@@ -298,6 +311,22 @@ app.use('/api/recruitment', recruitmentRoutes);
 app.use('/api/onboarding', onboardingRoutes);
 app.use('/api/grievance', grievanceRoutes);
 app.use('/api/user-management', require('./src/features/userManagement/userManagementRoutes'));
+
+// Phase 1 — Enterprise Shift Management
+app.use('/api/shift-workforce', require('./src/features/shift/shiftTemplateRoutes'));
+// Phase 3 — Notes & Reminders
+app.use('/api/workspace', require('./src/features/notesReminders/notesRemindersRoutes'));
+// Phase 4 — WFH Workflow
+app.use('/api/wfh', require('./src/features/wfh/wfhRoutes'));
+// Phase 5 — Biometric / Face Recognition
+app.use('/api/biometric', require('./src/features/biometric/biometricRoutes'));
+// Phase 7 — Role-Aware AI Assistant
+app.use('/api/ai-chat', require('./src/features/aiChat/aiChatRoutes'));
+// Universal Approval Engine
+const approvalRoutes = require('./src/features/approval/approvalRoutes');
+app.use('/api/approvals', approvalRoutes);
+// Load module integrations (registers engine callbacks for leave/wfh/expense/etc.)
+require('./src/features/approval/moduleIntegrations');
 
 app.use((req, res) => {
   return sendResponse(res, 404, false, 'Route not found', null);
@@ -346,6 +375,7 @@ const startServer = async () => {
     await runSchema('attendance', ensureAttendanceSchema);
     await runSchema('passwordReset', ensurePasswordResetSchema);
     await runSchema('firstLogin', ensureFirstLoginSchema);
+    await runSchema('refreshTokens', () => require('./src/features/login/refreshTokenSchema').ensureRefreshTokenSchema());
     await runSchema('salary', ensureSalarySchema);
     await runSchema('serviceSetting', ensureServiceSettingSchema);
     await runSchema('leave', ensureLeaveSchema);
@@ -368,6 +398,11 @@ const startServer = async () => {
     await runSchema('recruitment', ensureRecruitmentSchema);
     await runSchema('onboarding', ensureOnboardingSchema);
     await runSchema('grievance', ensureGrievanceSchema);
+    await runSchema('wfh', () => require('./src/features/wfh/wfhRoutes').ensureSchema());
+    await runSchema('notesReminders', () => require('./src/features/notesReminders/notesRemindersRoutes').ensureSchema());
+    await runSchema('aiChat', () => require('./src/features/aiChat/aiChatRoutes').ensureSchema());
+    await runSchema('shiftWorkforce', () => require('./src/features/shift/shiftTemplateRoutes').ensureSchema());
+    await runSchema('approvalEngine', () => require('./src/features/approval/approvalRoutes').ensureSchema());
 
     try {
       const { runDbOptimizations } = require('./src/utils/dbOptimizations');
@@ -375,6 +410,23 @@ const startServer = async () => {
       logger.info('DB optimizations applied');
     } catch (e) {
       console.warn('[db-opt] Non-fatal optimization error:', e.message);
+    }
+
+    // Phase 7: auth audit log schema (login events)
+    try {
+      const { ensureAuthAuditSchema } = require('./src/features/login/authAuditSchema');
+      await ensureAuthAuditSchema();
+      logger.info('Auth audit log schema ready');
+    } catch (e) {
+      console.warn('[auth-audit] Non-fatal schema error:', e.message);
+    }
+
+    // Team Lead architecture: is_team_lead flag, reports_to_user_id, tl_audit_log
+    try {
+      await ensureTeamLeadSchema();
+      logger.info('Team Lead schema ready');
+    } catch (e) {
+      console.warn('[team-lead] Non-fatal schema error:', e.message);
     }
 
     httpServer.listen(PORT, () => {

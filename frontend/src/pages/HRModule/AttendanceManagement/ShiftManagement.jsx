@@ -1,9 +1,9 @@
-﻿import React, { useState, useEffect } from 'react';
-import { FaExclamationTriangle, FaStar, FaCrown } from 'react-icons/fa';
+﻿﻿import React, { useState, useEffect, useCallback } from 'react';
+import { FaExclamationTriangle, FaStar, FaCrown, FaSyncAlt, FaTasks, FaCalendarAlt } from 'react-icons/fa';
 import { shiftAPI } from '../../../services/shiftAPI';
 import './ShiftManagement.css';
 
-const ShiftManagement = () => {
+const ShiftTemplates = () => {
   // ==================== SHIFT MANAGEMENT STATE ====================
   const [shiftData, setShiftData] = useState([]);
   const [availableEmployees, setAvailableEmployees] = useState([]);
@@ -15,11 +15,16 @@ const ShiftManagement = () => {
   const [shiftToSetDefault, setShiftToSetDefault] = useState(null);
   const [newShift, setNewShift] = useState({
     shift_name: '',
+    shift_code: '',
+    description: '',
+    shift_type: 'General',
     check_in_time: '',
     check_out_time: '',
+    break_duration: 60,
+    min_hours: 8,
     employees: [],
     is_default: false,
-    grace_period_minutes: 15  // Default value, but fully editable
+    grace_period_minutes: 15
   });
 
   // Load initial data
@@ -41,23 +46,16 @@ const ShiftManagement = () => {
     }
   };
 
- const loadAvailableEmployees = async () => {
+  const loadAvailableEmployees = async () => {
     try {
-       
-        const response = await shiftAPI.getEmployees();
-    
-        
-        const employees = response.data?.employees || [];
-       
-        
-        setAvailableEmployees(employees);
+      const response = await shiftAPI.getEmployees();
+      setAvailableEmployees(response.data.employees || []);
     } catch (error) {
-        console.error('Error loading employees:', error);
-        console.error('Error response:', error.response);
-      
-        setAvailableEmployees([]);
+      console.error('Error loading employees:', error);
+      alert('Error loading available employees.');
+      setAvailableEmployees([]);
     }
-};
+  };
 
   const loadShiftEmployees = async (shiftId) => {
     try {
@@ -69,32 +67,41 @@ const ShiftManagement = () => {
     }
   };
 
-  
   const handleAddShift = () => {
     setIsShiftModalOpen(true);
     setSelectedShift(null);
     setNewShift({
       shift_name: '',
+      shift_code: '',
+      description: '',
+      shift_type: 'General',
       check_in_time: '',
       check_out_time: '',
+      break_duration: 60,
+      min_hours: 8,
       employees: [],
       is_default: false,
       grace_period_minutes: 15
     });
   };
 
- const handleSaveShift = async () => {
+  const handleSaveShift = async () => {
     if (newShift.shift_name && newShift.check_in_time && newShift.check_out_time) {
         try {
             const saveData = {
                 shift_name: newShift.shift_name,
+                shift_code: newShift.shift_code,
+                description: newShift.description,
+                shift_type: newShift.shift_type,
                 check_in_time: newShift.check_in_time,
                 check_out_time: newShift.check_out_time,
+                break_duration: newShift.break_duration || 60,
+                min_hours: newShift.min_hours || 8,
                 grace_period_minutes: newShift.grace_period_minutes || 15,
                 is_default: newShift.is_default || false,
                 employees: newShift.employees || []
             };
-            
+
             await shiftAPI.create(saveData);
             await loadShiftData();
             setIsShiftModalOpen(false);
@@ -106,7 +113,7 @@ const ShiftManagement = () => {
     } else {
         alert('Please fill all required fields!');
     }
-};
+  };
 
   const handleViewEmployees = async (shift) => {
     try {
@@ -128,11 +135,16 @@ const ShiftManagement = () => {
       setSelectedShift(shift);
       setNewShift({
         shift_name: shift.shift_name || '',
+        shift_code: shift.shift_code || '',
+        description: shift.description || '',
+        shift_type: shift.shift_type || 'General',
         check_in_time: shift.check_in_time || '',
         check_out_time: shift.check_out_time || '',
+        break_duration: shift.break_duration || 60,
+        min_hours: shift.min_hours || 8,
         employees: employees.map(employee => employee.employee_id),
         is_default: shift.is_default || false,
-        grace_period_minutes: shift.grace_period_minutes || 0
+        grace_period_minutes: shift.grace_period_minutes || 15
       });
       setIsShiftModalOpen(true);
     } catch (error) {
@@ -172,17 +184,22 @@ const ShiftManagement = () => {
     }
   };
 
- const handleUpdateShift = async () => {
+  const handleUpdateShift = async () => {
     if (newShift.shift_name && newShift.check_in_time && newShift.check_out_time) {
         try {
             const updateData = {
                 shift_name: newShift.shift_name,
+                shift_code: newShift.shift_code,
+                description: newShift.description,
+                shift_type: newShift.shift_type,
                 check_in_time: newShift.check_in_time,
                 check_out_time: newShift.check_out_time,
+                break_duration: newShift.break_duration || 60,
+                min_hours: newShift.min_hours || 8,
                 grace_period_minutes: newShift.grace_period_minutes || 15,
                 employees: newShift.employees || []
             };
-            
+
             await shiftAPI.update(selectedShift.shift_id, updateData);
             await loadShiftData();
             setIsShiftModalOpen(false);
@@ -195,7 +212,7 @@ const ShiftManagement = () => {
     } else {
         alert('Please fill all required fields!');
     }
-};
+  };
   const formatTime = (timeString) => {
     if (!timeString) return '';
     return timeString.substring(0, 5);
@@ -212,16 +229,10 @@ const ShiftManagement = () => {
   }
 
   return (
-    <div className="lm-container" id="lm-main-container">
-      {/* Header */}
-      <div className="lm-header">
-        <h2 id="lm-main-title">Shift Management</h2>
-      </div>
-
-      {/* ==================== SHIFT MANAGEMENT SECTION ==================== */}
+    <>
       <div className="lm-table-container lm-glass-effect" style={{marginBottom: '2rem'}}>
         <div className="lm-table-header">
-          <h3 id="lm-shift-section-title">Shift Management</h3>
+          <h3 id="lm-shift-section-title">Shift Templates</h3>
           <button
             onClick={handleAddShift}
             className="lm-primary-btn"
@@ -237,7 +248,7 @@ const ShiftManagement = () => {
               <tr>
                 <th style={{width: '20%'}}>Shift Name</th>
                 <th style={{width: '15%'}}>Shift Times</th>
-                <th style={{width: '15%'}}>Grace Period</th>
+                <th style={{width: '10%'}}>Grace Period</th>
                 <th style={{width: '12%'}}>Status</th>
                 <th style={{width: '13%'}}>Employees</th>
                 <th style={{width: '30%'}}>Actions</th>
@@ -357,6 +368,24 @@ const ShiftManagement = () => {
                     placeholder="Enter shift name"
                   />
                 </div>
+
+                <div className="lm-form-row">
+                  <div className="lm-form-field">
+                    <label>Shift Code</label>
+                    <input
+                      type="text"
+                      value={newShift.shift_code}
+                      onChange={(e) => setNewShift(prev => ({...prev, shift_code: e.target.value}))}
+                      placeholder="e.g., MORNING_01"
+                    />
+                  </div>
+                  <div className="lm-form-field">
+                    <label>Shift Type</label>
+                    <select value={newShift.shift_type} onChange={(e) => setNewShift(prev => ({...prev, shift_type: e.target.value}))}>
+                      <option>General</option><option>Morning</option><option>Evening</option><option>Night</option><option>Flexible</option><option>Rotational</option>
+                    </select>
+                  </div>
+                </div>
                 
                 <div className="lm-form-row">
                   <div className="lm-form-field">
@@ -377,7 +406,26 @@ const ShiftManagement = () => {
                   </div>
                 </div>
 
-                {/* Fully Editable Grace Period - No restrictions */}
+                <div className="lm-form-row">
+                  <div className="lm-form-field">
+                    <label>Minimum Hours</label>
+                    <input
+                      type="number"
+                      value={newShift.min_hours}
+                      onChange={(e) => setNewShift(prev => ({...prev, min_hours: parseInt(e.target.value) || 0}))}
+                      min="0"
+                    />
+                  </div>
+                  <div className="lm-form-field">
+                    <label>Break Duration (minutes)</label>
+                    <input
+                      type="number"
+                      value={newShift.break_duration}
+                      onChange={(e) => setNewShift(prev => ({...prev, break_duration: parseInt(e.target.value) || 0}))}
+                      min="0"
+                    />
+                  </div>
+                </div>
                 <div className="lm-form-field">
                   <label>Grace Period (minutes)</label>
                   <input
@@ -394,6 +442,16 @@ const ShiftManagement = () => {
                   </small>
                 </div>
 
+                <div className="lm-form-field">
+                  <label>Description</label>
+                  <textarea
+                    value={newShift.description}
+                    onChange={(e) => setNewShift(prev => ({...prev, description: e.target.value}))}
+                    placeholder="Optional: Add a short description for this shift"
+                    rows="2"
+                  />
+                </div>
+
                 {!selectedShift && (
                   <div className="lm-form-field lm-checkbox-field">
                     <label className="lm-checkbox-label">
@@ -403,7 +461,7 @@ const ShiftManagement = () => {
                         onChange={(e) => setNewShift(prev => ({...prev, is_default: e.target.checked}))}
                       />
                       <span className="lm-checkbox-custom"></span>
-                      Set as default shift for all Employees
+                      Set as default shift for all employees
                     </label>
                     <small className="lm-checkbox-description">
                       When checked, this shift will be automatically assigned to all employees without specific shift assignments.
@@ -415,7 +473,7 @@ const ShiftManagement = () => {
                   <label>Assign Employees (Optional)</label>
                   <select
                     multiple
-                    value={newShift.employees || []}
+                    value={newShift.employees}
                     onChange={(e) => setNewShift(prev => ({
                       ...prev, 
                       employees: Array.from(e.target.selectedOptions, option => option.value)
@@ -594,6 +652,69 @@ const ShiftManagement = () => {
           </div>
         </div>
       )}
+    </>
+  );
+};
+
+const ShiftRotation = () => (
+  <div className="placeholder-content">
+    <FaSyncAlt className="placeholder-icon" />
+    <h3>Shift Rotation Engine</h3>
+    <p>This feature is coming soon.</p>
+    <p className="no-data-subtext">
+      You will be able to create and manage automated shift rotation schedules for different teams and departments.
+    </p>
+  </div>
+);
+
+const RosterManagement = () => (
+  <div className="placeholder-content">
+    <FaTasks className="placeholder-icon" />
+    <h3>Roster Management</h3>
+    <p>This feature is coming soon.</p>
+    <p className="no-data-subtext">
+      This section will provide tools to build, manage, and publish weekly or monthly employee rosters.
+    </p>
+  </div>
+);
+
+const ShiftManagement = () => {
+  const [activeTab, setActiveTab] = useState('templates');
+
+  const renderTabContent = useCallback(() => {
+    switch (activeTab) {
+      case 'templates':
+        return <ShiftTemplates />;
+      case 'rotation':
+        return <ShiftRotation />;
+      case 'roster':
+        return <RosterManagement />;
+      default:
+        return <ShiftTemplates />;
+    }
+  }, [activeTab]);
+
+  return (
+    <div className="lm-container" id="lm-main-container">
+      <div className="lm-header">
+        <h2 id="lm-main-title">Enterprise Shift Management</h2>
+      </div>
+
+      <div className="lm-tabs">
+        <button onClick={() => setActiveTab('templates')} className={`lm-tab-btn ${activeTab === 'templates' ? 'active' : ''}`}>
+          <FaCalendarAlt /> Shift Templates
+        </button>
+        <button onClick={() => setActiveTab('rotation')} className={`lm-tab-btn ${activeTab === 'rotation' ? 'active' : ''}`}>
+          <FaSyncAlt /> Shift Rotation
+        </button>
+        <button onClick={() => setActiveTab('roster')} className={`lm-tab-btn ${activeTab === 'roster' ? 'active' : ''}`}>
+          <FaTasks /> Roster Management
+        </button>
+      </div>
+
+      <div className="lm-tab-content">
+        {renderTabContent()}
+      </div>
     </div>
   );
 };

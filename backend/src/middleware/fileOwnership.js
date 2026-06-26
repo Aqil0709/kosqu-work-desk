@@ -51,9 +51,10 @@ const checkFileOwnership = async (req, res, next) => {
       if (isHrAdmin || Number(projDocs[0].user_id) === Number(userId)) return next();
       // Also allow TL / reporting manager access
       const [tlCheck] = await pool.execute(
-        `SELECT id FROM employee_details
-         WHERE tenant_id = ? AND employee_id = (SELECT employee_id FROM project_docs WHERE file_path = ? AND tenant_id = ? LIMIT 1)
-           AND (reporting_manager_id = ? OR team_lead_id = ?) LIMIT 1`,
+        `SELECT ed.id FROM employee_details ed
+         JOIN project_docs pd ON pd.employee_id = ed.employee_id AND pd.tenant_id = ed.tenant_id
+         WHERE ed.tenant_id = ? AND pd.file_path = ? AND pd.tenant_id = ?
+           AND (ed.reporting_manager_id = ? OR ed.team_lead_id = ?) LIMIT 1`,
         [tenantId, dbPath, tenantId, userId, userId]
       ).catch(() => [[]]);
       if (tlCheck.length > 0) return next();

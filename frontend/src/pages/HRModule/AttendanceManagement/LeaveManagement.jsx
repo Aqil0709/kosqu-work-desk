@@ -136,38 +136,62 @@ const LeaveManagement = () => {
     }
 };
 
+  // Rejection reason state
+  const [rejectReason, setRejectReason] = useState('');
+
   // Leave Functions
-  const handleApproveLeave = async (leaveId) => {
+  const callLeaveAPI = async (method, url, data = {}) => {
+    const api = (await import('../../../services/api.js')).default;
+    return method === 'put' ? api.put(url, data) : api.post(url, data);
+  };
+
+  const handleApproveLeave = async (leaveId, stage = null) => {
     try {
-      await leaveAPI.approve(leaveId);
-      showToast('Leave approved successfully!', 'success');
+      if (stage === 'tl') {
+        await callLeaveAPI('put', `/leaves/${leaveId}/tl-approve`, { action: 'approve' });
+        showToast('Team Lead approval recorded!', 'success');
+      } else if (stage === 'client') {
+        await callLeaveAPI('put', `/leaves/${leaveId}/client-approve`, { action: 'approve' });
+        showToast('Client approval recorded!', 'success');
+      } else if (stage === 'hr') {
+        await callLeaveAPI('put', `/leaves/${leaveId}/hr-approve`, { action: 'approve' });
+        showToast('HR approval recorded!', 'success');
+      } else {
+        await leaveAPI.approve(leaveId);
+        showToast('Leave approved successfully!', 'success');
+      }
       loadLeaveData();
-      
-      // Update balance drawer for this employee if expanded
       const leaveItem = leaveData.find(item => item.leave_id === leaveId);
       if (leaveItem && employeeBalances[leaveItem.employee_id]) {
         loadEmployeeBalances(leaveItem.employee_id);
       }
     } catch (error) {
-      console.error('Error approving leave:', error);
       const errorMessage = error.response?.data?.message || 'Error approving leave. Please try again.';
       showToast(errorMessage, 'danger');
     }
   };
 
-  const handleRejectLeave = async (leaveId) => {
+  const handleRejectLeave = async (leaveId, stage = null) => {
     try {
-      await leaveAPI.reject(leaveId);
+      const remarks = rejectReason || undefined;
+      if (stage === 'tl') {
+        await callLeaveAPI('put', `/leaves/${leaveId}/tl-approve`, { action: 'reject', remarks });
+      } else if (stage === 'client') {
+        await callLeaveAPI('put', `/leaves/${leaveId}/client-approve`, { action: 'reject', remarks });
+      } else if (stage === 'hr') {
+        await callLeaveAPI('put', `/leaves/${leaveId}/hr-approve`, { action: 'reject', remarks });
+      } else {
+        await leaveAPI.reject(leaveId, { remarks });
+      }
       setIsRejectConfirmOpen(false);
+      setRejectReason('');
       showToast('Leave rejected successfully!', 'success');
       loadLeaveData();
-      
       const leaveItem = leaveData.find(item => item.leave_id === leaveId);
       if (leaveItem && employeeBalances[leaveItem.employee_id]) {
         loadEmployeeBalances(leaveItem.employee_id);
       }
     } catch (error) {
-      console.error('Error rejecting leave:', error);
       const errorMessage = error.response?.data?.message || 'Error rejecting leave. Please try again.';
       showToast(errorMessage, 'danger');
     }
@@ -444,70 +468,53 @@ const LeaveManagement = () => {
                     </td>
                     <td style={{width: '12%'}}>
                       {getStatusBadgeClass(leave.status)}
-                      {/* v2: show sequential approval progress */}
-                      {leave.approval_level && leave.status === 'Pending' && (
-                        <div style={{ fontSize: 11, marginTop: 4, color: 'var(--theme-text-muted,#6b7280)' }}>
+                      {/* Workflow stage progress pills */}
+                      {leave.status === 'Pending' && (
+                        <div style={{ display:'flex', gap:3, flexWrap:'wrap', marginTop:5 }}>
                           {[
-                            { key: 'tl', label: 'TL', status: leave.tl_status },
-                            { key: 'pl', label: 'PL', status: leave.pl_status },
-                            { key: 'hr', label: 'HR', status: String(leave.status||'').toLowerCase() === 'approved' ? 'approved' : (leave.approval_level === 'done' ? 'approved' : 'pending') },
-                          ].map((step, i) => (
-                            <span key={step.key} style={{
-                              display: 'inline-block', marginRight: 4,
-                              color: step.status === 'approved' ? '#22c55e' : step.status === 'rejected' ? '#ef4444' : 'var(--theme-text-muted,#9ca3af)',
-                              fontWeight: 600
-                            }}>{step.label}:{step.status === 'approved' ? '✓' : step.status === 'rejected' ? '✗' : '...'}</span>
-                          ))}
+                            { key:'tl', label:'TL', st: leave.tl_status },
+                            { key:'client', label:'Client', st: leave.client_status },
+                            { key:'hr', label:'HR', st: leave.hr_status },
+                          ].map(step => {
+                            const c = step.st === 'approved' ? '#10b981' : step.st === 'rejected' ? '#ef4444' : step.st === 'skipped' ? '#94a3b8' : '#f59e0b';
+                            return (
+                              <span key={step.key} style={{ padding:'1px 6px', borderRadius:99, fontSize:10, fontWeight:700, background: c+'22', color: c, border:`1px solid ${c}55` }}>
+                                {step.label} {step.st === 'approved' ? '✓' : step.st === 'rejected' ? '✗' : step.st === 'skipped' ? '—' : '…'}
+                              </span>
+                            );
+                          })}
                         </div>
                       )}
                     </td>
                     <td style={{width: '15%'}}>
                       <div className="leave-actions-container">
-                        {/* v2: TL approval button */}
-                        {leave.status === 'Pending' && leave.approval_level === 'tl' && (
-                          <button
-                            onClick={async (e) => { e.stopPropagation(); if(window.confirm('TL Approve this leave?')) { try { const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001'; await (await import('axios')).default.put(`${API_BASE}/api/leaves/${leave.leave_id}/tl-approve`, { action: 'approve' }, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }); showToast('TL approved!'); loadLeaveData(); } catch(err) { showToast(err.response?.data?.message || 'Error', 'danger'); } } }}
-                            className="leave-action-btn leave-approve-btn quick-action"
-                            title="TL Approve"
-                          >TL Approve</button>
-                        )}
-                        {/* v2: PL approval button */}
-                        {leave.status === 'Pending' && leave.approval_level === 'pl' && (
-                          <button
-                            onClick={async (e) => { e.stopPropagation(); if(window.confirm('PL Approve this leave?')) { try { const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001'; await (await import('axios')).default.put(`${API_BASE}/api/leaves/${leave.leave_id}/pl-approve`, { action: 'approve' }, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }); showToast('PL approved!'); loadLeaveData(); } catch(err) { showToast(err.response?.data?.message || 'Error', 'danger'); } } }}
-                            className="leave-action-btn leave-approve-btn quick-action"
-                            title="PL Approve"
-                          >PL Approve</button>
-                        )}
-                        {/* Standard HR approve (when approval_level === 'hr' or no sequential workflow) */}
-                        {leave.status === 'Pending' && (!leave.approval_level || leave.approval_level === 'hr') && (
-                          <>
-                            <button
-                              onClick={(e) => handleQuickApprove(leave.leave_id, e)}
-                              className="leave-action-btn leave-approve-btn quick-action"
-                              title="Approve Leave"
-                            >
-                              Approve
-                            </button>
-                            <button
-                              onClick={(e) => handleQuickReject(leave, e)}
-                              className="leave-action-btn leave-reject-btn quick-action"
-                              title="Reject Leave"
-                            >
-                              Reject
-                            </button>
-                            <button
-                              onClick={(e) => handleQuickDelete(leave, e)}
-                              className="leave-action-btn leave-delete-btn quick-action"
-                              title="Delete Leave"
-                            >
-                              Delete
-                            </button>
-                          </>
-                        )}
+                        {leave.status === 'Pending' && (() => {
+                          const level = leave.approval_level || 'hr';
+                          return (
+                            <>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); if(window.confirm(`Approve at ${level.toUpperCase()} stage?`)) handleApproveLeave(leave.leave_id, level); }}
+                                className="leave-action-btn leave-approve-btn quick-action"
+                                title={`Approve (${level.toUpperCase()} stage)`}
+                              >
+                                {level === 'tl' ? 'TL ✓' : level === 'client' ? 'Client ✓' : level === 'admin' ? 'Admin ✓' : 'HR ✓'}
+                              </button>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); setSelectedEmployee({ ...leave, _stage: level }); setIsRejectConfirmOpen(true); }}
+                                className="leave-action-btn leave-reject-btn quick-action"
+                                title="Reject Leave"
+                              >✕</button>
+                              <button
+                                onClick={(e) => handleQuickDelete(leave, e)}
+                                className="leave-action-btn leave-delete-btn quick-action"
+                                title="Delete Leave"
+                              >🗑</button>
+                            </>
+                          );
+                        })()}
                         {leave.status !== 'Pending' && (
                           <span className="leave-processed-text">
-                            Processed on {formatDate(leave.approved_at)}
+                            Processed {formatDate(leave.hr_approved_at || leave.approved_at)}
                           </span>
                         )}
                       </div>
@@ -570,21 +577,32 @@ const LeaveManagement = () => {
                 Reject Leave Request?
               </h3>
               <p className="leave-delete-message">
-                Are you sure you want to reject the leave request from <strong>{selectedEmployee.employee_name}</strong>? 
-                This action will mark the leave as rejected and notify the employee.
+                Reject leave request from <strong>{selectedEmployee.employee_name}</strong>?
               </p>
+              <div style={{ marginBottom: 14 }}>
+                <label style={{ fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 6, color: 'var(--theme-text,#334155)' }}>
+                  Rejection Reason <span style={{ color:'#94a3b8', fontWeight:400 }}>(optional)</span>
+                </label>
+                <textarea
+                  value={rejectReason}
+                  onChange={e => setRejectReason(e.target.value)}
+                  placeholder="Enter reason for rejection..."
+                  rows={3}
+                  style={{ width:'100%', borderRadius:8, border:'1px solid var(--card-border,#e2e8f0)', padding:'8px 11px', fontSize:13, resize:'vertical', background:'var(--card-bg,#fff)', color:'var(--theme-text,#0f172a)', boxSizing:'border-box' }}
+                />
+              </div>
 
               <div className="leave-delete-actions">
                 <button
                   type="button"
-                  onClick={() => setIsRejectConfirmOpen(false)}
+                  onClick={() => { setIsRejectConfirmOpen(false); setRejectReason(''); }}
                   className="leave-cancel-btn"
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
-                  onClick={() => handleRejectLeave(selectedEmployee.leave_id)}
+                  onClick={() => handleRejectLeave(selectedEmployee.leave_id, selectedEmployee._stage)}
                   className="leave-reject-btn"
                 >
                   Reject Leave

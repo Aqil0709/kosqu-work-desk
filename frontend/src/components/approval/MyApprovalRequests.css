@@ -1,0 +1,36 @@
+.my-requests { padding: 24px; max-width: 1200px; margin: 0 auto; }
+.my-requests__header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }
+.my-requests__header h2 { margin: 0; font-size: 1.4rem; font-weight: 700; color: #1a1a2e; }
+.my-requests__filters { display: flex; gap: 8px; }
+.my-requests__filters select { padding: 7px 10px; border: 1.5px solid #dee2e6; border-radius: 7px; font-size: 0.85rem; }
+.my-requests__loading, .my-requests__empty { text-align: center; padding: 40px; color: #6c757d; }
+.my-requests__layout { display: grid; grid-template-columns: 360px 1fr; gap: 20px; align-items: start; }
+@media (max-width: 900px) { .my-requests__layout { grid-template-columns: 1fr; } }
+.my-requests__list { display: flex; flex-direction: column; gap: 10px; max-height: 80vh; overflow-y: auto; }
+.my-requests__card { background: #fff; border: 1.5px solid #e9ecef; border-radius: 10px; padding: 14px 16px; cursor: pointer; transition: all 0.15s; }
+.my-requests__card:hover, .my-requests__card.active { border-color: #0d6efd; box-shadow: 0 0 0 3px rgba(13,110,253,0.08); }
+.my-requests__card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.my-requests__module { font-size: 0.75rem; font-weight: 600; background: #e9ecef; color: #495057; padding: 3px 10px; border-radius: 20px; }
+.my-requests__status { font-size: 0.75rem; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
+.my-requests__title { font-size: 0.93rem; font-weight: 600; color: #212529; margin-bottom: 6px; }
+.my-requests__meta { display: flex; gap: 12px; font-size: 0.78rem; color: #6c757d; flex-wrap: wrap; }
+.my-requests__detail { background: #fff; border: 1.5px solid #e9ecef; border-radius: 12px; padding: 22px; max-height: 80vh; overflow-y: auto; }
+.my-requests__detail-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 16px; }
+.my-requests__detail-header h3 { margin: 0; font-size: 1.05rem; font-weight: 700; color: #1a1a2e; flex: 1; }
+.my-requests__withdraw-btn { padding: 6px 14px; background: #f8d7da; color: #842029; border: none; border-radius: 7px; cursor: pointer; font-size: 0.82rem; font-weight: 600; white-space: nowrap; }
+.my-requests__rejection { background: #f8d7da; color: #58151c; padding: 10px 14px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 16px; }
+.my-requests__timeline h4, .my-requests__comments h4 { font-size: 0.9rem; font-weight: 700; color: #495057; margin: 0 0 12px; }
+.my-requests__step { display: flex; gap: 12px; padding-bottom: 16px; }
+.my-requests__step-dot { width: 28px; height: 28px; border-radius: 50%; background: #e9ecef; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; flex-shrink: 0; }
+.my-requests__step--approved .my-requests__step-dot   { background: #d1e7dd; }
+.my-requests__step--rejected .my-requests__step-dot   { background: #f8d7da; }
+.my-requests__step--pending  .my-requests__step-dot   { background: #fff3cd; }
+.my-requests__step-body { flex: 1; padding-top: 2px; }
+.my-requests__step-name { font-size: 0.88rem; font-weight: 600; color: #212529; }
+.my-requests__step-who  { font-size: 0.78rem; color: #6c757d; margin-top: 2px; }
+.my-requests__step-remarks { font-size: 0.8rem; font-style: italic; color: #495057; margin-top: 4px; }
+.my-requests__comments { margin-top: 20px; padding-top: 16px; border-top: 1px solid #e9ecef; }
+.my-requests__comment { background: #f8f9fa; border-radius: 8px; padding: 10px 14px; margin-bottom: 8px; font-size: 0.85rem; }
+.my-requests__comment strong { color: #212529; }
+.my-requests__comment span { color: #6c757d; font-size: 0.78rem; }
+.my-requests__comment p { margin: 6px 0 0; color: #495057; }

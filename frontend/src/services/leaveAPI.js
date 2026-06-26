@@ -2,56 +2,64 @@
 import api from './api';
 
 export const leaveAPI = {
-  // ==================== ADMIN ENDPOINTS ====================
-  
-  // Get all leave requests (for admin)
+  // ==================== ADMIN / HR ENDPOINTS ====================
+
   getAll: (filters = {}) => {
     const params = new URLSearchParams();
-    if (filters.status) params.append('status', filters.status);
+    if (filters.status)     params.append('status', filters.status);
     if (filters.leave_type) params.append('leave_type', filters.leave_type);
+    if (filters.employee_id) params.append('employee_id', filters.employee_id);
     return api.get(`/leaves?${params.toString()}`);
   },
 
-  // Approve leave request (admin)
-  approve: (leaveId) => api.post(`/leaves/${leaveId}/approve`),
+  // Direct HR/Admin approve (skips all stages)
+  approve: (leaveId, data = {}) => api.post(`/leaves/${leaveId}/approve`, data),
 
-  // Reject leave request (admin)
-  reject: (leaveId) => api.post(`/leaves/${leaveId}/reject`),
+  // Direct HR/Admin reject
+  reject: (leaveId, data = {}) => api.post(`/leaves/${leaveId}/reject`, data),
 
-  // Get leave statistics (admin)
+  // Stage-specific approvals
+  tlApprove:     (leaveId, data = {}) => api.put(`/leaves/${leaveId}/tl-approve`, data),
+  clientApprove: (leaveId, data = {}) => api.put(`/leaves/${leaveId}/client-approve`, data),
+  hrApprove:     (leaveId, data = {}) => api.put(`/leaves/${leaveId}/hr-approve`, data),
+
+  // Pending approvals for the current approver
+  getPendingApprovals: (level = null) => {
+    const q = level ? `?level=${level}` : '';
+    return api.get(`/leaves/pending-approvals${q}`);
+  },
+
+  // Full audit trail for a leave
+  getAuditTrail: (leaveId) => api.get(`/leaves/audit/${leaveId}`),
+
   getStats: () => api.get('/leaves/stats'),
 
-  // Get employee attendance history (admin)
   getEmployeeAttendanceHistory: (employeeId) => api.get(`/leaves/history/${employeeId}`),
 
-  // Get leave balances for a specific employee (admin)
-  getBalances: (employeeId, year = new Date().getFullYear()) => 
+  getBalances: (employeeId, year = new Date().getFullYear()) =>
     api.get(`/leaves/balances/${employeeId}?year=${year}`),
 
-  // Get all leave types for HR settings
   getLeaveTypeSettings: () => api.get('/leaves/types/settings'),
 
-  // Create a leave type (HR settings)
-  createLeaveType: (leaveTypeData) => api.post('/leaves/types', leaveTypeData),
+  createLeaveType: (data) => api.post('/leaves/types', data),
 
-  // Update leave type settings
-  updateLeaveType: (typeId, leaveTypeData) => api.put(`/leaves/types/${typeId}`, leaveTypeData),
+  updateLeaveType: (typeId, data) => api.put(`/leaves/types/${typeId}`, data),
+
+  exportLeaves: (params = {}) => {
+    const q = new URLSearchParams(params).toString();
+    return api.get(`/leaves/export?${q}`, { responseType: 'blob' });
+  },
 
   // ==================== EMPLOYEE ENDPOINTS ====================
-  
-  // Get current user's leaves (employee)
+
   getMyLeaves: () => api.get('/leaves/my'),
 
-  // Submit new leave request (employee)
-  create: (leaveData) => api.post('/leaves', leaveData),
+  create: (data) => api.post('/leaves', data),
 
-  // Delete leave request (employee - only their own pending leaves)
   delete: (leaveId) => api.delete(`/leaves/${leaveId}`),
 
-  // Get leave balances for the logged-in employee (self)
-  getMyBalances: (year = new Date().getFullYear()) => 
+  getMyBalances: (year = new Date().getFullYear()) =>
     api.get(`/leaves/balances/my?year=${year}`),
 
-  // Get active leave types
-  getLeaveTypes: () => api.get('/leaves/types')
+  getLeaveTypes: () => api.get('/leaves/types'),
 };

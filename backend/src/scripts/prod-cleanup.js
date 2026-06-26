@@ -142,6 +142,14 @@ async function run() {
   console.log(' Mode    :', DRY_RUN ? 'DRY-RUN (no changes)' : FORCE ? 'FORCE (no confirmation)' : 'INTERACTIVE');
   console.log('═'.repeat(65) + '\n');
 
+  // CRITICAL: Add explicit safety lock environment variable
+  if (process.env.ALLOW_DATA_DELETION !== 'true') {
+    console.error('❌ DANGER: This is a destructive script. It will not run without an explicit safety override.');
+    console.error('   To proceed, you MUST set the environment variable:');
+    console.error('   ALLOW_DATA_DELETION=true node src/scripts/prod-cleanup.js');
+    process.exit(1);
+  }
+
   // ── Safety: backup check ──────────────────────────────────────────────────
   if (!FORCE && !DRY_RUN) {
     const backups = fs.existsSync(BACKUPS_DIR)

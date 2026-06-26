@@ -314,7 +314,7 @@ router.put('/team/:id/review', async (req, res) => {
 // ── Admin / Manager routes ─────────────────────────────────────────────────────
 
 // GET /api/work-reports — admin/HR/TL views reports (scoped by role)
-router.get('/', requireModuleAccess('employee_management', 'read'), async (req, res) => {
+router.get('/', requireModuleAccess('work_reports', 'read'), async (req, res) => {
   try {
     const tenantId = req.user.tenant_id;
     const userId   = req.user.id;

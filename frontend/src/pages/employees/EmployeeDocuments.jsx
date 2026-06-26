@@ -171,7 +171,10 @@ export default function EmployeeDocuments() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {filtered.map(doc => {
             const cfg = DOC_TYPE_CONFIG[doc.doc_type] || DOC_TYPE_CONFIG.other;
-            const fileUrl = employeeDocumentAPI.getFileUrl(doc.file_path);
+            const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001';
+            const downloadUrl = doc.download_token
+              ? `${API_BASE}/api/employee-documents/download/${doc.download_token}`
+              : null;
             return (
               <div key={doc.id} style={{ background: 'var(--card-bg,#fff)', border: '1px solid var(--card-border,#e5e7eb)', borderRadius: 10, padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14 }}>
                 <div style={{ width: 44, height: 44, borderRadius: 10, background: cfg.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem', flexShrink: 0 }}>
@@ -186,14 +189,18 @@ export default function EmployeeDocuments() {
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-                  <a href={fileUrl} target="_blank" rel="noreferrer"
-                    style={{ padding: '6px 14px', borderRadius: 7, border: '1px solid #d1d5db', background: 'transparent', color: '#374151', fontSize: '0.82rem', fontWeight: 600, textDecoration: 'none', cursor: 'pointer' }}>
-                    View
-                  </a>
-                  <a href={fileUrl} download={doc.file_name}
-                    style={{ padding: '6px 14px', borderRadius: 7, border: '1px solid #1C47C9', background: '#1C47C9', color: '#fff', fontSize: '0.82rem', fontWeight: 600, textDecoration: 'none', cursor: 'pointer' }}>
-                    Download
-                  </a>
+                  {downloadUrl && (
+                    <a href={downloadUrl} target="_blank" rel="noreferrer"
+                      style={{ padding: '6px 14px', borderRadius: 7, border: '1px solid #d1d5db', background: 'transparent', color: '#374151', fontSize: '0.82rem', fontWeight: 600, textDecoration: 'none', cursor: 'pointer' }}>
+                      View
+                    </a>
+                  )}
+                  {downloadUrl && (
+                    <a href={downloadUrl} download={doc.file_name}
+                      style={{ padding: '6px 14px', borderRadius: 7, border: '1px solid #1C47C9', background: '#1C47C9', color: '#fff', fontSize: '0.82rem', fontWeight: 600, textDecoration: 'none', cursor: 'pointer' }}>
+                      Download
+                    </a>
+                  )}
                   <button onClick={() => handleDelete(doc.id, doc.doc_label)}
                     style={{ padding: '6px 12px', borderRadius: 7, border: '1px solid #fca5a5', background: 'transparent', color: '#b91c1c', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer' }}>
                     Delete

@@ -1,17 +1,247 @@
-// backend/routes/leaveRoutes.js
+// backend/src/features/leave/leaveRoutes.js
+// Full 4-stage leave approval workflow: Employee → TL → Client → HR
 const express = require('express');
 const leaveController = require('./leaveController');
 const authMiddleware = require('../../middleware/auth.middleware');
 const requireModuleAccess = require('../../middleware/requireModuleAccess');
+const { pool } = require('../../config/db');
+const { sendNotification, sendToMany, getHRAndAdmins } = require('../notifications/notificationHelper');
 
 const router = express.Router();
 
 // All routes require authentication
 router.use(authMiddleware.verifyToken);
 
-// ==================== LEAVE ROUTES ====================
+// ===================== HELPERS =====================
 
-// Specific routes first to prevent wildcard clashes
+const logLeaveAudit = async (tenantId, leaveId, actorId, actorRole, action, remarks = null) => {
+  try {
+    await pool.execute(
+      `INSERT INTO leave_audit_log (tenant_id, leave_id, actor_id, actor_role, action, remarks)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [tenantId, leaveId, actorId, actorRole, action, remarks || null]
+    );
+  } catch (_) {}
+};
+
+/**
+ * Core approval state machine.
+ * Workflow: tl → client → hr → done
+ * Each stage: can approve or reject with optional remarks.
+ * If no client is assigned to the employee, client stage is auto-skipped.
+ */
+const advanceApproval = async (leaveId, tenantId, approverRole, approverId, action, remarks = null) => {
+  const [rows] = await pool.execute(
+    `SELECT lr.*,
+            COALESCE(ed.reports_to_user_id, ed.team_lead_id) AS team_lead_id,
+            ed.client_id,
+            CAST(ed.employee_id AS UNSIGNED) AS emp_user_id,
+            u.first_name, u.last_name
+     FROM leave_requests lr
+     JOIN employee_details ed ON ed.id = lr.employee_id AND ed.tenant_id = lr.tenant_id
+     JOIN users u ON u.id = ed.employee_id
+     WHERE lr.leave_id = ? AND lr.tenant_id = ?`,
+    [leaveId, tenantId]
+  );
+  if (!rows.length) throw new Error('Leave request not found');
+  const leave = rows[0];
+
+  const ROLE_LABEL = { tl: 'Team Lead', client: 'Client', hr: 'HR', admin: 'Admin' };
+  const roleLabel  = ROLE_LABEL[approverRole] || approverRole.toUpperCase();
+  const dateRange  = `${leave.start_date} to ${leave.end_date}`;
+  const empName    = `${leave.first_name} ${leave.last_name}`;
+
+  // ── REJECT ────────────────────────────────────────────────────────────────
+  if (action === 'reject') {
+    await pool.execute(
+      `UPDATE leave_requests
+       SET status = 'Rejected',
+           ${approverRole}_status = 'rejected',
+           ${approverRole}_approved_by = ?,
+           ${approverRole}_approved_at = NOW(),
+           ${approverRole}_remarks = ?,
+           rejection_reason = ?,
+           updated_by = ?
+       WHERE leave_id = ? AND tenant_id = ?`,
+      [approverId, remarks, remarks, approverId, leaveId, tenantId]
+    );
+
+    // Restore pending balance
+    if (leave.is_paid) {
+      const totalDays = Math.ceil(Math.abs(new Date(leave.end_date) - new Date(leave.start_date)) / 86400000) + 1;
+      const year = new Date(leave.start_date).getFullYear();
+      await pool.execute(
+        `UPDATE leave_balances SET pending = GREATEST(0, pending - ?)
+         WHERE tenant_id = ? AND employee_id = ? AND leave_type = ? AND year = ?`,
+        [totalDays, tenantId, leave.employee_id, leave.leave_type, year]
+      );
+    }
+
+    await logLeaveAudit(tenantId, leaveId, approverId, approverRole, `${approverRole}_rejected`, remarks);
+
+    if (leave.emp_user_id) {
+      sendNotification(tenantId, leave.emp_user_id, {
+        title: `❌ Leave Rejected by ${roleLabel}`,
+        message: `Your ${leave.leave_type} leave (${dateRange}) was rejected by ${roleLabel}.${remarks ? ` Reason: ${remarks}` : ''}`,
+        type: 'leave',
+        related_id: Number(leaveId),
+      }).catch(() => {});
+    }
+    return { status: 'rejected' };
+  }
+
+  // ── APPROVE ───────────────────────────────────────────────────────────────
+  // Check if client stage should be skipped (no client assigned)
+  const hasClient = !!leave.client_id;
+
+  let nextLevel = null;
+  let overallStatus = 'Pending';
+
+  if (approverRole === 'tl') {
+    // After TL: go to client if assigned, else skip to hr
+    nextLevel = hasClient ? 'client' : 'hr';
+    const clientSkip = hasClient ? {} : { client_status: 'skipped' };
+    const clientSkipFields = hasClient ? '' : ', client_status = "skipped"';
+    await pool.execute(
+      `UPDATE leave_requests
+       SET tl_status = 'approved',
+           tl_approved_by = ?,
+           tl_approved_at = NOW(),
+           tl_remarks = ?,
+           approval_level = ?,
+           updated_by = ?
+           ${clientSkipFields}
+       WHERE leave_id = ? AND tenant_id = ?`,
+      [approverId, remarks, nextLevel, approverId, leaveId, tenantId]
+    );
+
+    // Notify next approver
+    if (hasClient) {
+      // Get client user accounts linked to this client
+      const [clientUsers] = await pool.execute(
+        `SELECT u.id FROM users u WHERE u.tenant_id = ? AND u.client_ref_id = ? AND u.is_active = 1`,
+        [tenantId, leave.client_id]
+      );
+      const clientUserIds = clientUsers.map(r => r.id);
+      if (clientUserIds.length) {
+        sendToMany(tenantId, clientUserIds, {
+          title: '📋 Leave Approval Required',
+          message: `${empName}'s ${leave.leave_type} leave (${dateRange}) awaits your approval.`,
+          type: 'leave',
+          related_id: Number(leaveId),
+        }).catch(() => {});
+      }
+    } else {
+      // No client — notify HR
+      const hrAdmins = await getHRAndAdmins(tenantId);
+      sendToMany(tenantId, hrAdmins, {
+        title: '📋 Leave Approval Required',
+        message: `${empName}'s ${leave.leave_type} leave (${dateRange}) is pending HR approval after TL approval.`,
+        type: 'leave',
+        related_id: Number(leaveId),
+      }).catch(() => {});
+    }
+
+    if (leave.emp_user_id) {
+      sendNotification(tenantId, leave.emp_user_id, {
+        title: `✅ Leave Approved by Team Lead`,
+        message: `Your ${leave.leave_type} leave (${dateRange}) was approved by Team Lead${hasClient ? ', pending Client approval' : ', pending HR approval'}.`,
+        type: 'leave',
+        related_id: Number(leaveId),
+      }).catch(() => {});
+    }
+
+  } else if (approverRole === 'client') {
+    nextLevel = 'hr';
+    await pool.execute(
+      `UPDATE leave_requests
+       SET client_status = 'approved',
+           client_approved_by = ?,
+           client_approved_at = NOW(),
+           client_remarks = ?,
+           approval_level = 'hr',
+           updated_by = ?
+       WHERE leave_id = ? AND tenant_id = ?`,
+      [approverId, remarks, approverId, leaveId, tenantId]
+    );
+
+    // Notify HR
+    const hrAdmins = await getHRAndAdmins(tenantId);
+    sendToMany(tenantId, hrAdmins, {
+      title: '📋 Leave Approval Required',
+      message: `${empName}'s ${leave.leave_type} leave (${dateRange}) is pending HR final approval.`,
+      type: 'leave',
+      related_id: Number(leaveId),
+    }).catch(() => {});
+
+    if (leave.emp_user_id) {
+      sendNotification(tenantId, leave.emp_user_id, {
+        title: '✅ Leave Approved by Client',
+        message: `Your ${leave.leave_type} leave (${dateRange}) was approved by Client, pending HR final approval.`,
+        type: 'leave',
+        related_id: Number(leaveId),
+      }).catch(() => {});
+    }
+
+  } else if (approverRole === 'hr' || approverRole === 'admin') {
+    overallStatus = 'Approved';
+    await pool.execute(
+      `UPDATE leave_requests
+       SET hr_status = 'approved',
+           hr_approved_by = ?,
+           hr_approved_at = NOW(),
+           hr_remarks = ?,
+           approval_level = 'done',
+           status = 'Approved',
+           updated_by = ?
+       WHERE leave_id = ? AND tenant_id = ?`,
+      [approverId, remarks, approverId, leaveId, tenantId]
+    );
+
+    // Update leave balance and mark attendance
+    const start = new Date(leave.start_date);
+    const end   = new Date(leave.end_date);
+    const totalDays = Math.ceil(Math.abs(end - start) / 86400000) + 1;
+    const year = start.getFullYear();
+
+    if (leave.is_paid) {
+      await pool.execute(
+        `UPDATE leave_balances SET pending = GREATEST(0, pending - ?), used = used + ?
+         WHERE tenant_id = ? AND employee_id = ? AND leave_type = ? AND year = ?`,
+        [totalDays, totalDays, tenantId, leave.employee_id, leave.leave_type, year]
+      );
+    }
+
+    const fmt = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    let cur = new Date(leave.start_date);
+    const last = new Date(leave.end_date);
+    while (cur <= last) {
+      await pool.execute(
+        `INSERT INTO attendance_history (tenant_id, employee_id, date, description, status)
+         VALUES (?, ?, ?, ?, 'On Leave')
+         ON DUPLICATE KEY UPDATE description = VALUES(description), status = VALUES(status)`,
+        [tenantId, leave.employee_id, fmt(cur), `${leave.leave_type} Leave`]
+      );
+      cur.setDate(cur.getDate() + 1);
+    }
+
+    if (leave.emp_user_id) {
+      sendNotification(tenantId, leave.emp_user_id, {
+        title: '✅ Leave Fully Approved',
+        message: `Your ${leave.leave_type} leave (${dateRange}) has been fully approved by HR.`,
+        type: 'leave',
+        related_id: Number(leaveId),
+      }).catch(() => {});
+    }
+  }
+
+  await logLeaveAudit(tenantId, leaveId, approverId, approverRole, `${approverRole}_approved`, remarks);
+
+  return { status: overallStatus, nextLevel };
+};
+
+// ===================== READ ROUTES =====================
+
 router.get('/types/settings', requireModuleAccess('leave_management', 'read'), leaveController.getLeaveTypeSettings);
 router.get('/types', leaveController.getLeaveTypes);
 router.post('/types', requireModuleAccess('leave_management', 'write'), leaveController.createLeaveType);
@@ -21,283 +251,50 @@ router.get('/balances/:employeeId', requireModuleAccess('leave_management', 'rea
 router.get('/my', leaveController.getMyLeaves);
 router.get('/stats', requireModuleAccess('leave_management', 'read'), leaveController.getLeaveStats);
 router.get('/history/:employeeId', requireModuleAccess('leave_management', 'read'), leaveController.getEmployeeAttendanceHistory);
-router.get('/', requireModuleAccess('leave_management', 'read'), leaveController.getAllLeaves);
 
-// POST /api/leaves - Create new leave request (employee)
-router.post('/', leaveController.createLeave);
-
-// DELETE /api/leaves/:leaveId - Delete leave request
-router.delete('/:leaveId', requireModuleAccess('leave_management', 'write'), leaveController.deleteLeave);
-
-// ==================== NEW v2 ROUTES: Sequential Approval Workflow ====================
-
-const { pool } = require('../../config/db');
-
-const { sendNotification } = require('../notifications/notificationHelper');
-
-// Helper: update leave approval level and notify the employee
-const advanceApproval = async (leaveId, tenantId, approverRole, approverId, action) => {
-  const [rows] = await pool.execute(
-    'SELECT * FROM leave_requests WHERE leave_id=? AND tenant_id=?',
-    [leaveId, tenantId]
-  );
-  if (!rows.length) throw new Error('Leave request not found');
-  const leave = rows[0];
-
-  // Resolve employee user_id for notification
-  const [empRows] = await pool.execute(
-    `SELECT CAST(ed.employee_id AS UNSIGNED) as emp_user_id
-     FROM employee_details ed
-     WHERE ed.id = ? AND ed.tenant_id = ? LIMIT 1`,
-    [leave.employee_id, tenantId]
-  );
-  const empUserId = empRows[0]?.emp_user_id;
-
-  const ROLE_LABEL = { tl: 'Team Lead', pl: 'Project Lead', hr: 'HR' };
-  const roleLabel = ROLE_LABEL[approverRole] || approverRole.toUpperCase();
-  const dateRange = `${leave.start_date} to ${leave.end_date}`;
-
-  if (action === 'reject') {
-    await pool.execute(
-      `UPDATE leave_requests SET status='rejected', ${approverRole}_approved_by=?, ${approverRole}_approved_at=NOW(), ${approverRole}_status='rejected' WHERE leave_id=?`,
-      [approverId, leaveId]
-    );
-    // Restore pending balance so the employee's allocation is not permanently consumed
-    if (leave.is_paid) {
-      const totalDays = Math.ceil(Math.abs(new Date(leave.end_date) - new Date(leave.start_date)) / (1000 * 60 * 60 * 24)) + 1;
-      const year = new Date(leave.start_date).getFullYear();
-      await pool.execute(
-        `UPDATE leave_balances SET pending = GREATEST(0, pending - ?) WHERE tenant_id=? AND employee_id=? AND leave_type=? AND year=?`,
-        [totalDays, tenantId, leave.employee_id, leave.leave_type, year]
-      );
-    }
-    if (empUserId) {
-      try {
-        await sendNotification(tenantId, empUserId, {
-          title: `❌ Leave Rejected by ${roleLabel}`,
-          message: `Your ${leave.leave_type} leave (${dateRange}) was rejected by ${roleLabel}.`,
-          type: 'leave',
-          related_id: Number(leaveId),
-        });
-      } catch (_) {}
-    }
-    return { status: 'rejected' };
-  }
-
-  const updates = {};
-  updates[`${approverRole}_approved_by`] = approverId;
-  updates[`${approverRole}_approved_at`] = new Date();
-  updates[`${approverRole}_status`] = 'approved';
-
-  let nextLevel = null;
-  let overallStatus = 'pending';
-
-  if (approverRole === 'tl') {
-    nextLevel = 'pl';
-    updates.approval_level = 'pl';
-  } else if (approverRole === 'pl') {
-    nextLevel = 'hr';
-    updates.approval_level = 'hr';
-  } else if (approverRole === 'hr') {
-    overallStatus = 'approved';
-    updates.approval_level = 'done';
-    updates.status = 'approved';
-  }
-
-  const setClauses = Object.keys(updates).map(k => `${k}=?`).join(', ');
-  await pool.execute(
-    `UPDATE leave_requests SET ${setClauses} WHERE leave_id=? AND tenant_id=?`,
-    [...Object.values(updates), leaveId, tenantId]
-  );
-
-  if (empUserId) {
-    try {
-      if (overallStatus === 'approved') {
-        await sendNotification(tenantId, empUserId, {
-          title: '✅ Leave Fully Approved',
-          message: `Your ${leave.leave_type} leave (${dateRange}) has been fully approved.`,
-          type: 'leave',
-          related_id: Number(leaveId),
-        });
-      } else {
-        const NEXT_LABEL = { pl: 'Project Lead', hr: 'HR' };
-        const nextLabel = NEXT_LABEL[nextLevel] ? `, pending ${NEXT_LABEL[nextLevel]} approval` : '';
-        await sendNotification(tenantId, empUserId, {
-          title: `✅ Leave Approved by ${roleLabel}`,
-          message: `Your ${leave.leave_type} leave (${dateRange}) was approved by ${roleLabel}${nextLabel}.`,
-          type: 'leave',
-          related_id: Number(leaveId),
-        });
-      }
-    } catch (_) {}
-  }
-
-  return { status: overallStatus, nextLevel };
-};
-
-// PUT /api/leaves/:leaveId/tl-approve — Team Lead approval
-// Only the employee's assigned team_lead_id may approve; HR/admin may step in if no TL is assigned.
-router.put('/:leaveId/tl-approve', requireModuleAccess('leave_management', 'write'), async (req, res) => {
+// GET /api/leaves/pending-approvals — leaves pending for current user's approver level
+router.get('/pending-approvals', async (req, res) => {
   try {
-    const tenantId = req.user.tenant_id;
-    const { action } = req.body;
-
-    const [leaveRows] = await pool.execute(
-      `SELECT lr.leave_id, ed.team_lead_id
-       FROM leave_requests lr
-       JOIN employee_details ed ON ed.id = lr.employee_id AND ed.tenant_id = lr.tenant_id
-       WHERE lr.leave_id = ? AND lr.tenant_id = ?`,
-      [req.params.leaveId, tenantId]
-    );
-    if (!leaveRows.length) return res.status(404).json({ success: false, message: 'Leave not found' });
-
-    const { team_lead_id } = leaveRows[0];
-    const isHrAdmin = ['admin', 'hr'].includes(req.user.position);
-    const isAssignedTl = team_lead_id && Number(team_lead_id) === Number(req.user.id);
-    const noTlAssigned = !team_lead_id;
-
-    if (!isAssignedTl && !(noTlAssigned && isHrAdmin)) {
-      return res.status(403).json({ success: false, message: 'Only the assigned Team Lead can approve this leave' });
-    }
-
-    const result = await advanceApproval(req.params.leaveId, tenantId, 'tl', req.user.id, action || 'approve');
-    return res.json({ success: true, ...result });
-  } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
-  }
-});
-
-// PUT /api/leaves/:leaveId/pl-approve — Project Lead approval
-// Only the employee's assigned project_lead_id may approve; HR/admin may step in if no PL is assigned.
-router.put('/:leaveId/pl-approve', requireModuleAccess('leave_management', 'write'), async (req, res) => {
-  try {
-    const tenantId = req.user.tenant_id;
-    const { action } = req.body;
-
-    const [leaveRows] = await pool.execute(
-      `SELECT lr.tl_status, ed.project_lead_id
-       FROM leave_requests lr
-       JOIN employee_details ed ON ed.id = lr.employee_id AND ed.tenant_id = lr.tenant_id
-       WHERE lr.leave_id = ? AND lr.tenant_id = ?`,
-      [req.params.leaveId, tenantId]
-    );
-    if (!leaveRows.length) return res.status(404).json({ success: false, message: 'Leave not found' });
-    if (leaveRows[0].tl_status !== 'approved') {
-      return res.status(400).json({ success: false, message: 'Team Lead must approve first' });
-    }
-
-    const { project_lead_id } = leaveRows[0];
-    const isHrAdmin = ['admin', 'hr'].includes(req.user.position);
-    const isAssignedPl = project_lead_id && Number(project_lead_id) === Number(req.user.id);
-    const noPlAssigned = !project_lead_id;
-
-    if (!isAssignedPl && !(noPlAssigned && isHrAdmin)) {
-      return res.status(403).json({ success: false, message: 'Only the assigned Project Lead can approve this leave' });
-    }
-
-    const result = await advanceApproval(req.params.leaveId, tenantId, 'pl', req.user.id, action || 'approve');
-    return res.json({ success: true, ...result });
-  } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
-  }
-});
-
-// PUT /api/leaves/:leaveId/hr-approve — HR final approval (completes the sequential workflow)
-// Only users with position 'hr' or 'admin' may perform final approval.
-router.put('/:leaveId/hr-approve', requireModuleAccess('leave_management', 'write'), async (req, res) => {
-  try {
-    const tenantId = req.user.tenant_id;
-    const { action } = req.body;
-
-    if (!['admin', 'hr'].includes(req.user.position)) {
-      return res.status(403).json({ success: false, message: 'Only HR or Admin can perform final leave approval' });
-    }
-
-    // HR approval only valid if PL already approved
-    const [rows] = await pool.execute(
-      'SELECT pl_status FROM leave_requests WHERE leave_id=? AND tenant_id=?',
-      [req.params.leaveId, tenantId]
-    );
-    if (!rows.length) return res.status(404).json({ success: false, message: 'Leave not found' });
-    if (rows[0].pl_status !== 'approved') {
-      return res.status(400).json({ success: false, message: 'Project Lead must approve first' });
-    }
-    const result = await advanceApproval(req.params.leaveId, tenantId, 'hr', req.user.id, action || 'approve');
-
-    // When HR approves, update the leave balance (same logic as single-level approve)
-    if ((action || 'approve') === 'approve' && result.status === 'approved') {
-      const [leaveRows] = await pool.execute(
-        'SELECT employee_id, leave_type, is_paid, start_date, end_date FROM leave_requests WHERE leave_id=? AND tenant_id=?',
-        [req.params.leaveId, tenantId]
-      );
-      if (leaveRows.length) {
-        const { employee_id, leave_type, is_paid, start_date, end_date } = leaveRows[0];
-        const start = new Date(start_date);
-        const end = new Date(end_date);
-        const total_days = Math.ceil(Math.abs(end - start) / (1000 * 60 * 60 * 24)) + 1;
-        const year = start.getFullYear();
-
-        // Determine if paid leave
-        const [[ltRow]] = await pool.execute(
-          'SELECT is_paid FROM leave_types WHERE tenant_id=? AND name=? LIMIT 1',
-          [tenantId, leave_type]
-        );
-        const isPaid = ltRow ? Number(ltRow.is_paid) === 1 : Number(is_paid) === 1;
-
-        if (isPaid) {
-          await pool.execute(
-            `UPDATE leave_balances SET pending = pending - ?, used = used + ?
-             WHERE tenant_id=? AND employee_id=? AND leave_type=? AND year=?`,
-            [total_days, total_days, tenantId, employee_id, leave_type, year]
-          );
-        }
-
-        // Mark each day as On Leave in attendance_history
-        const formatDateLocal = (d) => {
-          const y = d.getFullYear();
-          const m = String(d.getMonth() + 1).padStart(2, '0');
-          const day = String(d.getDate()).padStart(2, '0');
-          return `${y}-${m}-${day}`;
-        };
-        let cur = new Date(start_date);
-        const last = new Date(end_date);
-        while (cur <= last) {
-          await pool.execute(
-            `INSERT INTO attendance_history (tenant_id, employee_id, date, description, status)
-             VALUES (?, ?, ?, ?, 'On Leave')
-             ON DUPLICATE KEY UPDATE description=VALUES(description), status=VALUES(status)`,
-            [tenantId, employee_id, formatDateLocal(cur), `${leave_type} Leave`]
-          );
-          cur.setDate(cur.getDate() + 1);
-        }
-      }
-    }
-
-    return res.json({ success: true, ...result });
-  } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
-  }
-});
-
-// GET /api/leaves/pending-approvals — get leaves pending for the current approver's level
-router.get('/pending-approvals', requireModuleAccess('leave_management', 'read'), async (req, res) => {
-  try {
-    const tenantId = req.user.tenant_id;
-    const { level } = req.query; // 'tl' | 'pl' | 'hr'
+    const tenantId = req.tenantId;
+    const { position, id: userId } = req.user;
     let condition = '';
-    if (level === 'tl') condition = "AND lr.approval_level = 'tl' AND lr.tl_status = 'pending'";
-    else if (level === 'pl') condition = "AND lr.approval_level = 'pl' AND lr.pl_status = 'pending'";
-    else if (level === 'hr') condition = "AND lr.approval_level = 'hr' AND lr.status = 'pending'";
-    else condition = "AND lr.status = 'pending'";
+    const params = [tenantId];
+
+    if (position === 'team_lead' || req.user.is_team_lead) {
+      // TL sees leaves where they are the assigned team lead and TL approval is pending
+      condition = `AND lr.tl_status = 'pending' AND lr.approval_level = 'tl' AND COALESCE(ed.reports_to_user_id, ed.team_lead_id) = ?`;
+      params.push(userId);
+    } else if (position === 'client') {
+      // Client sees leaves at client stage for employees linked to their client account
+      condition = `AND lr.client_status = 'pending' AND lr.approval_level = 'client' AND u_client.id = ?`;
+      params.push(userId);
+    } else if (['admin', 'hr'].includes(position)) {
+      condition = `AND lr.approval_level = 'hr' AND lr.hr_status = 'pending'`;
+    } else {
+      return res.status(403).json({ success: false, message: 'Unauthorized' });
+    }
+
+    const joinClient = position === 'client'
+      ? `JOIN users u_client ON u_client.client_ref_id = ed.client_id AND u_client.tenant_id = lr.tenant_id`
+      : `LEFT JOIN users u_client ON 1=0`;
 
     const [rows] = await pool.execute(
-      `SELECT lr.*, u.first_name, u.last_name, u.email
+      `SELECT lr.leave_id, lr.leave_type, lr.start_date, lr.end_date,
+              DATEDIFF(lr.end_date, lr.start_date) + 1 AS total_days,
+              lr.description, lr.status, lr.approval_level,
+              lr.tl_status, lr.client_status, lr.hr_status,
+              lr.tl_remarks, lr.client_remarks, lr.hr_remarks,
+              lr.created_at,
+              CONCAT(u.first_name, ' ', u.last_name) AS employee_name,
+              u.email AS employee_email,
+              ed.id AS emp_code
        FROM leave_requests lr
-       JOIN employee_details ed ON ed.id = lr.employee_id
+       JOIN employee_details ed ON ed.id = lr.employee_id AND ed.tenant_id = lr.tenant_id
        JOIN users u ON u.id = ed.employee_id
+       ${joinClient}
        WHERE lr.tenant_id = ? ${condition}
        ORDER BY lr.created_at ASC`,
-      [tenantId]
+      params
     );
     return res.json({ success: true, leaves: rows });
   } catch (err) {
@@ -305,97 +302,235 @@ router.get('/pending-approvals', requireModuleAccess('leave_management', 'read')
   }
 });
 
-// ── GET /api/leaves/export ─────────────────────────────────────────────────────
-// Export leave records as XLSX (admin/HR only)
-router.get('/export', requireModuleAccess('leave_management', 'read'), async (req, res) => {
+// GET /api/leaves/audit/:leaveId — full audit trail for a leave request
+router.get('/audit/:leaveId', async (req, res) => {
   try {
-    const XLSX = require('xlsx');
-    const { pool } = require('../../config/db');
-    const tenantId = req.user.tenant_id;
-    const { month, year, employee_id, status } = req.query;
+    const tenantId = req.tenantId;
+    const { leaveId } = req.params;
 
-    let sql = `SELECT u.first_name, u.last_name, u.email, u.position,
-                      lr.leave_type, lr.start_date, lr.end_date,
-                      DATEDIFF(lr.end_date, lr.start_date) + 1 AS days_count,
-                      lr.status, lr.description AS reason, lr.created_at,
-                      ed.id AS emp_number
-               FROM leave_requests lr
-               JOIN users u ON u.id = lr.employee_id
-               JOIN employee_details ed ON ed.employee_id = lr.employee_id AND ed.tenant_id = lr.tenant_id
-               WHERE lr.tenant_id = ?`;
-    const params = [tenantId];
+    // Verify caller has access to this leave
+    const [leaveRows] = await pool.execute(
+      `SELECT lr.employee_id, ed.employee_id AS emp_user_id,
+              COALESCE(ed.reports_to_user_id, ed.team_lead_id) AS team_lead_id,
+              ed.client_id
+       FROM leave_requests lr
+       JOIN employee_details ed ON ed.id = lr.employee_id AND ed.tenant_id = lr.tenant_id
+       WHERE lr.leave_id = ? AND lr.tenant_id = ?`,
+      [leaveId, tenantId]
+    );
+    if (!leaveRows.length) return res.status(404).json({ success: false, message: 'Leave not found' });
 
-    if (employee_id) { sql += ' AND lr.employee_id = ?'; params.push(employee_id); }
-    if (status) { sql += ' AND lr.status = ?'; params.push(status); }
-    if (month && year) { sql += ' AND MONTH(lr.start_date) = ? AND YEAR(lr.start_date) = ?'; params.push(Number(month), Number(year)); }
-    else if (year) { sql += ' AND YEAR(lr.start_date) = ?'; params.push(Number(year)); }
-    sql += ' ORDER BY lr.created_at DESC';
+    const leave = leaveRows[0];
+    const { position, id: userId } = req.user;
+    const isOwner      = Number(leave.emp_user_id) === Number(userId);
+    const isHrAdmin    = ['admin', 'hr'].includes(position);
+    const isAssignedTl = Number(leave.team_lead_id) === Number(userId);
+    if (!isOwner && !isHrAdmin && !isAssignedTl && position !== 'client') {
+      return res.status(403).json({ success: false, message: 'Unauthorized' });
+    }
 
-    const [rows] = await pool.execute(sql, params);
+    const [auditRows] = await pool.execute(
+      `SELECT lal.*, CONCAT(u.first_name, ' ', u.last_name) AS actor_name, u.position AS actor_position
+       FROM leave_audit_log lal
+       JOIN users u ON u.id = lal.actor_id
+       WHERE lal.leave_id = ? AND lal.tenant_id = ?
+       ORDER BY lal.created_at ASC`,
+      [leaveId, tenantId]
+    );
 
-    const wsData = [
-      ['Name', 'Email', 'Position', 'Emp ID', 'Leave Type', 'Start Date', 'End Date', 'Days', 'Status', 'Reason', 'Applied On'],
-      ...rows.map(r => [
-        `${r.first_name} ${r.last_name}`, r.email, r.position || '',
-        r.emp_number || '', r.leave_type || '',
-        r.start_date ? new Date(r.start_date).toLocaleDateString('en-IN') : '',
-        r.end_date   ? new Date(r.end_date).toLocaleDateString('en-IN')   : '',
-        r.days_count || 0, r.status || '', r.reason || '',
-        r.created_at ? new Date(r.created_at).toLocaleDateString('en-IN') : ''
-      ])
-    ];
+    const [leaveDetail] = await pool.execute(
+      `SELECT lr.*,
+              CONCAT(u.first_name, ' ', u.last_name) AS employee_name,
+              CONCAT(tl.first_name, ' ', tl.last_name) AS tl_name,
+              CONCAT(hr.first_name, ' ', hr.last_name) AS hr_approver_name
+       FROM leave_requests lr
+       JOIN employee_details ed ON ed.id = lr.employee_id AND ed.tenant_id = lr.tenant_id
+       JOIN users u ON u.id = ed.employee_id
+       LEFT JOIN users tl ON tl.id = lr.tl_approved_by
+       LEFT JOIN users hr ON hr.id = lr.hr_approved_by
+       WHERE lr.leave_id = ? AND lr.tenant_id = ?`,
+      [leaveId, tenantId]
+    );
 
-    const ws = XLSX.utils.aoa_to_sheet(wsData);
-    ws['!cols'] = [{ wch: 22 }, { wch: 28 }, { wch: 14 }, { wch: 12 }, { wch: 16 }, { wch: 13 }, { wch: 13 }, { wch: 7 }, { wch: 12 }, { wch: 40 }, { wch: 13 }];
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Leave Requests');
-
-    const now = new Date();
-    const fileName = `Leave_Export_${now.getFullYear()}_${String(now.getMonth() + 1).padStart(2, '0')}.xlsx`;
-    const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
-    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.send(buf);
+    return res.json({ success: true, leave: leaveDetail[0], audit: auditRows });
   } catch (err) {
-    console.error('[LeaveExport] error:', err);
-    res.status(500).json({ success: false, message: 'Failed to generate export' });
+    return res.status(500).json({ success: false, message: err.message });
   }
 });
 
-// POST /api/leaves/:leaveId/approve — Admin/HR direct approval (legacy + hr-level approvals)
-// Used by leaveAPI.approve() in the frontend for the "Approve" button when approval_level is null or 'hr'
-router.post('/:leaveId/approve', requireModuleAccess('leave_management', 'write'), async (req, res) => {
+// GET /api/leaves — all leaves (admin/HR/TL filtered)
+router.get('/', requireModuleAccess('leave_management', 'read'), leaveController.getAllLeaves);
+
+// POST /api/leaves — create leave request
+router.post('/', leaveController.createLeave);
+
+// DELETE /api/leaves/:leaveId — delete leave
+router.delete('/:leaveId', requireModuleAccess('leave_management', 'write'), leaveController.deleteLeave);
+
+// ===================== APPROVAL ROUTES =====================
+
+// PUT /api/leaves/:leaveId/tl-approve — Team Lead approval/rejection
+router.put('/:leaveId/tl-approve', async (req, res) => {
   try {
-    const tenantId = req.user.tenant_id;
+    const tenantId = req.tenantId;
     const { leaveId } = req.params;
+    const { action = 'approve', remarks } = req.body;
+
+    const [leaveRows] = await pool.execute(
+      `SELECT lr.leave_id, lr.tl_status, lr.approval_level,
+              COALESCE(ed.reports_to_user_id, ed.team_lead_id) AS assigned_tl_id
+       FROM leave_requests lr
+       JOIN employee_details ed ON ed.id = lr.employee_id AND ed.tenant_id = lr.tenant_id
+       WHERE lr.leave_id = ? AND lr.tenant_id = ?`,
+      [leaveId, tenantId]
+    );
+    if (!leaveRows.length) return res.status(404).json({ success: false, message: 'Leave not found' });
+
+    const { assigned_tl_id, tl_status, approval_level } = leaveRows[0];
+    const team_lead_id = assigned_tl_id;
+    const isHrAdmin    = ['admin', 'hr'].includes(req.user.position);
+    const isAssignedTl = assigned_tl_id && Number(assigned_tl_id) === Number(req.user.id);
+    const noTlAssigned = !assigned_tl_id;
+
+    if (!isAssignedTl && !isHrAdmin) {
+      return res.status(403).json({ success: false, message: 'Only the assigned Team Lead can act on this leave at TL stage' });
+    }
+    if (tl_status !== 'pending' || approval_level !== 'tl') {
+      return res.status(400).json({ success: false, message: `Leave is not awaiting TL approval (current stage: ${approval_level}, TL status: ${tl_status})` });
+    }
+
+    const result = await advanceApproval(leaveId, tenantId, 'tl', req.user.id, action, remarks);
+    return res.json({ success: true, ...result });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// PUT /api/leaves/:leaveId/client-approve — Client approval/rejection (after TL)
+router.put('/:leaveId/client-approve', async (req, res) => {
+  try {
+    const tenantId = req.tenantId;
+    const { leaveId } = req.params;
+    const { action = 'approve', remarks } = req.body;
+
+    const [leaveRows] = await pool.execute(
+      `SELECT lr.leave_id, lr.client_status, lr.approval_level, lr.tl_status,
+              ed.client_id
+       FROM leave_requests lr
+       JOIN employee_details ed ON ed.id = lr.employee_id AND ed.tenant_id = lr.tenant_id
+       WHERE lr.leave_id = ? AND lr.tenant_id = ?`,
+      [leaveId, tenantId]
+    );
+    if (!leaveRows.length) return res.status(404).json({ success: false, message: 'Leave not found' });
+
+    const { client_status, approval_level, tl_status, client_id } = leaveRows[0];
+
+    if (tl_status !== 'approved') {
+      return res.status(400).json({ success: false, message: 'Team Lead must approve first' });
+    }
+    if (approval_level !== 'client') {
+      return res.status(400).json({ success: false, message: `Leave is not at client approval stage (current: ${approval_level})` });
+    }
+
+    // Verify the current user is a client user linked to this client
+    const isHrAdmin = ['admin', 'hr'].includes(req.user.position);
+    if (!isHrAdmin) {
+      if (req.user.position !== 'client') {
+        return res.status(403).json({ success: false, message: 'Only Client users or HR/Admin can act at client approval stage' });
+      }
+      // Check this client user is linked to the employee's client
+      const [clientLink] = await pool.execute(
+        `SELECT id FROM users WHERE id = ? AND tenant_id = ? AND client_ref_id = ? AND is_active = 1`,
+        [req.user.id, tenantId, client_id]
+      );
+      if (!clientLink.length) {
+        return res.status(403).json({ success: false, message: 'You are not authorized to approve leaves for this employee' });
+      }
+    }
+
+    const result = await advanceApproval(leaveId, tenantId, 'client', req.user.id, action, remarks);
+    return res.json({ success: true, ...result });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// PUT /api/leaves/:leaveId/hr-approve — HR final approval (after TL+Client)
+router.put('/:leaveId/hr-approve', async (req, res) => {
+  try {
+    const tenantId = req.tenantId;
+    const { leaveId } = req.params;
+    const { action = 'approve', remarks } = req.body;
 
     if (!['admin', 'hr'].includes(req.user.position)) {
-      return res.status(403).json({ success: false, message: 'Only HR or Admin can approve leaves' });
+      return res.status(403).json({ success: false, message: 'Only HR or Admin can perform final leave approval' });
     }
 
     const [rows] = await pool.execute(
-      'SELECT * FROM leave_requests WHERE leave_id=? AND tenant_id=?',
+      `SELECT lr.approval_level, lr.tl_status, lr.client_status, lr.hr_status, ed.client_id
+       FROM leave_requests lr
+       JOIN employee_details ed ON ed.id = lr.employee_id AND ed.tenant_id = lr.tenant_id
+       WHERE lr.leave_id = ? AND lr.tenant_id = ?`,
+      [leaveId, tenantId]
+    );
+    if (!rows.length) return res.status(404).json({ success: false, message: 'Leave not found' });
+
+    const { approval_level, tl_status, client_status, client_id } = rows[0];
+
+    if (approval_level !== 'hr') {
+      return res.status(400).json({ success: false, message: `Leave is not at HR approval stage (current: ${approval_level})` });
+    }
+    // Client stage must be approved or skipped
+    if (client_id && client_status !== 'approved' && client_status !== 'skipped') {
+      return res.status(400).json({ success: false, message: 'Client must approve before HR can act' });
+    }
+
+    const result = await advanceApproval(leaveId, tenantId, 'hr', req.user.id, action, remarks);
+    return res.json({ success: true, ...result });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// POST /api/leaves/:leaveId/approve — Admin/HR direct approval (legacy + bypass for admin override)
+router.post('/:leaveId/approve', requireModuleAccess('leave_management', 'write'), async (req, res) => {
+  try {
+    const tenantId = req.tenantId;
+    const { leaveId } = req.params;
+    const { remarks } = req.body;
+
+    if (!['admin', 'hr'].includes(req.user.position)) {
+      return res.status(403).json({ success: false, message: 'Only HR or Admin can directly approve leaves' });
+    }
+
+    const [rows] = await pool.execute(
+      'SELECT * FROM leave_requests WHERE leave_id = ? AND tenant_id = ?',
       [leaveId, tenantId]
     );
     if (!rows.length) return res.status(404).json({ success: false, message: 'Leave not found' });
     const leave = rows[0];
 
-    // Mark fully approved (skip sequential checks for direct admin override)
+    // Admin override: skip all stages
     await pool.execute(
-      `UPDATE leave_requests SET status='approved', approval_level='done',
-        hr_approved_by=?, hr_approved_at=NOW(), hr_status='approved'
-       WHERE leave_id=? AND tenant_id=?`,
-      [req.user.id, leaveId, tenantId]
+      `UPDATE leave_requests
+       SET status = 'Approved', approval_level = 'done',
+           tl_status = IF(tl_status = 'pending', 'skipped', tl_status),
+           client_status = IF(client_status = 'pending', 'skipped', client_status),
+           hr_status = 'approved',
+           hr_approved_by = ?, hr_approved_at = NOW(),
+           hr_remarks = ?, updated_by = ?
+       WHERE leave_id = ? AND tenant_id = ?`,
+      [req.user.id, remarks, req.user.id, leaveId, tenantId]
     );
 
-    // Update leave balance
+    // Update balance + attendance
     const start = new Date(leave.start_date);
-    const end = new Date(leave.end_date);
-    const total_days = Math.ceil(Math.abs(end - start) / (1000 * 60 * 60 * 24)) + 1;
+    const end   = new Date(leave.end_date);
+    const totalDays = Math.ceil(Math.abs(end - start) / 86400000) + 1;
     const year = start.getFullYear();
 
     const [[ltRow]] = await pool.execute(
-      'SELECT is_paid FROM leave_types WHERE tenant_id=? AND name=? LIMIT 1',
+      'SELECT is_paid FROM leave_types WHERE tenant_id = ? AND name = ? LIMIT 1',
       [tenantId, leave.leave_type]
     );
     const isPaid = ltRow ? Number(ltRow.is_paid) === 1 : Number(leave.is_paid) === 1;
@@ -403,31 +538,25 @@ router.post('/:leaveId/approve', requireModuleAccess('leave_management', 'write'
     if (isPaid) {
       await pool.execute(
         `UPDATE leave_balances SET pending = GREATEST(0, pending - ?), used = used + ?
-         WHERE tenant_id=? AND employee_id=? AND leave_type=? AND year=?`,
-        [total_days, total_days, tenantId, leave.employee_id, leave.leave_type, year]
+         WHERE tenant_id = ? AND employee_id = ? AND leave_type = ? AND year = ?`,
+        [totalDays, totalDays, tenantId, leave.employee_id, leave.leave_type, year]
       );
     }
 
-    // Mark each day as On Leave in attendance_history
-    const formatDateLocal = (d) => {
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      return `${y}-${m}-${day}`;
-    };
+    const fmt = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
     let cur = new Date(leave.start_date);
-    const last = new Date(leave.end_date);
-    while (cur <= last) {
+    while (cur <= end) {
       await pool.execute(
         `INSERT INTO attendance_history (tenant_id, employee_id, date, description, status)
          VALUES (?, ?, ?, ?, 'On Leave')
-         ON DUPLICATE KEY UPDATE description=VALUES(description), status=VALUES(status)`,
-        [tenantId, leave.employee_id, formatDateLocal(cur), `${leave.leave_type} Leave`]
+         ON DUPLICATE KEY UPDATE description = VALUES(description), status = VALUES(status)`,
+        [tenantId, leave.employee_id, fmt(cur), `${leave.leave_type} Leave`]
       );
       cur.setDate(cur.getDate() + 1);
     }
 
-    // Notify employee
+    await logLeaveAudit(tenantId, leaveId, req.user.id, 'admin', 'admin_approved', remarks);
+
     const [empRows] = await pool.execute(
       `SELECT CAST(ed.employee_id AS UNSIGNED) as emp_user_id
        FROM employee_details ed WHERE ed.id = ? AND ed.tenant_id = ? LIMIT 1`,
@@ -435,19 +564,16 @@ router.post('/:leaveId/approve', requireModuleAccess('leave_management', 'write'
     );
     const empUserId = empRows[0]?.emp_user_id;
     if (empUserId) {
-      try {
-        await sendNotification(tenantId, empUserId, {
-          title: '✅ Leave Approved',
-          message: `Your ${leave.leave_type} leave (${leave.start_date} to ${leave.end_date}) has been approved.`,
-          type: 'leave',
-          related_id: Number(leaveId),
-        });
-      } catch (_) {}
+      sendNotification(tenantId, empUserId, {
+        title: '✅ Leave Approved',
+        message: `Your ${leave.leave_type} leave (${leave.start_date} to ${leave.end_date}) has been approved.`,
+        type: 'leave',
+        related_id: Number(leaveId),
+      }).catch(() => {});
     }
 
-    return res.json({ success: true, status: 'approved', message: 'Leave approved successfully' });
+    return res.json({ success: true, status: 'Approved', message: 'Leave approved successfully' });
   } catch (err) {
-    console.error('[LeaveApprove] error:', err);
     return res.status(500).json({ success: false, message: err.message });
   }
 });
@@ -455,60 +581,117 @@ router.post('/:leaveId/approve', requireModuleAccess('leave_management', 'write'
 // POST /api/leaves/:leaveId/reject — Admin/HR direct rejection
 router.post('/:leaveId/reject', requireModuleAccess('leave_management', 'write'), async (req, res) => {
   try {
-    const tenantId = req.user.tenant_id;
+    const tenantId = req.tenantId;
     const { leaveId } = req.params;
+    const { remarks, reason } = req.body;
+    const rejectionReason = remarks || reason;
 
     if (!['admin', 'hr'].includes(req.user.position)) {
       return res.status(403).json({ success: false, message: 'Only HR or Admin can reject leaves' });
     }
 
     const [rows] = await pool.execute(
-      'SELECT * FROM leave_requests WHERE leave_id=? AND tenant_id=?',
+      'SELECT * FROM leave_requests WHERE leave_id = ? AND tenant_id = ?',
       [leaveId, tenantId]
     );
     if (!rows.length) return res.status(404).json({ success: false, message: 'Leave not found' });
     const leave = rows[0];
 
     await pool.execute(
-      `UPDATE leave_requests SET status='rejected',
-        hr_approved_by=?, hr_approved_at=NOW(), hr_status='rejected'
-       WHERE leave_id=? AND tenant_id=?`,
-      [req.user.id, leaveId, tenantId]
+      `UPDATE leave_requests
+       SET status = 'Rejected',
+           hr_approved_by = ?, hr_approved_at = NOW(), hr_status = 'rejected',
+           rejection_reason = ?, hr_remarks = ?, updated_by = ?
+       WHERE leave_id = ? AND tenant_id = ?`,
+      [req.user.id, rejectionReason, rejectionReason, req.user.id, leaveId, tenantId]
     );
 
-    // Restore pending balance
     if (leave.is_paid) {
-      const total_days = Math.ceil(Math.abs(new Date(leave.end_date) - new Date(leave.start_date)) / (1000 * 60 * 60 * 24)) + 1;
+      const totalDays = Math.ceil(Math.abs(new Date(leave.end_date) - new Date(leave.start_date)) / 86400000) + 1;
       const year = new Date(leave.start_date).getFullYear();
       await pool.execute(
         `UPDATE leave_balances SET pending = GREATEST(0, pending - ?)
-         WHERE tenant_id=? AND employee_id=? AND leave_type=? AND year=?`,
-        [total_days, tenantId, leave.employee_id, leave.leave_type, year]
+         WHERE tenant_id = ? AND employee_id = ? AND leave_type = ? AND year = ?`,
+        [totalDays, tenantId, leave.employee_id, leave.leave_type, year]
       );
     }
 
-    // Notify employee
+    await logLeaveAudit(tenantId, leaveId, req.user.id, 'admin', 'admin_rejected', rejectionReason);
+
     const [empRows] = await pool.execute(
       `SELECT CAST(ed.employee_id AS UNSIGNED) as emp_user_id
        FROM employee_details ed WHERE ed.id = ? AND ed.tenant_id = ? LIMIT 1`,
       [leave.employee_id, tenantId]
     );
-    const empUserId = empRows[0]?.emp_user_id;
-    if (empUserId) {
-      try {
-        await sendNotification(tenantId, empUserId, {
-          title: '❌ Leave Rejected',
-          message: `Your ${leave.leave_type} leave (${leave.start_date} to ${leave.end_date}) has been rejected.`,
-          type: 'leave',
-          related_id: Number(leaveId),
-        });
-      } catch (_) {}
+    if (empRows[0]?.emp_user_id) {
+      sendNotification(tenantId, empRows[0].emp_user_id, {
+        title: '❌ Leave Rejected',
+        message: `Your ${leave.leave_type} leave (${leave.start_date} to ${leave.end_date}) has been rejected.${rejectionReason ? ` Reason: ${rejectionReason}` : ''}`,
+        type: 'leave',
+        related_id: Number(leaveId),
+      }).catch(() => {});
     }
 
-    return res.json({ success: true, status: 'rejected', message: 'Leave rejected successfully' });
+    return res.json({ success: true, status: 'Rejected', message: 'Leave rejected successfully' });
   } catch (err) {
-    console.error('[LeaveReject] error:', err);
     return res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// GET /api/leaves/export — XLSX export (admin/HR)
+router.get('/export', requireModuleAccess('leave_management', 'read'), async (req, res) => {
+  try {
+    const XLSX = require('xlsx');
+    const tenantId = req.tenantId;
+    const { month, year, employee_id, status } = req.query;
+
+    let sql = `SELECT u.first_name, u.last_name, u.email, u.position,
+                      lr.leave_type, lr.start_date, lr.end_date,
+                      DATEDIFF(lr.end_date, lr.start_date) + 1 AS days_count,
+                      lr.status, lr.description AS reason, lr.created_at,
+                      lr.tl_status, lr.client_status, lr.hr_status,
+                      lr.rejection_reason,
+                      ed.id AS emp_number
+               FROM leave_requests lr
+               JOIN employee_details ed ON ed.employee_id = lr.employee_id AND ed.tenant_id = lr.tenant_id
+               JOIN users u ON u.id = ed.employee_id
+               WHERE lr.tenant_id = ?`;
+    const params = [tenantId];
+
+    if (employee_id) { sql += ' AND lr.employee_id = ?'; params.push(employee_id); }
+    if (status)      { sql += ' AND lr.status = ?'; params.push(status); }
+    if (month && year) { sql += ' AND MONTH(lr.start_date) = ? AND YEAR(lr.start_date) = ?'; params.push(Number(month), Number(year)); }
+    else if (year)   { sql += ' AND YEAR(lr.start_date) = ?'; params.push(Number(year)); }
+    sql += ' ORDER BY lr.created_at DESC';
+
+    const [rows] = await pool.execute(sql, params);
+
+    const wsData = [
+      ['Name','Email','Position','Emp ID','Leave Type','Start','End','Days','Status','TL Status','Client Status','HR Status','Reason','Rejection Reason','Applied On'],
+      ...rows.map(r => [
+        `${r.first_name} ${r.last_name}`, r.email, r.position || '', r.emp_number || '',
+        r.leave_type || '',
+        r.start_date ? new Date(r.start_date).toLocaleDateString('en-IN') : '',
+        r.end_date   ? new Date(r.end_date).toLocaleDateString('en-IN')   : '',
+        r.days_count || 0, r.status || '',
+        r.tl_status || '', r.client_status || '', r.hr_status || '',
+        r.reason || '', r.rejection_reason || '',
+        r.created_at ? new Date(r.created_at).toLocaleDateString('en-IN') : ''
+      ])
+    ];
+
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Leave Requests');
+
+    const now = new Date();
+    const fileName = `Leave_Export_${now.getFullYear()}_${String(now.getMonth()+1).padStart(2,'0')}.xlsx`;
+    const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.send(buf);
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to generate export' });
   }
 });
 

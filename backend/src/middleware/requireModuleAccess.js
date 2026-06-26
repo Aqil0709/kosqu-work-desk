@@ -10,6 +10,7 @@ const accessMeetsLevel = (access, minLevel) => {
 
 // Roles that behave identically to 'employee' for access-control purposes.
 // intern and consultant get same restrictions as employee (extra profile fields only).
+// hr, team_lead, pm are NOT here — they are also employees and can use the employee portal.
 const EMPLOYEE_LIKE_ROLES = new Set(['employee', 'intern', 'consultant', 'user']);
 
 // Modules that employees (and employee-like roles) are never allowed to access,
@@ -22,11 +23,18 @@ const EMPLOYEE_FORBIDDEN_MODULES = new Set([
   'accounts', 'billing_management', 'delivery_management', 'expense_management',
   'billing_settings', 'quotation_management', 'services', 'service_management',
   'lead_management', 'recruitment', 'payroll_compliance', 'onboarding',
+  'declarations', 'asset_management', 'grievance',
 ]);
 
-// Modules accessible to team_lead in addition to normal employee modules.
-// team_lead can view their own team but cannot access full HR management.
+// Modules accessible to team_lead and pm in addition to normal employee modules.
 const TEAM_LEAD_ALLOWED_MODULES = new Set([
+  'work_reports', 'mom_management', 'performance_management',
+  'project_management', 'attendance_management', 'leave_management',
+  'pttm',
+]);
+
+// PM role gets same pre-approved module access as team_lead
+const PM_ALLOWED_MODULES = new Set([
   'work_reports', 'mom_management', 'performance_management',
   'project_management', 'attendance_management', 'leave_management',
   'pttm',
@@ -82,13 +90,17 @@ const requireModuleAccess = (moduleKey, minLevel = 'read') => async (req, res, n
       }
     }
 
-    // team_lead: allow their specific modules without DB lookup (they still need
-    // module_access entries for anything beyond TEAM_LEAD_ALLOWED_MODULES)
-    if (role === 'team_lead') {
+    // team_lead: anyone with is_team_lead=true gets access to TL modules without DB lookup
+    const isTeamLead = req.user?.is_team_lead === true || req.user?.is_team_lead === 1 || role === 'team_lead';
+    if (isTeamLead) {
       const keysToCheck = Array.isArray(moduleKey) ? moduleKey : [moduleKey];
       const allAllowed = keysToCheck.every((k) => TEAM_LEAD_ALLOWED_MODULES.has(k));
       if (allAllowed) return next();
-      // For other modules, fall through to DB check
+    }
+    if (role === 'pm') {
+      const keysToCheck = Array.isArray(moduleKey) ? moduleKey : [moduleKey];
+      const allAllowed = keysToCheck.every((k) => PM_ALLOWED_MODULES.has(k));
+      if (allAllowed) return next();
     }
 
     const userId = req.user?.id || req.user?.user_id;

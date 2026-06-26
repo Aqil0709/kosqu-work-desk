@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useNotifications } from '../../contexts/NotificationContext';
@@ -25,11 +26,15 @@ const PAGE_TITLES = {
   'employee-resignation':  'My Resignation',
   'employee-leads':        'My Leads',
   'employee-documents':    'My Documents',
-  'employee-declaration':  'Investment Declaration (12BB)',
   'employee-onboarding':   'My Onboarding',
   'employee-grievance':    'Grievance Portal',
   'employee-projects':     'Projects & Tasks',
   pttm:                    'Project Management',
+  'employee-calendar':     'My Calendar',
+  'employee-notes':        'Notes & Reminders',
+  'employee-wfh':          'Work From Home',
+  'employee-ai-chat':      'AI Assistant',
+  'change-password':       'Change Password',
 };
 
 /* ─── Icons ─────────────────────────────────────────────────────────── */
@@ -54,11 +59,6 @@ const LogoutIcon       = () => (
     <path d="M4 5H12V3H4C2.9 3 2 3.9 2 5V19C2 20.1 2.9 21 4 21H12V19H4V5Z" fill="currentColor"/>
   </svg>
 );
-const TaxIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-    <path d="M9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm2-7h-1V2h-2v2H8V2H6v2H5C3.89 4 3 4.9 3 6v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z" fill="currentColor"/>
-  </svg>
-);
 const TeamReportIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
     <path d="M19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3ZM19 19H5V5H19V19ZM7 10H9V17H7V10ZM11 7H13V17H11V7ZM15 13H17V17H15V13Z" fill="currentColor"/>
@@ -69,6 +69,10 @@ const ResignationIcon = () => (
     <path d="M20 3H4C2.9 3 2 3.9 2 5V19C2 20.1 2.9 21 4 21H20C21.1 21 22 20.1 22 19V5C22 3.9 21.1 3 20 3ZM20 19H4V5H20V19ZM13.5 7.5L11.5 9.5L14 12L11.5 14.5L13.5 16.5L18 12L13.5 7.5ZM10.5 7.5L6 12L10.5 16.5L12.5 14.5L10 12L12.5 9.5L10.5 7.5Z" fill="currentColor"/>
   </svg>
 );
+const CalendarIcon     = () => <Ic d="M19 3H18V1H16V3H8V1H6V3H5C3.89 3 3 3.9 3 5V19C3 20.1 3.89 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3ZM19 19H5V8H19V19ZM7 10H9V12H7V10ZM11 10H13V12H11V10ZM15 10H17V12H15V10ZM7 14H9V16H7V14ZM11 14H13V16H11V14ZM15 14H17V16H15V14Z" />;
+const NotesIcon        = () => <Ic d="M19 3H14.82C14.4 1.84 13.3 1 12 1C10.7 1 9.6 1.84 9.18 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3ZM12 3C12.55 3 13 3.45 13 4C13 4.55 12.55 5 12 5C11.45 5 11 4.55 11 4C11 3.45 11.45 3 12 3ZM19 19H5V5H7V7H17V5H19V19ZM7 9H17V11H7V9ZM7 13H17V15H7V13ZM7 17H13V19H7V17Z" />;
+const WFHIcon          = () => <Ic d="M10 20V14H14V20H19V12H22L12 3L2 12H5V20H10Z" />;
+const AIIcon           = () => <Ic d="M20 2H4C2.9 2 2 2.9 2 4V22L6 18H20C21.1 18 22 17.1 22 16V4C22 2.9 21.1 2 20 2ZM20 16H5.17L4 17.17V4H20V16ZM7 9H9V11H7V9ZM11 9H13V11H11V9ZM15 9H17V11H15V9Z" />;
 const ChevronDown = () => (
   <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M7.41 8.84L12 13.42L16.59 8.84L18 10.25L12 16.25L6 10.25L7.41 8.84Z" fill="currentColor"/></svg>
 );
@@ -78,7 +82,16 @@ const ChevronRight = () => (
 
 /* ─── Component ─────────────────────────────────────────────────────── */
 const EmployeeLayout = ({ initialTab } = {}) => {
-  const [activeTab, setActiveTab]         = useState(() => initialTab || localStorage.getItem(STORAGE_KEY) || 'dashboard');
+  const navigate  = useNavigate();
+  const location  = useLocation();
+
+  // Derive active tab from URL hash (#tab-name) → supports deep linking, back button, bookmarks
+  const getTabFromUrl = useCallback(() => {
+    const hash = location.hash.replace('#', '');
+    return hash || initialTab || localStorage.getItem(STORAGE_KEY) || 'dashboard';
+  }, [location.hash, initialTab]);
+
+  const [activeTab, setActiveTabState]    = useState(getTabFromUrl);
   const [sidebarOpen, setSidebarOpen]     = useState(true);
   const [moreOpen, setMoreOpen]           = useState(false);
   const moreRef                           = useRef(null);
@@ -87,11 +100,22 @@ const EmployeeLayout = ({ initialTab } = {}) => {
   const { isDarkMode, toggleTheme }       = useTheme();
   const { notifications, unreadCount: notifCount, fetchNotifications, markAllRead, markOneRead } = useNotifications();
 
-  const isTeamLead       = user?.position === 'team_lead';
-  const canAccessPttm    = user?.position === 'admin' || user?.position === 'hr' || user?.position === 'team_lead' || user?.position === 'pm';
+  const isTeamLead       = user?.is_team_lead === true || user?.is_team_lead === 1;
+  const canAccessPttm    = user?.position === 'admin' || user?.position === 'hr' || user?.is_team_lead || user?.position === 'pm';
   const canAccessProjects = user?.position !== 'client';
 
-  useEffect(() => { localStorage.setItem(STORAGE_KEY, activeTab); }, [activeTab]);
+  // Sync state when URL hash changes (back/forward button)
+  useEffect(() => {
+    const tab = getTabFromUrl();
+    setActiveTabState(tab);
+  }, [location.hash, getTabFromUrl]);
+
+  // Navigate by updating URL hash (preserves history, enables back button)
+  const setActiveTab = useCallback((tab) => {
+    navigate(`#${tab}`, { replace: false });
+    localStorage.setItem(STORAGE_KEY, tab);
+  }, [navigate]);
+
   useEffect(() => { checkAuthStatus(); }, []);
 
   // Close "More" dropdown on outside click
@@ -159,7 +183,6 @@ const EmployeeLayout = ({ initialTab } = {}) => {
       items: [
         { tab: 'employee-leads',       icon: <LeadIcon />,        label: 'My Leads' },
         { tab: 'employee-documents',   icon: <DocumentIcon />,    label: 'My Documents' },
-        { tab: 'employee-declaration', icon: <TaxIcon />,         label: 'Tax Declaration' },
         { tab: 'employee-onboarding',  icon: <DocumentIcon />,    label: 'Onboarding' },
         { tab: 'employee-grievance',   icon: <LeadIcon />,        label: 'Grievance' },
         { tab: 'employee-resignation', icon: <ResignationIcon />, label: 'My Resignation' },
@@ -172,6 +195,15 @@ const EmployeeLayout = ({ initialTab } = {}) => {
         canAccessProjects ? { tab: 'employee-projects', icon: <ProjectsIcon />, label: 'My Tasks' }     : null,
         isTeamLead        ? { tab: 'tl-work-reports',  icon: <TeamReportIcon />,label: 'Team Reports' } : null,
       ].filter(Boolean),
+    },
+    {
+      items: [
+        { tab: 'employee-calendar', icon: <CalendarIcon />, label: 'My Calendar' },
+        { tab: 'employee-wfh',      icon: <WFHIcon />,      label: 'WFH Requests' },
+        { tab: 'employee-notes',    icon: <NotesIcon />,    label: 'Notes & Reminders' },
+        { tab: 'employee-ai-chat',  icon: <AIIcon />,       label: 'AI Assistant' },
+        { tab: 'change-password',   icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>, label: 'Change Password' },
+      ],
     },
   ];
 
@@ -191,22 +223,29 @@ const EmployeeLayout = ({ initialTab } = {}) => {
           onMarkAllRead={() => markAllRead()}
           onNotifItemClick={handleNotifItemClick}
           onLogout={logout}
-          profileItems={[{
-            label: 'My Profile',
-            icon: <UserIcon />,
-            onClick: () => navigateToTab('personal-info'),
-          }]}
+          profileItems={[
+            {
+              label: 'My Profile',
+              icon: <UserIcon />,
+              onClick: () => navigateToTab('personal-info'),
+            },
+            {
+              label: 'Change Password',
+              icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>,
+              onClick: () => navigateToTab('change-password'),
+            },
+          ]}
         />
 
         <div className="dashboard-body">
           <aside className={`dashboard-sidebar ${sidebarOpen ? 'open' : 'closed'}`}>
             <nav className="sidebar-nav">
               <ul>
-                {SECTIONS.map(section => {
+                {SECTIONS.map((section, idx) => {
                   if (section.show === false) return null;
                   if (!section.items.length) return null;
                   return (
-                    <li key={section.label} style={{ listStyle: 'none' }}>
+                    <li key={section.label || idx} style={{ listStyle: 'none' }}>
                       {sidebarOpen && (
                         <span className="nav-section-label">{section.label}</span>
                       )}
