@@ -109,11 +109,42 @@ server {
         client_max_body_size 15M;
     }
 
-    # ── Super Admin (subdomain alternative: use /super-admin path) ────────────
+    # ── Super Admin ───────────────────────────────────────────────────────────
+    # alias + try_files needs index.html served with alias prefix (Nginx quirk)
     location /super-admin/ {
         alias /var/www/work-desk/super-admin/dist/;
-        try_files $uri $uri/ /super-admin/index.html;
+        try_files $uri $uri/ @super_admin_fallback;
     }
+    location @super_admin_fallback {
+        root /var/www/work-desk/super-admin/dist;
+        rewrite ^ /index.html break;
+    }
+
+    # ── PWA: Service Worker must be served from root scope ────────────────────
+    location = /sw.js {
+        root /var/www/work-desk/frontend/dist;
+        add_header Cache-Control "no-cache, no-store, must-revalidate";
+        add_header Service-Worker-Allowed "/";
+    }
+    location = /manifest.webmanifest {
+        root /var/www/work-desk/frontend/dist;
+        add_header Content-Type "application/manifest+json";
+        add_header Cache-Control "no-cache";
+    }
+
+    # ── Correct MIME types for JS modules (main app) ──────────────────────────
+    location ~* ^/assets/.*\.js$ {
+        root /var/www/work-desk/frontend/dist;
+        add_header Content-Type "application/javascript";
+        try_files $uri =404;
+    }
+    location ~* ^/assets/.*\.css$ {
+        root /var/www/work-desk/frontend/dist;
+        add_header Content-Type "text/css";
+        try_files $uri =404;
+    }
+    # Super admin JS/CSS assets get correct MIME via alias block above
+    # (alias handles files; named location handles SPA fallback only)
 
     # ── Security headers ──────────────────────────────────────────────────────
     add_header X-Frame-Options "SAMEORIGIN" always;

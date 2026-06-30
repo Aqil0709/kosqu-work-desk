@@ -1033,3 +1033,76 @@
   color: #F8FAFC;
   border: 1px solid #E2E8F0;
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   PWA MOBILE — installed app safe-area + touch improvements
+═══════════════════════════════════════════════════════════════════ */
+
+/* Respect iPhone notch / home bar */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .al-topbar {
+    padding-top: max(0px, env(safe-area-inset-top));
+  }
+  .al-main {
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+  }
+  .al-sidebar {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Larger touch targets on mobile */
+@media (max-width: 768px) {
+  .al-nav-list > li > button,
+  .nav-group-toggle {
+    min-height: 48px;
+    padding: 12px 16px;
+  }
+
+  .al-nav-list .nav-submenu li > button {
+    min-height: 44px;
+    padding: 10px 16px 10px 36px;
+  }
+
+  /* Overlay behind open sidebar */
+  .al-sidebar.open::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: -1;
+  }
+
+  /* Main content full width, no margin */
+  .al-body {
+    overflow-x: hidden;
+  }
+
+  /* Card/table scroll on small screens */
+  .al-main table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Prevent text overflow in topbar */
+  .al-page-title {
+    font-size: 15px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 160px;
+  }
+}
+
+@media (max-width: 480px) {
+  .al-page-title {
+    max-width: 120px;
+    font-size: 14px;
+  }
+
+  /* Stack topbar actions */
+  .al-topbar-actions {
+    gap: 4px;
+  }
+}

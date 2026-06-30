@@ -409,6 +409,8 @@ const AdminLayout = ({ initialTab, initialState = null }) => {
     setActiveTab(tabName);
     if (!location.pathname.startsWith('/admin')) navigate('/admin');
     setTimeout(() => setNavigationState(null), 500);
+    // Auto-close sidebar on mobile (screen width <= 768px)
+    if (window.innerWidth <= 768) setSidebarOpen(false);
   }, [location.pathname, navigate, setActiveTab]);
 
   // Notification type → admin tab mapping (must be after navigateToTab)
