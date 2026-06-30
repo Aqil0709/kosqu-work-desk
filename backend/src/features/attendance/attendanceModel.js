@@ -382,15 +382,15 @@ create: async (tenantId, attendanceData) => {
                 lateStreak = monthLateCount;
 
                 if (monthLateCount === 3) {
-                    // 3rd late this month → warning notification only, no deduction
+                    // 3rd late this month → warning notification only, no deduction yet
                     lateWarning = true;
-                    deductionReason = `3 late arrivals this month - Warning issued`;
+                    deductionReason = `3 late arrivals this month — Warning: next late will result in half-day deduction`;
                 } else if (monthLateCount >= 4) {
-                    // 4th+ late this month → full day salary deduction
+                    // 4th+ late this month → HALF day salary deduction (per policy)
                     shouldDeductSalary = true;
                     const dailySalary = employeeSalary / 26;
-                    deductionAmount = parseFloat(dailySalary.toFixed(2));
-                    deductionReason = `${monthLateCount} late arrivals this month - 1 day salary deducted`;
+                    deductionAmount = parseFloat((dailySalary * 0.5).toFixed(2));
+                    deductionReason = `${monthLateCount} late arrivals this month — Half-day salary deducted`;
                 }
             } else {
                 status = 'Present';

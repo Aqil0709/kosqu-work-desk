@@ -45,6 +45,14 @@ const EmployeePayslips = () => {
   const [olError, setOlError] = useState('');
   const [olLoaded, setOlLoaded] = useState(false);
   const [downloadingOl, setDownloadingOl] = useState(false);
+  const [attSummary, setAttSummary] = useState(null);
+
+  const loadAttSummary = useCallback(async () => {
+    try {
+      const res = await axios.get(`${API_BASE}/api/salary/my-attendance-summary`, { headers: authH() });
+      if (res.data?.success) setAttSummary(res.data);
+    } catch (_) {}
+  }, []);
 
   const loadPayslips = useCallback(async () => {
     try {
@@ -96,7 +104,7 @@ const EmployeePayslips = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slipYearFilter, slipMonthFilter]);
 
-  useEffect(() => { loadPayslips(); }, [loadPayslips]);
+  useEffect(() => { loadPayslips(); loadAttSummary(); }, [loadPayslips, loadAttSummary]);
 
   useEffect(() => {
     if (activeTab === 'my-slips' && !mySlipsLoaded) loadMySlips();
@@ -199,6 +207,83 @@ const EmployeePayslips = () => {
               <div className="ep-stat"><span>Fully Paid</span><strong className="green">{totalPaid}</strong></div>
               <div className="ep-stat"><span>Total Net Salary</span><strong>{fmtNum(totalNet)}</strong></div>
               <div className="ep-stat"><span>Total Received</span><strong className="green">{fmtNum(totalPaidAmt)}</strong></div>
+            </div>
+          )}
+
+          {/* ── Live Current Month Attendance-Based Salary Card ── */}
+          {attSummary && (
+            <div style={{
+              background: 'linear-gradient(135deg, #0f172a, #1e293b)',
+              border: '1px solid #334155',
+              borderRadius: 16,
+              padding: '20px 24px',
+              marginBottom: 20,
+              color: '#f1f5f9',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: 15 }}>
+                    📊 {attSummary.month} {attSummary.year} — Estimated Salary
+                  </div>
+                  <div style={{ color: '#94a3b8', fontSize: 13, marginTop: 2 }}>
+                    Based on your attendance this month (updates daily)
+                  </div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontSize: 24, fontWeight: 800, color: '#34d399' }}>
+                    {fmtNum(attSummary.estimated_net_salary)}
+                  </div>
+                  <div style={{ fontSize: 12, color: '#94a3b8' }}>Estimated Net Salary</div>
+                </div>
+              </div>
+
+              {/* Attendance grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: 10, marginBottom: 16 }}>
+                {[
+                  { label: 'Present', value: attSummary.present_days, color: '#34d399' },
+                  { label: 'Absent', value: attSummary.absent_days, color: '#f87171' },
+                  { label: 'Late', value: attSummary.late_days, color: '#fbbf24' },
+                  { label: 'Half Day', value: attSummary.half_days, color: '#f97316' },
+                  { label: 'Paid Leave', value: attSummary.paid_leave_days, color: '#60a5fa' },
+                  { label: 'Unpaid Leave', value: attSummary.unpaid_leave_days, color: '#e879f9' },
+                ].map(({ label, value, color }) => (
+                  <div key={label} style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 10, padding: '10px 12px', textAlign: 'center' }}>
+                    <div style={{ fontSize: 22, fontWeight: 800, color }}>{value}</div>
+                    <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>{label}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Deduction breakdown */}
+              {attSummary.total_deduction > 0 && (
+                <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 10, padding: '12px 16px' }}>
+                  <div style={{ fontWeight: 600, fontSize: 13, color: '#fca5a5', marginBottom: 8 }}>
+                    💸 Deduction Breakdown
+                  </div>
+                  <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
+                    {attSummary.leave_and_absence_deduction > 0 && (
+                      <div>
+                        <span style={{ color: '#94a3b8', fontSize: 12 }}>Absent / Unpaid Leave</span>
+                        <div style={{ color: '#f87171', fontWeight: 700 }}>{fmtNum(attSummary.leave_and_absence_deduction)}</div>
+                      </div>
+                    )}
+                    {attSummary.attendance_deductions > 0 && (
+                      <div>
+                        <span style={{ color: '#94a3b8', fontSize: 12 }}>Late Deductions (≥4×)</span>
+                        <div style={{ color: '#fbbf24', fontWeight: 700 }}>{fmtNum(attSummary.attendance_deductions)}</div>
+                      </div>
+                    )}
+                    <div>
+                      <span style={{ color: '#94a3b8', fontSize: 12 }}>Total Deduction</span>
+                      <div style={{ color: '#f87171', fontWeight: 800 }}>{fmtNum(attSummary.total_deduction)}</div>
+                    </div>
+                    <div>
+                      <span style={{ color: '#94a3b8', fontSize: 12 }}>Daily Rate</span>
+                      <div style={{ color: '#cbd5e1', fontWeight: 700 }}>{fmtNum(attSummary.daily_rate)}/day</div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

@@ -92,7 +92,7 @@ const EmployeeLayout = ({ initialTab } = {}) => {
   }, [location.hash, initialTab]);
 
   const [activeTab, setActiveTabState]    = useState(getTabFromUrl);
-  const [sidebarOpen, setSidebarOpen]     = useState(true);
+  const [sidebarOpen, setSidebarOpen]     = useState(window.innerWidth > 768);
   const [moreOpen, setMoreOpen]           = useState(false);
   const moreRef                           = useRef(null);
 
@@ -145,7 +145,10 @@ const EmployeeLayout = ({ initialTab } = {}) => {
     setActiveTab(NOTIF_TAB[notif.type] || 'dashboard');
   };
 
-  const navigateToTab = (tab) => setActiveTab(tab);
+  const navigateToTab = (tab) => {
+    setActiveTab(tab);
+    if (window.innerWidth <= 768) setSidebarOpen(false);
+  };
 
   const getUserInitials = () => {
     if (!user) return 'E';
@@ -238,6 +241,13 @@ const EmployeeLayout = ({ initialTab } = {}) => {
         />
 
         <div className="dashboard-body">
+          {/* Mobile overlay — tap outside to close sidebar */}
+          {sidebarOpen && (
+            <div
+              className="emp-mobile-overlay"
+              onClick={() => setSidebarOpen(false)}
+            />
+          )}
           <aside className={`dashboard-sidebar ${sidebarOpen ? 'open' : 'closed'}`}>
             <nav className="sidebar-nav">
               <ul>

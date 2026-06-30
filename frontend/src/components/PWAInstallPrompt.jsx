@@ -70,15 +70,15 @@ export default function PWAInstallPrompt() {
 
       <div style={{ flex: 1 }}>
         <div style={{ color: '#F1F5F9', fontWeight: 600, fontSize: 15 }}>
-          HRMS App Install Karo
+          Install HRMS App
         </div>
         {isIOS ? (
           <div style={{ color: '#94A3B8', fontSize: 13, marginTop: 2 }}>
-            Safari mein <strong style={{ color: '#60A5FA' }}>Share</strong> button tap karo → <strong style={{ color: '#60A5FA' }}>Add to Home Screen</strong>
+            Tap the <strong style={{ color: '#60A5FA' }}>Share</strong> button in Safari → select <strong style={{ color: '#60A5FA' }}>Add to Home Screen</strong>
           </div>
         ) : (
           <div style={{ color: '#94A3B8', fontSize: 13, marginTop: 2 }}>
-            Home screen pe add karo — bilkul app jaisa experience
+            Add to your home screen for a fast, app-like experience
           </div>
         )}
       </div>

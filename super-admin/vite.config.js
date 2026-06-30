@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
-  base: '/super-admin/',
+  base: '/',
   build: {
     sourcemap: false,
     minify: true,

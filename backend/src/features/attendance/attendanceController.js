@@ -459,20 +459,20 @@ const attendanceController = {
                     if (result && result.is_late) {
                         if (result.late_warning) {
                             await sendToMany(req.tenantId, userIds, {
-                                title: '⚠️ Late Warning',
-                                message: `${employeeName} is late for the 3rd time this month. Next late arrival will result in 1 day salary deduction.`,
+                                title: '⚠️ Late Arrival Warning',
+                                message: `${employeeName} is late for the 3rd time this month. One more late arrival will result in a half-day salary deduction.`,
                                 type: 'attendance_warning',
                             });
                         } else if (result.should_deduct_salary) {
                             await sendToMany(req.tenantId, userIds, {
-                                title: '🔴 Salary Deduction',
-                                message: `${employeeName} has been late ${result.month_late_count} times this month. A salary deduction has been applied per policy.`,
+                                title: '🔴 Half-Day Salary Deduction Applied',
+                                message: `${employeeName} has been late ${result.month_late_count} times this month. A half-day salary deduction (₹${result.deduction_amount}) has been applied per company policy.`,
                                 type: 'salary_deduction',
                             });
                         } else {
                             await sendToMany(req.tenantId, userIds, {
-                                title: 'Employee Late Check-in',
-                                message: `${employeeName} checked in ${result.late_minutes} minutes late today.`,
+                                title: 'Late Check-in',
+                                message: `${employeeName} checked in ${result.late_minutes} minutes late today (beyond grace period).`,
                                 type: 'attendance',
                             });
                         }
@@ -569,11 +569,25 @@ const attendanceController = {
 
             const { userIds, employeeName } = await getNotificationRecipients(tenantId, userId, { includeClient: false });
             if (result?.is_late) {
-                await sendToMany(tenantId, userIds, {
-                    title: 'Employee Late Check-in (Face)',
-                    message: `${employeeName} checked in ${result.late_minutes} minutes late via face recognition.`,
-                    type: 'attendance',
-                });
+                if (result.late_warning) {
+                    await sendToMany(tenantId, userIds, {
+                        title: '⚠️ Late Warning',
+                        message: `${employeeName} is late for the 3rd time this month. Next late arrival will result in a half-day salary deduction.`,
+                        type: 'attendance_warning',
+                    });
+                } else if (result.should_deduct_salary) {
+                    await sendToMany(tenantId, userIds, {
+                        title: '🔴 Half-Day Salary Deduction',
+                        message: `${employeeName} has been late ${result.month_late_count} times this month. A half-day salary deduction has been applied.`,
+                        type: 'salary_deduction',
+                    });
+                } else {
+                    await sendToMany(tenantId, userIds, {
+                        title: 'Late Check-in',
+                        message: `${employeeName} checked in ${result.late_minutes} minutes late today (via face recognition).`,
+                        type: 'attendance',
+                    });
+                }
             } else {
                 await sendToMany(tenantId, userIds.filter(id => id !== userId), {
                     title: `Employee ${type === 'check_in' ? 'Checked In' : 'Checked Out'} (Face)`,

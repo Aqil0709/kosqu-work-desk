@@ -186,6 +186,60 @@ router.get('/my-history', async (req, res) => {
     }
 });
 
+// ── GET /api/salary/my-attendance-summary ────────────────────────────────────
+// Returns current month live attendance deduction estimate for the logged-in employee
+router.get('/my-attendance-summary', async (req, res) => {
+    try {
+        const tenantId = req.tenantId;
+        const userId = req.user.id;
+        const Salary = require('./salaryModel');
+
+        const [empRows] = await pool.execute(
+            `SELECT ed.id,
+                    ROUND(COALESCE(
+                      NULLIF(ed.salary, 0),
+                      NULLIF(ed.salary_gross, 0) * 12,
+                      (COALESCE(ed.salary_basic,0)+COALESCE(ed.salary_hra,0)+COALESCE(ed.salary_medical_allowance,0)+COALESCE(ed.salary_travel_allowance,0)+COALESCE(ed.salary_other_allowance,0))*12,
+                      0
+                    ), 0) as annual_salary
+             FROM employee_details ed
+             WHERE ed.employee_id = ? AND ed.tenant_id = ? LIMIT 1`,
+            [userId, tenantId]
+        );
+        if (!empRows.length) return res.status(404).json({ success: false, message: 'Employee not found' });
+
+        const empDetailId = empRows[0].id;
+        const annualSalary = parseFloat(empRows[0].annual_salary) || 0;
+        const now = new Date();
+        const month = now.getMonth() + 1;
+        const year = now.getFullYear();
+
+        const calc = await Salary.calculateSalary(tenantId, empDetailId, month, year, annualSalary);
+
+        return res.json({
+            success: true,
+            month: now.toLocaleString('en-US', { month: 'long' }),
+            year,
+            monthly_salary: calc.monthly_salary,
+            present_days: calc.details?.present_days || 0,
+            absent_days: calc.details?.absent_days || 0,
+            late_days: calc.details?.late_days || 0,
+            half_days: calc.details?.half_days || 0,
+            paid_leave_days: calc.details?.paid_leave_days || 0,
+            unpaid_leave_days: calc.details?.unpaid_leave_days || 0,
+            deduction_days: calc.details?.deduction_days || 0,
+            total_deduction: calc.details?.total_deduction || 0,
+            attendance_deductions: calc.details?.attendance_deductions || 0,
+            leave_and_absence_deduction: calc.details?.leave_and_absence_deduction || 0,
+            estimated_net_salary: calc.net_salary,
+            daily_rate: calc.details?.daily_rate || 0,
+        });
+    } catch (err) {
+        console.error('GET /salary/my-attendance-summary error:', err);
+        return res.status(500).json({ success: false, message: 'Something went wrong.' });
+    }
+});
+
 // ── GET /api/salary/export ────────────────────────────────────────────────────
 // Export salary records as XLSX (admin/HR with salary_management read access)
 router.get('/export', canReadSalary, async (req, res) => {

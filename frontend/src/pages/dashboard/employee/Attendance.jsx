@@ -586,15 +586,15 @@ const AttendanceTable = () => {
         <div className="attendance-actions">
           <button
             className="check-in-btn"
-            onClick={() => handleQuickCheckIn('check_in')}
+            onClick={handleFaceRecognitionAttendance}
           >
-            {todayWFH ? '🏠 WFH Check In' : '📍 Check In'}
+            {todayWFH ? '🏠 WFH Check In' : '📷 Face Check In'}
           </button>
           <button
             className="check-out-btn"
-            onClick={() => handleQuickCheckIn('check_out')}
+            onClick={handleFaceRecognitionAttendance}
           >
-            {todayWFH ? '🏠 WFH Check Out' : '🏠 Quick Check Out'}
+            {todayWFH ? '🏠 WFH Check Out' : '📷 Face Check Out'}
           </button>
         </div>
       </div>
@@ -625,6 +625,131 @@ const AttendanceTable = () => {
         </div>
       </div>
 
+
+      {/* ── Face Recognition Modal ─────────────────────────────────── */}
+      {isCameraOpen && (
+        <div className="face-modal-overlay" onClick={(e) => e.target === e.currentTarget && stopCamera()}>
+          <div className="face-modal">
+            <div className="face-modal-header">
+              <h3>📷 Face Recognition Attendance</h3>
+              <button className="face-modal-close" onClick={stopCamera}>✕</button>
+            </div>
+
+            <div className="face-modal-body">
+              {/* Auto-detect type */}
+              {(() => {
+                const todayRecs = attendance.filter(r => r.date === getIndiaDate());
+                const checkedIn = todayRecs.some(r => r.checkIn && r.checkIn !== '--');
+                const checkedOut = todayRecs.some(r => r.checkOut && r.checkOut !== '--');
+                const type = checkedIn && !checkedOut ? 'Check Out' : 'Check In';
+                return (
+                  <div className="face-type-badge">
+                    {type === 'Check In' ? '🟢' : '🔴'} <strong>{type}</strong>
+                    <span style={{ color: '#94a3b8', marginLeft: 8, fontSize: 13 }}>
+                      (auto-detected from today's records)
+                    </span>
+                  </div>
+                );
+              })()}
+
+              {/* Camera / Upload toggle */}
+              <div className="face-mode-tabs">
+                <button
+                  className={`face-mode-tab ${!isUploadMode ? 'active' : ''}`}
+                  onClick={() => { setIsUploadMode(false); if (!cameraStream) startCamera(); }}
+                >
+                  📸 Camera
+                </button>
+                <button
+                  className={`face-mode-tab ${isUploadMode ? 'active' : ''}`}
+                  onClick={switchToUploadMode}
+                >
+                  📁 Upload Photo
+                </button>
+              </div>
+
+              {/* Camera view */}
+              {!isUploadMode && (
+                <div className="face-camera-wrap">
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    muted
+                    className="face-video"
+                  />
+                  <canvas ref={canvasRef} style={{ display: 'none' }} />
+                  <div className="face-guide-ring" />
+                </div>
+              )}
+
+              {/* Upload view */}
+              {isUploadMode && (
+                <div className="face-upload-wrap">
+                  {uploadImagePreview ? (
+                    <div className="face-preview-wrap">
+                      <img src={uploadImagePreview} alt="Preview" className="face-preview-img" />
+                      <button className="face-clear-btn" onClick={clearUploadedImage}>✕ Clear</button>
+                    </div>
+                  ) : (
+                    <label className="face-upload-label">
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        capture="user"
+                        onChange={handleImageSelect}
+                        style={{ display: 'none' }}
+                      />
+                      <div className="face-upload-placeholder">
+                        <span style={{ fontSize: 48 }}>🤳</span>
+                        <p>Tap to take photo or upload selfie</p>
+                        <span style={{ fontSize: 13, color: '#64748b' }}>Max 5MB · JPEG, PNG</span>
+                      </div>
+                    </label>
+                  )}
+                </div>
+              )}
+
+              {/* Result */}
+              {verificationResult && (
+                <div className={`face-result ${verificationResult.success ? 'success' : 'error'}`}>
+                  {verificationResult.message}
+                </div>
+              )}
+
+              {/* Loading */}
+              {faceRecognitionLoading && (
+                <div className="face-loading">
+                  <div className="face-spinner" />
+                  <span>Analysing face...</span>
+                </div>
+              )}
+            </div>
+
+            <div className="face-modal-footer">
+              {!isUploadMode ? (
+                <button
+                  className="face-capture-btn"
+                  onClick={captureAndVerify}
+                  disabled={faceRecognitionLoading || !cameraStream}
+                >
+                  {faceRecognitionLoading ? '⏳ Verifying...' : '📸 Capture & Verify'}
+                </button>
+              ) : (
+                <button
+                  className="face-capture-btn"
+                  onClick={handleUploadAndVerify}
+                  disabled={faceRecognitionLoading || !uploadedImage}
+                >
+                  {faceRecognitionLoading ? '⏳ Verifying...' : '✅ Verify & Mark Attendance'}
+                </button>
+              )}
+              <button className="face-cancel-btn" onClick={stopCamera}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="attendance-table-container">
         <div className="table-header">

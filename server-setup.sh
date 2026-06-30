@@ -61,6 +61,45 @@ echo "MySQL user 'hrms_user' created with access to 'work-desk' database"
 echo ""
 echo "[5/7] Configuring Nginx..."
 cat > /etc/nginx/sites-available/work-desk.tech <<'NGINX'
+# ── Super Admin on admin.work-desk.tech subdomain ─────────────────────────────
+server {
+    listen 80;
+    server_name admin.work-desk.tech;
+
+    root /var/www/work-desk/super-admin/dist;
+    index index.html;
+
+    # All routes → SPA index.html
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # JS/CSS must have correct MIME types
+    location ~* \.js$ {
+        add_header Content-Type "application/javascript";
+        try_files $uri =404;
+    }
+    location ~* \.css$ {
+        add_header Content-Type "text/css";
+        try_files $uri =404;
+    }
+
+    # API calls from super admin panel → backend
+    location /api/ {
+        proxy_pass http://localhost:5001;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        client_max_body_size 15M;
+    }
+
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+}
+
+# ── Main app ───────────────────────────────────────────────────────────────────
 server {
     listen 80;
     server_name work-desk.tech www.work-desk.tech;
@@ -109,17 +148,6 @@ server {
         client_max_body_size 15M;
     }
 
-    # ── Super Admin ───────────────────────────────────────────────────────────
-    # alias + try_files needs index.html served with alias prefix (Nginx quirk)
-    location /super-admin/ {
-        alias /var/www/work-desk/super-admin/dist/;
-        try_files $uri $uri/ @super_admin_fallback;
-    }
-    location @super_admin_fallback {
-        root /var/www/work-desk/super-admin/dist;
-        rewrite ^ /index.html break;
-    }
-
     # ── PWA: Service Worker must be served from root scope ────────────────────
     location = /sw.js {
         root /var/www/work-desk/frontend/dist;
@@ -164,8 +192,8 @@ echo "[6/7] Setting up SSL (Let's Encrypt)..."
 if ! command -v certbot &> /dev/null; then
   apt-get install -y certbot python3-certbot-nginx
 fi
-certbot --nginx -d work-desk.tech -d www.work-desk.tech --non-interactive --agree-tos -m ashish.kumar@kosqu.com || \
-  echo "WARNING: SSL setup failed — run manually: certbot --nginx -d work-desk.tech -d www.work-desk.tech"
+certbot --nginx -d work-desk.tech -d www.work-desk.tech -d admin.work-desk.tech --non-interactive --agree-tos -m ashish.kumar@kosqu.com || \
+  echo "WARNING: SSL setup failed — run manually: certbot --nginx -d work-desk.tech -d www.work-desk.tech -d admin.work-desk.tech"
 
 # ── 7. Firewall ───────────────────────────────────────────────────────────────
 echo ""

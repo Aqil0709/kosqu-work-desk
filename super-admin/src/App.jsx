@@ -57,7 +57,7 @@ const AppContent = () => {
 
 function App() {
   return (
-    <Router basename="/super-admin">
+    <Router basename="/">
       <AuthProvider>
         <AppContent />
       </AuthProvider>
