@@ -10,6 +10,15 @@ echo ""
 echo "--- [1/6] Pulling latest changes ---"
 git pull origin new-workdesk || { echo "ERROR: git pull failed"; exit 1; }
 
+# Ensure uploads symlink is intact (persistent folder survives git pulls)
+UPLOADS_PERSISTENT="/var/www/work-desk-uploads"
+UPLOADS_LINK="$(pwd)/backend/src/features/uploads"
+if [ -d "$UPLOADS_PERSISTENT" ] && [ ! -L "$UPLOADS_LINK" ]; then
+  rm -rf "$UPLOADS_LINK"
+  ln -sfn "$UPLOADS_PERSISTENT" "$UPLOADS_LINK"
+  echo "Uploads symlink restored -> $UPLOADS_PERSISTENT"
+fi
+
 # ── 2. Build Frontend ─────────────────────────────────────────────────────────
 echo ""
 echo "--- [2/6] Building Frontend ---"

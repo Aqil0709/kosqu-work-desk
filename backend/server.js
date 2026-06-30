@@ -449,4 +449,15 @@ const startServer = async () => {
 
 startServer();
 
+// Prevent unhandled errors from crashing the process silently
+process.on('unhandledRejection', (reason) => {
+  logger.error('Unhandled Promise Rejection', { reason: String(reason) });
+  process.exit(1);
+});
+
+process.on('uncaughtException', (error) => {
+  logger.error('Uncaught Exception', { message: error.message, stack: error.stack });
+  process.exit(1);
+});
+
 module.exports = app;
