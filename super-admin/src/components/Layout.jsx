@@ -1,12 +1,13 @@
-// src/components/Layout.jsx
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { 
-  HiShieldCheck, 
-  HiSquares2X2, 
-  HiBuildingOffice2, 
-  HiArrowRightOnRectangle 
+import {
+  HiShieldCheck,
+  HiSquares2X2,
+  HiBuildingOffice2,
+  HiArrowRightOnRectangle,
+  HiBars3,
+  HiXMark,
 } from 'react-icons/hi2';
 import './Layout.css';
 
@@ -14,11 +15,34 @@ const Layout = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const navItems = [
-    { path: '/dashboard', label: 'Dashboard', icon: HiSquares2X2 },
-    { path: '/tenants', label: 'Organizations', icon: HiBuildingOffice2 },
+    { path: '/dashboard',  label: 'Dashboard',     icon: HiSquares2X2 },
+    { path: '/tenants',    label: 'Organizations',  icon: HiBuildingOffice2 },
   ];
+
+  // Close sidebar on route change (mobile)
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [location.pathname]);
+
+  // Close sidebar on outside click (mobile)
+  useEffect(() => {
+    if (!sidebarOpen) return;
+    const handler = (e) => {
+      if (!e.target.closest('.sidebar') && !e.target.closest('.mobile-menu-btn')) {
+        setSidebarOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [sidebarOpen]);
+
+  const handleNav = (path) => {
+    navigate(path);
+    setSidebarOpen(false);
+  };
 
   const handleLogout = () => {
     logout();
@@ -32,11 +56,31 @@ const Layout = () => {
 
   return (
     <div className="layout">
-      <aside className="sidebar">
+
+      {/* Mobile top bar */}
+      <header className="mobile-header">
+        <button
+          className="mobile-menu-btn"
+          onClick={() => setSidebarOpen(o => !o)}
+          aria-label="Toggle menu"
+        >
+          {sidebarOpen ? <HiXMark size={22} /> : <HiBars3 size={22} />}
+        </button>
+        <div className="mobile-brand">
+          <div className="brand-icon-sm"><HiShieldCheck /></div>
+          <span>Super Admin</span>
+        </div>
+        <div className="user-avatar-sm">{getInitials()}</div>
+      </header>
+
+      {/* Overlay */}
+      {sidebarOpen && (
+        <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />
+      )}
+
+      <aside className={`sidebar${sidebarOpen ? ' sidebar--open' : ''}`}>
         <div className="sidebar-brand">
-          <div className="brand-icon">
-            <HiShieldCheck />
-          </div>
+          <div className="brand-icon"><HiShieldCheck /></div>
           <div className="brand-text">
             <h2>Work Desk</h2>
             <span>Super Admin Panel</span>
@@ -47,8 +91,8 @@ const Layout = () => {
           {navItems.map((item) => (
             <button
               key={item.path}
-              className={`nav-item ${location.pathname === item.path ? 'active' : ''}`}
-              onClick={() => navigate(item.path)}
+              className={`nav-item${location.pathname === item.path ? ' active' : ''}`}
+              onClick={() => handleNav(item.path)}
             >
               <item.icon className="nav-icon" />
               {item.label}

@@ -1,10 +1,10 @@
-/* src/components/Layout.css */
+/* ── Layout shell ─────────────────────────────────────────────────────────── */
 .layout {
   display: flex;
   min-height: 100vh;
 }
 
-/* Sidebar */
+/* ── Sidebar ──────────────────────────────────────────────────────────────── */
 .sidebar {
   width: 260px;
   background: var(--bg-sidebar);
@@ -15,8 +15,8 @@
   top: 0;
   left: 0;
   bottom: 0;
-  z-index: 100;
-  transition: transform var(--transition-normal);
+  z-index: 200;
+  transition: transform 0.25s ease;
 }
 
 .sidebar-brand {
@@ -54,13 +54,14 @@
   font-weight: 400;
 }
 
-/* Navigation */
+/* ── Nav ──────────────────────────────────────────────────────────────────── */
 .sidebar-nav {
   flex: 1;
   padding: 16px 12px;
   display: flex;
   flex-direction: column;
   gap: 4px;
+  overflow-y: auto;
 }
 
 .nav-item {
@@ -70,10 +71,9 @@
   padding: 11px 14px;
   border-radius: var(--radius-md);
   color: var(--text-muted);
-  text-decoration: none;
   font-size: 14px;
   font-weight: 500;
-  transition: all var(--transition-fast);
+  transition: all 0.15s ease;
   cursor: pointer;
   border: none;
   background: none;
@@ -97,7 +97,7 @@
   flex-shrink: 0;
 }
 
-/* Sidebar Footer */
+/* ── Sidebar footer ───────────────────────────────────────────────────────── */
 .sidebar-footer {
   padding: 16px 12px;
   border-top: 1px solid var(--border-color);
@@ -153,26 +153,129 @@
   width: 100%;
   font-family: inherit;
   text-align: left;
-  transition: all var(--transition-fast);
+  transition: all 0.15s ease;
 }
 
 .logout-btn:hover {
   background: rgba(239, 68, 68, 0.08);
 }
 
-/* Main Content */
+/* ── Main content ─────────────────────────────────────────────────────────── */
 .main-content {
   flex: 1;
   margin-left: 260px;
   padding: 32px;
   min-height: 100vh;
+  box-sizing: border-box;
 }
 
+/* ── Mobile header (hidden on desktop) ───────────────────────────────────── */
+.mobile-header {
+  display: none;
+}
+
+/* ── Overlay (mobile) ────────────────────────────────────────────────────── */
+.sidebar-overlay {
+  display: none;
+}
+
+/* ── Mobile responsive ───────────────────────────────────────────────────── */
 @media (max-width: 768px) {
+
+  /* Hide desktop sidebar by default, slide in when open */
   .sidebar {
     transform: translateX(-100%);
+    top: 56px; /* below mobile header */
+    box-shadow: 4px 0 24px rgba(0,0,0,0.3);
   }
+
+  .sidebar--open {
+    transform: translateX(0);
+  }
+
+  /* Overlay behind open sidebar */
+  .sidebar-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 199;
+    top: 56px;
+  }
+
+  /* Main content full width */
   .main-content {
     margin-left: 0;
+    padding: 16px;
+    padding-top: 72px; /* room for mobile header */
+  }
+
+  /* Mobile top bar */
+  .mobile-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 56px;
+    padding: 0 16px;
+    background: var(--bg-sidebar);
+    border-bottom: 1px solid var(--border-color);
+    z-index: 201;
+  }
+
+  .mobile-menu-btn {
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    cursor: pointer;
+    padding: 6px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+  }
+
+  .mobile-menu-btn:hover {
+    background: rgba(99,102,241,0.1);
+  }
+
+  .mobile-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .brand-icon-sm {
+    width: 28px;
+    height: 28px;
+    background: var(--gradient-primary);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    color: white;
+  }
+
+  .user-avatar-sm {
+    width: 32px;
+    height: 32px;
+    background: var(--gradient-primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: white;
+    flex-shrink: 0;
   }
 }
