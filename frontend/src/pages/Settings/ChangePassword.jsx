@@ -19,6 +19,26 @@ const EyeIcon = ({ open }) => (
   </svg>
 );
 
+const PasswordField = ({ label, name, value, showKey, showState, onChange, onToggle }) => (
+  <div className="cp-field">
+    <label className="cp-label">{label}</label>
+    <div className="cp-input-wrap">
+      <input
+        type={showState ? 'text' : 'password'}
+        name={name}
+        value={value}
+        onChange={onChange}
+        className="cp-input"
+        placeholder={`Enter ${label.toLowerCase()}`}
+        autoComplete={name === 'currentPassword' ? 'current-password' : 'new-password'}
+      />
+      <button type="button" className="cp-eye" onClick={onToggle} tabIndex={-1}>
+        <EyeIcon open={showState} />
+      </button>
+    </div>
+  </div>
+);
+
 const ChangePassword = () => {
   const [form, setForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [show, setShow] = useState({ current: false, new: false, confirm: false });
@@ -72,26 +92,6 @@ const ChangePassword = () => {
     }
   };
 
-  const PasswordField = ({ label, name, showKey }) => (
-    <div className="cp-field">
-      <label className="cp-label">{label}</label>
-      <div className="cp-input-wrap">
-        <input
-          type={show[showKey] ? 'text' : 'password'}
-          name={name}
-          value={form[name]}
-          onChange={handleChange}
-          className="cp-input"
-          placeholder={`Enter ${label.toLowerCase()}`}
-          autoComplete={name === 'currentPassword' ? 'current-password' : 'new-password'}
-        />
-        <button type="button" className="cp-eye" onClick={() => toggleShow(showKey)} tabIndex={-1}>
-          <EyeIcon open={show[showKey]} />
-        </button>
-      </div>
-    </div>
-  );
-
   return (
     <div className="cp-wrap">
       <div className="cp-card">
@@ -101,9 +101,9 @@ const ChangePassword = () => {
         </div>
 
         <form className="cp-form" onSubmit={handleSubmit} noValidate>
-          <PasswordField label="Current Password" name="currentPassword" showKey="current" />
-          <PasswordField label="New Password" name="newPassword" showKey="new" />
-          <PasswordField label="Confirm New Password" name="confirmPassword" showKey="confirm" />
+          <PasswordField label="Current Password" name="currentPassword" value={form.currentPassword} showKey="current" showState={show.current} onChange={handleChange} onToggle={() => toggleShow('current')} />
+          <PasswordField label="New Password" name="newPassword" value={form.newPassword} showKey="new" showState={show.new} onChange={handleChange} onToggle={() => toggleShow('new')} />
+          <PasswordField label="Confirm New Password" name="confirmPassword" value={form.confirmPassword} showKey="confirm" showState={show.confirm} onChange={handleChange} onToggle={() => toggleShow('confirm')} />
 
           <div className="cp-policy">
             <p>Password must:</p>

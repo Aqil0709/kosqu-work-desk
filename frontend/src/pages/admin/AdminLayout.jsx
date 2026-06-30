@@ -337,7 +337,7 @@ const NAV_SECTIONS = [
           { id: 'master', label: 'Master Settings', adminOnly: true },
           { id: 'smtpconfig', label: 'SMTP Config', adminOnly: true },
           { id: 'leavepolicysettings', label: 'Leave Policy', moduleKey: 'leave_management' },
-          { id: 'worklocations', label: 'Work Locations', adminOnly: true },
+          { id: 'worklocations', label: 'Work Locations', adminOnly: false },
           { id: 'change-password', label: 'Change Password' },
         ]
       },
@@ -656,7 +656,7 @@ const AdminLayout = ({ initialTab, initialState = null }) => {
           {activeTab === 'master' && isAdmin && <MasterSettings />}
           {activeTab === 'smtpconfig' && isAdmin && <SmtpConfig />}
           {activeTab === 'customfields' && isAdmin && <CustomFieldsManager />}
-          {activeTab === 'worklocations' && isAdmin && <WorkLocations />}
+          {activeTab === 'worklocations' && isAdminOrHR && <WorkLocations />}
           {/* HR + Admin shared tabs */}
           {activeTab === 'leavepolicysettings' && isAdminOrHR && access('leave_management') && <LeavePolicySettings />}
           {activeTab === 'mom' && isAdminOrHR && <MOM />}

@@ -281,9 +281,10 @@ app.use('/api/expenses', expenseRoutes);
 app.use('/api/projects', require('./src/features/projects/projectRoutes'));
 app.use('/api/increment-letters', incrementLetterRoutes);
 app.use('/api/experience-letters', experienceLetterRoutes);
-// /api/declaration-form removed (Phase 6)
+app.use('/api/declaration-form', require('./src/features/employee/declarationFormRoutes'));
 app.use('/api/resignation-requests', resignationRoutes);
 app.use('/api/attendance', attendanceRoutes);
+app.use('/api/attendance/face', require('./src/features/attendance/faceEnrollRoutes'));
 app.use('/api/leaves', leaveRoutes);
 app.use('/api/module-access', moduleAccessRoutes);
 app.use('/api/clients', clientRoutes);

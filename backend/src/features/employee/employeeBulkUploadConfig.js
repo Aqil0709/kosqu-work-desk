@@ -29,7 +29,7 @@ const BULK_UPLOAD_COLUMNS = [
   {
     key: 'email',
     label: 'Email',
-    required: true,
+    required: false,
     aliases: ['email', 'email address', 'email_address']
   },
   {
@@ -41,13 +41,13 @@ const BULK_UPLOAD_COLUMNS = [
   {
     key: 'position',
     label: 'Designation',
-    required: true,
+    required: false,
     aliases: ['position', 'designation', 'job title', 'job_title']
   },
   {
     key: 'department',
     label: 'Department',
-    required: true,
+    required: false,
     aliases: ['department', 'department name', 'department_name']
   },
   {
@@ -71,7 +71,7 @@ const BULK_UPLOAD_COLUMNS = [
   {
     key: 'employment_type',
     label: 'Employment Type',
-    required: true,
+    required: false,
     aliases: ['employment type', 'employment_type', 'employee type']
   },
   {
@@ -131,7 +131,7 @@ const BULK_UPLOAD_COLUMNS = [
   {
     key: 'joining_date',
     label: 'Joining Date',
-    required: true,
+    required: false,
     aliases: ['joining date', 'joining_date', 'date of joining', 'date_of_joining']
   },
   {

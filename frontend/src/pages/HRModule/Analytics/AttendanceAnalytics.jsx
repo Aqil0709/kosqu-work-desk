@@ -42,9 +42,9 @@ const AttendanceAnalytics = () => {
       const res = await axios.get(`${API_BASE}/api/attendance`, {
         headers: authH(),
         params: {
-          startDate: dateRange.start,
-          endDate: dateRange.end,
-          employeeId: selectedEmployee !== 'all' ? selectedEmployee : undefined
+          start_date: dateRange.start,
+          end_date: dateRange.end,
+          employee_id: selectedEmployee !== 'all' ? selectedEmployee : undefined
         }
       });
 
@@ -59,10 +59,10 @@ const AttendanceAnalytics = () => {
   };
 
   const calculateStats = (data) => {
-    const present = data.filter(r => r.status === 'present').length;
-    const absent = data.filter(r => r.status === 'absent').length;
-    const leave = data.filter(r => r.status === 'leave').length;
-    const late = data.filter(r => r.status === 'present' && r.checkin_time && r.checkin_time > '09:00:00').length;
+    const present = data.filter(r => r.status?.toLowerCase() === 'present' || r.status?.toLowerCase() === 'delayed').length;
+    const absent = data.filter(r => r.status?.toLowerCase() === 'absent').length;
+    const leave = data.filter(r => r.status?.toLowerCase() === 'leave').length;
+    const late = data.filter(r => r.is_late === 1 || r.is_late === true).length;
     const total = data.length;
 
     setStats({
@@ -157,7 +157,7 @@ const AttendanceAnalytics = () => {
           </thead>
           <tbody>
             {attendanceData.map((record, idx) => (
-              <tr key={idx}>
+              <tr key={record.id ?? `att-${record.attendance_date}-${record.employee_id ?? idx}`}>
                 <td>{new Date(record.attendance_date).toLocaleDateString()}</td>
                 <td>{record.first_name} {record.last_name}</td>
                 <td>{record.checkin_time || '-'}</td>

@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback, useMemo } from 'react';
+﻿import { useState, useEffect, useCallback, useMemo, Fragment } from 'react';
 import * as XLSX from 'xlsx';
 import api from '../../../services/api';
 
@@ -282,9 +282,8 @@ const AdminWorkReports = () => {
     const name = `${emp.first_name || ''} ${emp.last_name || ''}`.trim();
 
     return (
-      <>
+      <Fragment key={key}>
         <tr
-          key={key}
           style={{ borderBottom: (isExpanded || isDocsExpanded) ? 'none' : '1px solid var(--card-border,#e2e8f0)', background: 'var(--card-bg,#fff)', transition: 'background .1s' }}
           onMouseEnter={e => e.currentTarget.style.background = 'var(--table-header-bg,#f9fafb)'}
           onMouseLeave={e => e.currentTarget.style.background = 'var(--card-bg,#fff)'}
@@ -415,7 +414,7 @@ const AdminWorkReports = () => {
             </td>
           </tr>
         )}
-      </>
+      </Fragment>
     );
   };
 
@@ -434,7 +433,7 @@ const AdminWorkReports = () => {
         <div style={{ display:'flex', gap:8, flexWrap:'wrap', alignItems:'center' }}>
           <input type="text" placeholder="🔍 Search employee..." value={search} onChange={e => setSearch(e.target.value)} style={{ ...S.input, width:200 }} />
           <select value={month} onChange={e => setMonth(Number(e.target.value))} style={S.input}>
-            {MONTHS.map((m,i) => <option key={i} value={i+1}>{m}</option>)}
+            {MONTHS.map((m,i) => <option key={m} value={i+1}>{m}</option>)}
           </select>
           <select value={year} onChange={e => setYear(Number(e.target.value))} style={{ ...S.input, width:90 }}>
             {[2024,2025,2026,2027].map(y => <option key={y} value={y}>{y}</option>)}

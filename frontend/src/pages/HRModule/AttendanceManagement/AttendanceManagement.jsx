@@ -636,6 +636,20 @@ const getUserAttendance = (user) => {
           let absentDays = 0;
           let leaveDays = 0;
 
+          let totalWorkHours = 0;
+          let totalLateMinutes = 0;
+
+          const fmtT = (t) => {
+            if (!t || t === '-') return '';
+            if (typeof t === 'string' && /^\d{2}:\d{2}/.test(t)) {
+              const [h, m] = t.split(':').map(Number);
+              const ampm = h >= 12 ? 'PM' : 'AM';
+              return `${h % 12 || 12}:${String(m).padStart(2,'0')} ${ampm}`;
+            }
+            if (t.includes('T')) return new Date(t).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+            return t;
+          };
+
           dateRange.forEach((dayInfo) => {
             const attendance = userKeys
               .map((keyValue) => attendanceMap.get(`${keyValue}_${dayInfo.date}`))
@@ -653,19 +667,30 @@ const getUserAttendance = (user) => {
 
             if (attendance) {
               const status = String(attendance.status || '').trim().toLowerCase();
+              const ci = fmtT(attendance.check_in_time || attendance.check_in);
+              const co = fmtT(attendance.check_out_time || attendance.check_out);
+              const wh = parseFloat(attendance.worked_hours || attendance.working_hours || 0);
+              const late = parseInt(attendance.late_minutes || 0);
+              if (wh > 0) totalWorkHours += wh;
+              if (late > 0) totalLateMinutes += late;
+
+              const timePart = ci ? (co ? `${ci}→${co}` : ci) : '';
+              const hoursPart = wh > 0 ? `(${wh.toFixed(1)}h)` : '';
+              const latePart = late > 0 ? ` L+${late}m` : '';
+
               if (status === 'present') {
-                row[header] = 'P';
+                row[header] = [timePart, hoursPart].filter(Boolean).join(' ') || 'P';
                 presentDays += 1;
                 return;
               }
               if (status === 'delayed' || status === 'late') {
-                row[header] = 'D';
+                row[header] = ['D' + latePart, timePart, hoursPart].filter(Boolean).join(' ');
                 presentDays += 1;
                 delayedDays += 1;
                 return;
               }
               if (status === 'half day' || status === 'half-day') {
-                row[header] = 'H';
+                row[header] = `H ${timePart}`.trim();
                 presentDays += 0.5;
                 lwpDays += 0.5;
                 return;
@@ -695,6 +720,9 @@ const getUserAttendance = (user) => {
             lwpDays += 1;
             absentDays += 1;
           });
+
+          row['Total Work Hrs'] = totalWorkHours > 0 ? totalWorkHours.toFixed(1) + 'h' : '—';
+          row['Late Minutes'] = totalLateMinutes > 0 ? totalLateMinutes + 'm' : '—';
 
           row['Present Days'] = presentDays;
           row.PL = paidLeaveDays;

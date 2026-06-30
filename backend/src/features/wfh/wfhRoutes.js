@@ -13,8 +13,9 @@ router.delete('/:id',                 verifyToken, ctrl.deleteRequest);
 router.get   ('/',                    verifyToken, ctrl.getAllRequests);
 router.get   ('/:id',                 verifyToken, ctrl.getRequest);
 
-// Approval chain
+// Approval chain: TL → Client (if assigned) → HR → Admin
 router.post  ('/:id/tl-action',       verifyToken, ctrl.tlAction);
+router.post  ('/:id/client-action',   verifyToken, ctrl.clientAction);
 router.post  ('/:id/hr-action',       verifyToken, ctrl.hrAction);
 router.post  ('/:id/final-action',    verifyToken, ctrl.finalAction);
 
@@ -27,11 +28,16 @@ const ensureWFHSchema = async () => {
       from_date        DATE         NOT NULL,
       to_date          DATE         NOT NULL,
       reason           TEXT         NOT NULL,
+      client_id        INT          NULL,
       status           VARCHAR(30)  NOT NULL DEFAULT 'pending',
+      current_stage    VARCHAR(20)  NOT NULL DEFAULT 'tl',
       attachment_path  VARCHAR(500) NULL,
       tl_action_by     INT          NULL,
       tl_action_at     DATETIME     NULL,
       tl_remarks       TEXT         NULL,
+      client_action_by INT          NULL,
+      client_action_at DATETIME     NULL,
+      client_remarks   TEXT         NULL,
       hr_action_by     INT          NULL,
       hr_action_at     DATETIME     NULL,
       hr_remarks       TEXT         NULL,

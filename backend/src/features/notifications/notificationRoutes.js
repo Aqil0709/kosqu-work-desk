@@ -155,5 +155,61 @@ router.post('/send-work-report-reminders', async (req, res) => {
   }
 });
 
+// POST /api/notifications/send-document-upload-reminder
+// Sends an in-app notification to one employee (or all employees) asking them to upload missing documents.
+router.post('/send-document-upload-reminder', async (req, res) => {
+  try {
+    const pos = (req.user.position || '').toLowerCase();
+    if (!['admin', 'hr'].includes(pos)) {
+      return res.status(403).json({ success: false, message: 'Admin/HR access required' });
+    }
+
+    const tenantId = req.tenantId || req.user.tenant_id;
+    const { user_id } = req.body; // optional — if provided, notify only that employee
+
+    const { sendNotification } = require('./notificationHelper');
+
+    if (user_id) {
+      // Notify a single employee
+      const [rows] = await pool.execute(
+        'SELECT id, CONCAT(first_name," ",last_name) as name FROM users WHERE id=? AND tenant_id=? AND is_active=1 LIMIT 1',
+        [user_id, tenantId]
+      );
+      if (!rows.length) return res.status(404).json({ success: false, message: 'Employee not found' });
+      await sendNotification(tenantId, rows[0].id, {
+        title: '📂 Documents Pending Upload',
+        message: 'Please upload your KYC documents (Aadhaar, PAN, profile photo, resume) via the Documents section in your profile.',
+        type: 'document_reminder',
+      });
+      return res.json({ success: true, reminded: 1, name: rows[0].name });
+    }
+
+    // Notify all active employees who have zero uploaded documents
+    const [missing] = await pool.execute(
+      `SELECT u.id, CONCAT(u.first_name,' ',u.last_name) as name
+       FROM users u
+       WHERE u.tenant_id=? AND u.is_active=1
+         AND LOWER(u.position) NOT IN ('admin','hr','client','super_admin','superadmin')
+         AND NOT EXISTS (
+           SELECT 1 FROM employee_documents ed
+           WHERE ed.employee_user_id = u.id AND ed.tenant_id = u.tenant_id
+         )`,
+      [tenantId]
+    );
+
+    for (const emp of missing) {
+      await sendNotification(tenantId, emp.id, {
+        title: '📂 Documents Pending Upload',
+        message: 'Please upload your KYC documents (Aadhaar, PAN, profile photo, resume) via the Documents section in your profile.',
+        type: 'document_reminder',
+      });
+    }
+
+    return res.json({ success: true, reminded: missing.length });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 router.ensureSchema = ensureNotificationsSchema;
 module.exports = router;

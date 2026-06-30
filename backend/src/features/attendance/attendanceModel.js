@@ -99,7 +99,7 @@ getAll: async (tenantId, filters = {}) => {
                 a.created_at
             FROM tb_attendance a
             LEFT JOIN employee_details ed ON a.employee_id = ed.id
-            LEFT JOIN users u ON ed.user_id = u.id
+            LEFT JOIN users u ON ed.employee_id = u.id
             LEFT JOIN tb_shifts s ON a.shift_id = s.shift_id
             WHERE a.tenant_id = ?
         `;
@@ -140,15 +140,14 @@ getAll: async (tenantId, filters = {}) => {
         const limit = Math.min(500, Math.max(1, Number(filters.limit || 100)));
         const offset = (page - 1) * limit;
 
-        const dataQuery  = baseSelect + whereClause + orderClause + ' LIMIT ? OFFSET ?';
+        const dataQuery  = baseSelect + whereClause + orderClause + ` LIMIT ${limit} OFFSET ${offset}`;
         const countQuery = `SELECT COUNT(*) AS total FROM tb_attendance a LEFT JOIN employee_details ed ON a.employee_id = ed.id WHERE a.tenant_id = ?` + whereClause;
 
-        const dataParams  = [...params, limit, offset];
         const countParams = [tenantId, ...params.slice(1)];
 
         const [[countRow], [rows]] = await Promise.all([
             pool.execute(countQuery, countParams),
-            pool.execute(dataQuery, dataParams),
+            pool.execute(dataQuery, params),
         ]);
 
         return { rows: rows || [], total: countRow[0]?.total || 0, page, limit };
@@ -534,7 +533,7 @@ updateCheckOut: async (tenantId, employeeId, date, checkOutTime, latitude = null
         const checkOut = new Date(checkOutTime);
         const workedHours = parseFloat(((checkOut - checkIn) / (1000 * 60 * 60)).toFixed(2));
 
-        const endTimeStr = shift.end_time || shift.old_end_time;
+        const endTimeStr = shift.check_out_time || shift.old_end_time || shift.end_time || '18:00';
         const [endHours, endMinutes] = endTimeStr.split(':');
         const expectedCheckOut = new Date(date);
         expectedCheckOut.setHours(parseInt(endHours, 10), parseInt(endMinutes, 10), 0, 0);

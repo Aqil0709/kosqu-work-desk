@@ -7,6 +7,7 @@ import { NotificationProvider } from './contexts/NotificationContext';
 import PrivateRoute from './components/common/PrivateRoute';
 import LoadingSpinner from './components/common/LoadingSpinner';
 import { CustomDialogMount } from './components/ui/CustomDialog';
+import PWAInstallPrompt from './components/PWAInstallPrompt';
 
 const Login = React.lazy(() => import('./pages/auth/Login'));
 const ResetPassword = React.lazy(() => import('./pages/auth/ResetPassword'));
@@ -120,6 +121,7 @@ function App() {
             <div className="App">
               <AppContent />
               <CustomDialogMount />
+              <PWAInstallPrompt />
             </div>
           </NotificationProvider>
         </AuthProvider>

@@ -172,4 +172,28 @@ markAbsentByEmployee: async (employeeId, date) => {
     throw error;
   }
 },
+
+  // Face enrollment APIs
+  faceServiceHealth: () => api.get('/attendance/face/health'),
+
+  enrollMyFace: (photoFile) => {
+    const form = new FormData();
+    form.append('photo', photoFile);
+    return api.post('/attendance/face/enroll-self', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 30000,
+    });
+  },
+
+  enrollEmployeeFace: (employeeId, photoFile) => {
+    const form = new FormData();
+    form.append('photo', photoFile);
+    return api.post(`/attendance/face/enroll/${employeeId}`, form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 30000,
+    });
+  },
+
+  unenrollEmployeeFace: (employeeId) =>
+    api.delete(`/attendance/face/unenroll/${employeeId}`),
 };

@@ -1,7 +1,7 @@
 // backend/controllers/attendanceController.js
 const Attendance = require('./attendanceModel');
 const Employee = require('../employee/employeeModel');
-// const FaceRecognition = require('../utils/faceRecognition');
+const { verifyFace, identifyFace } = require('./faceServiceClient');
 const Shift = require('../shift/shiftModel');
 const {pool} = require('../../config/db');
 const { getIndiaDate, getIndiaDateTime } = require('../../utils/indiaTime');
@@ -23,7 +23,22 @@ function haversineMeters(lat1, lon1, lat2, lon2) {
 // Validate that provided coordinates are within the employee's assigned work location.
 // If the employee has no work location assigned, attendance is always allowed.
 // If a work location IS assigned, GPS coordinates are required.
+// Exception: if employee has an approved WFH for today, skip all location checks.
 async function validateGeofence(tenantId, employeeUserId, latitude, longitude) {
+  // 1. Check for approved WFH today — bypass geofence entirely
+  const todayStr = getIndiaDate();
+  const [wfhRows] = await pool.execute(
+    `SELECT id FROM wfh_requests
+     WHERE tenant_id=? AND employee_id=? AND status='approved'
+       AND from_date <= ? AND to_date >= ?
+     LIMIT 1`,
+    [tenantId, employeeUserId, todayStr, todayStr]
+  );
+  if (wfhRows.length) {
+    return { valid: true, wfhBypass: true };
+  }
+
+  // 2. Normal geofence check
   const [rows] = await pool.execute(
     `SELECT wl.latitude, wl.longitude, wl.radius_meters, wl.name
      FROM tb_work_locations wl
@@ -398,6 +413,7 @@ const attendanceController = {
             const today = date || getIndiaDate();
             const currentDateTime = getIndiaDateTime();
             const attendanceExists = await Attendance.checkExists(req.tenantId, employeeId, today);
+            const isWFHDay = !!geo.wfhBypass;
 
             let result;
 
@@ -433,8 +449,9 @@ const attendanceController = {
                         date: today,
                         check_in: checkInTime,
                         status: 'Present',
-                        latitude,
-                        longitude
+                        latitude: isWFHDay ? null : latitude,
+                        longitude: isWFHDay ? null : longitude,
+                        remarks: isWFHDay ? 'WFH' : null,
                     });
 
                     const { userIds, employeeName } = await getNotificationRecipients(req.tenantId, userId, { includeClient: false });
@@ -472,27 +489,188 @@ const attendanceController = {
                 }
             }
 
-            res.json({ success: true, message: `Attendance ${type} marked successfully`, attendance: result });
+            res.json({ success: true, message: `Attendance ${type} marked successfully`, attendance: result, is_wfh_day: isWFHDay });
         } catch (error) {
             console.error('❌ Mark my attendance error:', error);
             res.status(500).json({ success: false, message: 'Something went wrong. Please contact administrator.' });
         }
     },
 
-    // Verify face and mark attendance (Feature not yet available)
+    // Verify face via selfie and mark attendance for the logged-in employee
     verifyMyFaceAndMarkAttendance: async (req, res) => {
-        return res.status(503).json({
-            success: false,
-            message: 'Face recognition is not available yet. Please use the regular check-in instead.',
-        });
+        try {
+            if (!req.file) {
+                return res.status(400).json({ success: false, message: 'Selfie image is required.' });
+            }
+
+            const userId    = req.user.id;
+            const tenantId  = req.tenantId;
+            const { latitude, longitude, type = 'check_in' } = req.body;
+
+            // Get employee_details.id (PK) for this user
+            const [employees] = await pool.execute(
+                'SELECT id FROM employee_details WHERE employee_id = ? AND tenant_id = ?',
+                [userId, tenantId]
+            );
+            if (!employees.length) {
+                return res.status(404).json({ success: false, message: 'Employee record not found.' });
+            }
+            const employeeId = employees[0].id;
+
+            // Call Python face service
+            let faceResult;
+            try {
+                faceResult = await verifyFace(tenantId, employeeId, req.file.buffer, req.file.originalname || 'selfie.jpg');
+            } catch (svcErr) {
+                console.error('[FaceService] unreachable:', svcErr.message);
+                return res.status(503).json({ success: false, message: 'Face recognition service is currently unavailable. Please use regular check-in.' });
+            }
+
+            if (!faceResult.verified) {
+                return res.status(401).json({
+                    success: false,
+                    face_verified: false,
+                    confidence: faceResult.confidence,
+                    message: faceResult.message || 'Face verification failed.',
+                });
+            }
+
+            // Face verified — now mark attendance (reuse markMyAttendance logic)
+            const geo = await validateGeofence(tenantId, userId, latitude, longitude);
+            if (!geo.valid) {
+                return res.status(403).json({ success: false, message: geo.reason });
+            }
+
+            const today    = getIndiaDate();
+            const nowDT    = getIndiaDateTime();
+            const isWFHDay = !!geo.wfhBypass;
+            const attendanceExists = await Attendance.checkExists(tenantId, employeeId, today);
+
+            let result;
+            if (attendanceExists) {
+                if (type !== 'check_out') {
+                    return res.status(400).json({ success: false, message: 'Attendance already marked for today.' });
+                }
+                result = await Attendance.updateCheckOut(tenantId, employeeId, today, nowDT, latitude, longitude);
+            } else {
+                if (type !== 'check_in') {
+                    return res.status(400).json({ success: false, message: 'Cannot check out without checking in first.' });
+                }
+                result = await Attendance.create(tenantId, {
+                    employee_id: employeeId,
+                    date: today,
+                    check_in: nowDT,
+                    status: 'Present',
+                    latitude: isWFHDay ? null : latitude,
+                    longitude: isWFHDay ? null : longitude,
+                    remarks: `Face Verified${isWFHDay ? ' | WFH' : ''}`,
+                });
+            }
+
+            const { userIds, employeeName } = await getNotificationRecipients(tenantId, userId, { includeClient: false });
+            if (result?.is_late) {
+                await sendToMany(tenantId, userIds, {
+                    title: 'Employee Late Check-in (Face)',
+                    message: `${employeeName} checked in ${result.late_minutes} minutes late via face recognition.`,
+                    type: 'attendance',
+                });
+            } else {
+                await sendToMany(tenantId, userIds.filter(id => id !== userId), {
+                    title: `Employee ${type === 'check_in' ? 'Checked In' : 'Checked Out'} (Face)`,
+                    message: `${employeeName} ${type === 'check_in' ? 'checked in' : 'checked out'} via face recognition.`,
+                    type: 'attendance',
+                });
+            }
+
+            return res.json({
+                success: true,
+                face_verified: true,
+                confidence: faceResult.confidence,
+                message: `Attendance ${type} marked via face recognition.`,
+                attendance: result,
+                is_wfh_day: isWFHDay,
+            });
+        } catch (error) {
+            console.error('❌ verifyMyFaceAndMarkAttendance error:', error);
+            res.status(500).json({ success: false, message: 'Something went wrong. Please contact administrator.' });
+        }
     },
 
-    // Identify and mark attendance via face (Feature not yet available)
+    // Identify employee from selfie and mark attendance (admin/kiosk use)
     identifyAndMarkAttendance: async (req, res) => {
-        return res.status(503).json({
-            success: false,
-            message: 'Face recognition is not available yet.',
-        });
+        try {
+            if (!req.file) {
+                return res.status(400).json({ success: false, message: 'Selfie image is required.' });
+            }
+
+            const tenantId = req.tenantId;
+            const { latitude, longitude, type = 'check_in' } = req.body;
+
+            let faceResult;
+            try {
+                faceResult = await identifyFace(tenantId, req.file.buffer, req.file.originalname || 'selfie.jpg');
+            } catch (svcErr) {
+                console.error('[FaceService] unreachable:', svcErr.message);
+                return res.status(503).json({ success: false, message: 'Face recognition service is currently unavailable.' });
+            }
+
+            if (!faceResult.identified) {
+                return res.status(404).json({
+                    success: false,
+                    identified: false,
+                    message: faceResult.message || 'Could not identify employee from this photo.',
+                });
+            }
+
+            const employeeId = faceResult.employee_id; // employee_details.id (PK)
+
+            // Get user_id for notifications
+            const [empRows] = await pool.execute(
+                'SELECT employee_id as user_id FROM employee_details WHERE id = ? AND tenant_id = ?',
+                [employeeId, tenantId]
+            );
+            if (!empRows.length) {
+                return res.status(404).json({ success: false, message: 'Employee record not found.' });
+            }
+            const userId = empRows[0].user_id;
+
+            const today  = getIndiaDate();
+            const nowDT  = getIndiaDateTime();
+            const attendanceExists = await Attendance.checkExists(tenantId, employeeId, today);
+
+            let result;
+            if (attendanceExists) {
+                if (type !== 'check_out') {
+                    return res.status(400).json({ success: false, message: 'Attendance already marked for today.' });
+                }
+                result = await Attendance.updateCheckOut(tenantId, employeeId, today, nowDT, latitude, longitude);
+            } else {
+                if (type !== 'check_in') {
+                    return res.status(400).json({ success: false, message: 'Cannot check out without checking in first.' });
+                }
+                result = await Attendance.create(tenantId, {
+                    employee_id: employeeId,
+                    date: today,
+                    check_in: nowDT,
+                    status: 'Present',
+                    latitude,
+                    longitude,
+                    remarks: 'Face Identified (Kiosk)',
+                });
+            }
+
+            return res.json({
+                success: true,
+                identified: true,
+                employee_id: employeeId,
+                confidence: faceResult.confidence,
+                message: `Attendance ${type} marked via face identification.`,
+                attendance: result,
+            });
+        } catch (error) {
+            console.error('❌ identifyAndMarkAttendance error:', error);
+            res.status(500).json({ success: false, message: 'Something went wrong. Please contact administrator.' });
+        }
     },
 
 

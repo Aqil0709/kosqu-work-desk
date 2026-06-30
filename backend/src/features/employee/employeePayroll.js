@@ -2,7 +2,7 @@ const roundMoney = (value) => Math.round((Number(value) || 0) * 100) / 100;
 
 const parseMoney = (value) => {
   if (value === null || value === undefined || value === '') return 0;
-  const parsed = Number(String(value).replace(/,/g, '').trim());
+  const parsed = Number(String(value).replace(/[₹$€£¥,\s]/g, '').trim());
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
 };
 

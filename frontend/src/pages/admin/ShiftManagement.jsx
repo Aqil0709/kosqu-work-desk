@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import api from '../../services/api';
 
-const API = '/api/shift-workforce';
+const API = '/shift-workforce';
 
 // ─── Generic table helpers ───────────────────────────────────────────────────
 function Th({ children }) {

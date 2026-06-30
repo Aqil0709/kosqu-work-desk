@@ -1,0 +1,19 @@
+[Unit]
+Description=HRMS Face Recognition Service
+After=network.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/var/www/work-desk/backend/face_service
+ExecStart=/var/www/work-desk/backend/face_service/venv/bin/python face_service.py
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=hrms-face-service
+Environment=FACE_SERVICE_PORT=5002
+
+[Install]
+WantedBy=multi-user.target

@@ -645,6 +645,33 @@ const EmployeeManagement = () => {
     setSelectedEmployee(employee);
     setViewDocumentsModalOpen(true);
     loadAiTemplates();
+    loadEmpDocs(employee);
+  };
+
+  const handleNotifyEmployee = async (employee) => {
+    try {
+      await axios.post(
+        `${API_URL}/api/notifications/send-document-upload-reminder`,
+        { user_id: employee.user_id || employee.id },
+        { headers: authHeaders }
+      );
+      alert(`Notification sent to ${employee.first_name} ${employee.last_name} to upload their documents.`);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to send notification.');
+    }
+  };
+
+  const handleNotifyAllToUpload = async () => {
+    try {
+      const res = await axios.post(
+        `${API_URL}/api/notifications/send-document-upload-reminder`,
+        {},
+        { headers: authHeaders }
+      );
+      alert(`Notified ${res.data.reminded} employee(s) who haven't uploaded their documents yet.`);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to send notifications.');
+    }
   };
 
   const loadAiTemplates = async () => {
@@ -2168,7 +2195,79 @@ const EmployeeManagement = () => {
               ))}
             </div>
 
+            {/* ── Uploaded Documents Section ── */}
+            <div style={{ margin:'24px 0 8px', padding:'0 2px' }}>
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
+                <h3 style={{ margin:0, fontSize:14, fontWeight:700, color:'var(--theme-text-strong,#0f172a)', display:'flex', alignItems:'center', gap:8 }}>
+                  <i className="fas fa-cloud-upload-alt" style={{ color:'#4F46E5' }}></i>
+                  Uploaded Documents
+                  <span style={{ fontSize:11, fontWeight:600, color:'#64748b', background:'#f1f5f9', borderRadius:6, padding:'2px 10px' }}>
+                    {empDocsLoading ? '...' : `${empDocs.length} file${empDocs.length !== 1 ? 's' : ''}`}
+                  </span>
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => handleNotifyEmployee(selectedEmployee)}
+                  style={{ display:'flex', alignItems:'center', gap:6, padding:'6px 14px', borderRadius:8, background:'#eff6ff', border:'1.5px solid #bfdbfe', color:'#2563eb', fontWeight:700, fontSize:12, cursor:'pointer' }}
+                  title="Send a reminder to this employee to upload their documents"
+                >
+                  <i className="fas fa-bell"></i> Notify to Upload
+                </button>
+              </div>
+
+              {empDocsLoading ? (
+                <p style={{ margin:0, fontSize:13, color:'#64748b', textAlign:'center', padding:'16px 0' }}>Loading...</p>
+              ) : empDocs.length === 0 ? (
+                <div style={{ textAlign:'center', padding:'18px 16px', background:'#fafafa', border:'1.5px dashed #e2e8f0', borderRadius:10 }}>
+                  <p style={{ margin:'0 0 4px', fontSize:13, color:'#94a3b8', fontWeight:600 }}>No documents uploaded yet</p>
+                  <p style={{ margin:0, fontSize:12, color:'#cbd5e1' }}>Aadhaar, PAN, resume and photo will appear here once the employee uploads them.</p>
+                </div>
+              ) : (
+                <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+                  {empDocs.map(doc => {
+                    const isPhoto = doc.doc_type === 'photo';
+                    const sizeKB = doc.file_size ? (doc.file_size / 1024).toFixed(1) + ' KB' : '—';
+                    const uploadedOn = doc.created_at
+                      ? new Date(doc.created_at).toLocaleString('en-IN', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' })
+                      : '—';
+                    const typeColors = { photo:['#7c3aed','rgba(124,58,237,0.1)'], aadhaar:['#059669','rgba(5,150,105,0.1)'], pan:['#d97706','rgba(217,119,6,0.1)'], cv:['#2563eb','rgba(37,99,235,0.1)'] };
+                    const [textColor, bgColor] = typeColors[doc.doc_type] || ['#2563eb','rgba(37,99,235,0.1)'];
+                    return (
+                      <div key={doc.id} style={{ display:'flex', alignItems:'center', gap:12, padding:'10px 14px', background:'#f8fafc', border:'1px solid #e2e8f0', borderRadius:10 }}>
+                        <div style={{ width:36, height:36, borderRadius:8, background:bgColor, display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, flexShrink:0 }}>
+                          {isPhoto ? '🖼️' : '📄'}
+                        </div>
+                        <div style={{ flex:1, minWidth:0 }}>
+                          <p style={{ margin:0, fontSize:12.5, fontWeight:700, color:'#0f172a', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{doc.original_filename}</p>
+                          <p style={{ margin:'3px 0 0', fontSize:11, color:'#64748b' }}>
+                            <span style={{ background:bgColor, color:textColor, fontWeight:700, fontSize:10, borderRadius:4, padding:'1px 7px', marginRight:6, textTransform:'uppercase' }}>{doc.doc_type}</span>
+                            {sizeKB} · {uploadedOn}
+                          </p>
+                        </div>
+                        <a
+                          href={`${API_URL}${doc.file_path}?token=${encodeURIComponent(localStorage.getItem('token') || '')}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ padding:'5px 14px', borderRadius:7, background:'#4F46E5', color:'#fff', fontWeight:700, fontSize:11, textDecoration:'none', flexShrink:0 }}
+                        >
+                          View
+                        </a>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
             <div className="modal-footer">
+              <button
+                type="button"
+                onClick={handleNotifyAllToUpload}
+                style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 18px', borderRadius:8, background:'#fef3c7', border:'1.5px solid #fcd34d', color:'#92400e', fontWeight:700, fontSize:13, cursor:'pointer', marginRight:'auto' }}
+                title="Send a reminder to ALL employees who haven't uploaded any documents yet"
+              >
+                <i className="fas fa-bell"></i> Notify All to Upload
+              </button>
               <button type="button" className="cancel-btn" onClick={() => setViewDocumentsModalOpen(false)}>
                 <i className="fas fa-times"></i> Close
               </button>

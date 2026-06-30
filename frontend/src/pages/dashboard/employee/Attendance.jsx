@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './Attendance.css';
 import { attendanceAPI, getIndiaDate } from '../../../services/attendanceAPI';
-import { getCurrentPosition } from '../../../services/locationAPI';
+import { getCurrentPosition, locationAPI } from '../../../services/locationAPI';
 
 const AttendanceTable = () => {
   const [attendance, setAttendance] = useState([]);
@@ -65,19 +65,40 @@ const AttendanceTable = () => {
     }
   };
 
+  const [todayWFH, setTodayWFH] = useState(null);     // approved WFH for today
+  const [myLocation, setMyLocation] = useState(null); // assigned work location
+
   // Fetch today's attendance status
   const fetchTodayAttendance = async () => {
     try {
       const response = await attendanceAPI.getMyTodayAttendance();
-
     } catch (err) {
       console.error('Error fetching today attendance:', err);
     }
   };
 
+  const fetchContextInfo = async () => {
+    try {
+      const today = getIndiaDate();
+      const [wfhRes, locRes] = await Promise.allSettled([
+        import('../../../services/api').then(m => m.default.get('/wfh/my')),
+        locationAPI.getMy(),
+      ]);
+      if (wfhRes.status === 'fulfilled') {
+        const list = wfhRes.value.data?.data || [];
+        const activeWFH = list.find(w => w.status === 'approved' && w.from_date <= today && w.to_date >= today);
+        setTodayWFH(activeWFH || null);
+      }
+      if (locRes.status === 'fulfilled') {
+        setMyLocation(locRes.value.data?.location || null);
+      }
+    } catch (_) {}
+  };
+
   useEffect(() => {
     fetchAttendanceHistory();
     fetchTodayAttendance();
+    fetchContextInfo();
   }, []);
 
   // Handle image selection for upload
@@ -115,52 +136,46 @@ const AttendanceTable = () => {
     setVerificationResult(null);
 
     try {
+      let lat = null, lon = null;
+      try { const pos = await getCurrentPosition(); lat = pos.coords.latitude; lon = pos.coords.longitude; } catch (_) {}
+
+      const todayRecords = attendance.filter(r => r.date === getIndiaDate());
+      const alreadyCheckedIn = todayRecords.some(r => r.checkIn && r.checkIn !== '--');
+      const alreadyCheckedOut = todayRecords.some(r => r.checkOut && r.checkOut !== '--');
+      const attendanceType = alreadyCheckedIn && !alreadyCheckedOut ? 'check_out' : 'check_in';
+
       const formData = new FormData();
       formData.append('faceImage', uploadedImage, 'uploaded-face.jpg');
+      formData.append('type', attendanceType);
+      if (lat) formData.append('latitude', lat);
+      if (lon) formData.append('longitude', lon);
 
       const response = await attendanceAPI.verifyMyFaceAndMarkAttendance(formData);
 
       if (response.data.success) {
         setVerificationResult({
           success: true,
-          message: `✅ Attendance marked successfully!`,
+          message: `✅ ${response.data.message || 'Attendance marked successfully!'} (Confidence: ${response.data.confidence}%)`,
           details: {
-            status: response.data.attendance.status,
-            checkIn: response.data.attendance.check_in_time,
-            shift: response.data.attendance.shift_name || response.data.attendance.shift,
-            confidence: response.data.confidence
+            status: response.data.attendance?.status,
+            confidence: response.data.confidence,
           }
         });
-
         await fetchAttendanceHistory();
-
-        setTimeout(() => {
-          stopCamera();
-          alert('Attendance marked successfully!');
-        }, 3000);
-
-      } else if (response.data.requiresPIN) {
-        setFaceVerificationStep('pin-required');
-        setVerificationResult({
-          success: false,
-          message: '🔒 Additional verification required',
-          confidence: response.data.confidence
-        });
+        setTimeout(() => { stopCamera(); }, 2500);
       } else {
         setVerificationResult({
           success: false,
-          message: response.data.message || 'Face verification failed'
+          message: response.data.message || 'Face verification failed. Please try again.',
+          confidence: response.data.confidence,
         });
-
-        setTimeout(() => {
-          setVerificationResult(null);
-        }, 3000);
+        setTimeout(() => { setVerificationResult(null); }, 3500);
       }
     } catch (err) {
       console.error('Upload verification error:', err);
       setVerificationResult({
         success: false,
-        message: err.response?.data?.message || 'Error during face verification'
+        message: err.response?.data?.message || 'Error during face verification',
       });
     } finally {
       setFaceRecognitionLoading(false);
@@ -253,52 +268,46 @@ const AttendanceTable = () => {
         throw new Error('Failed to capture image');
       }
 
+      let lat = null, lon = null;
+      try { const pos = await getCurrentPosition(); lat = pos.coords.latitude; lon = pos.coords.longitude; } catch (_) {}
+
+      const todayRecords = attendance.filter(r => r.date === getIndiaDate());
+      const alreadyCheckedIn = todayRecords.some(r => r.checkIn && r.checkIn !== '--');
+      const alreadyCheckedOut = todayRecords.some(r => r.checkOut && r.checkOut !== '--');
+      const attendanceType = alreadyCheckedIn && !alreadyCheckedOut ? 'check_out' : 'check_in';
+
       const formData = new FormData();
       formData.append('faceImage', blob, 'face-capture.jpg');
+      formData.append('type', attendanceType);
+      if (lat) formData.append('latitude', lat);
+      if (lon) formData.append('longitude', lon);
 
       const response = await attendanceAPI.verifyMyFaceAndMarkAttendance(formData);
 
       if (response.data.success) {
         setVerificationResult({
           success: true,
-          message: `✅ Attendance marked successfully!`,
+          message: `✅ ${response.data.message || 'Attendance marked successfully!'} (Confidence: ${response.data.confidence}%)`,
           details: {
-            status: response.data.attendance.status,
-            checkIn: response.data.attendance.check_in_time,
-            shift: response.data.attendance.shift_name || response.data.attendance.shift,
-            confidence: response.data.confidence
+            status: response.data.attendance?.status,
+            confidence: response.data.confidence,
           }
         });
-
         await fetchAttendanceHistory();
-
-        setTimeout(() => {
-          stopCamera();
-          alert('Attendance marked successfully!');
-        }, 3000);
-
-      } else if (response.data.requiresPIN) {
-        setFaceVerificationStep('pin-required');
-        setVerificationResult({
-          success: false,
-          message: '🔒 Additional verification required',
-          confidence: response.data.confidence
-        });
+        setTimeout(() => { stopCamera(); }, 2500);
       } else {
         setVerificationResult({
           success: false,
-          message: response.data.message || 'Face verification failed'
+          message: response.data.message || 'Face verification failed. Please try again.',
+          confidence: response.data.confidence,
         });
-
-        setTimeout(() => {
-          setVerificationResult(null);
-        }, 3000);
+        setTimeout(() => { setVerificationResult(null); }, 3500);
       }
     } catch (err) {
       console.error('Face verification error:', err);
       setVerificationResult({
         success: false,
-        message: err.response?.data?.message || 'Error during face verification'
+        message: err.response?.data?.message || 'Error during face verification',
       });
     } finally {
       setFaceRecognitionLoading(false);
@@ -538,8 +547,40 @@ const AttendanceTable = () => {
     );
   }
 
+  const fmtLocTime = (t) => {
+    if (!t) return null;
+    const [h, m] = t.split(':').map(Number);
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    return `${h % 12 || 12}:${String(m).padStart(2,'0')} ${ampm}`;
+  };
+
   return (
     <div className="attendance-section">
+      {/* WFH approved banner */}
+      {todayWFH && (
+        <div style={{ background: '#dbeafe', border: '1.5px solid #93c5fd', borderRadius: 10, padding: '10px 16px', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ fontSize: 20 }}>🏠</span>
+          <div>
+            <div style={{ fontWeight: 700, color: '#1d4ed8', fontSize: 14 }}>WFH Approved Today</div>
+            <div style={{ color: '#3b82f6', fontSize: 13 }}>Your Work From Home is approved. You can check in from any location — GPS is not required today.</div>
+          </div>
+        </div>
+      )}
+
+      {/* Location timing info */}
+      {!todayWFH && myLocation && (myLocation.check_in_time || myLocation.check_out_time) && (
+        <div style={{ background: '#f0fdf4', border: '1.5px solid #86efac', borderRadius: 10, padding: '10px 16px', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ fontSize: 20 }}>📍</span>
+          <div>
+            <div style={{ fontWeight: 700, color: '#15803d', fontSize: 14 }}>{myLocation.name}</div>
+            <div style={{ color: '#166534', fontSize: 13 }}>
+              Office Hours: <b>{fmtLocTime(myLocation.check_in_time)}</b> → <b>{fmtLocTime(myLocation.check_out_time)}</b>
+              {myLocation.grace_period_minutes > 0 && <span style={{ color: '#6b7280', marginLeft: 8 }}>({myLocation.grace_period_minutes} min grace period)</span>}
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="attendance-header">
         <h2>Attendance Management</h2>
         <div className="attendance-actions">
@@ -547,13 +588,13 @@ const AttendanceTable = () => {
             className="check-in-btn"
             onClick={() => handleQuickCheckIn('check_in')}
           >
-            📍 Check In
+            {todayWFH ? '🏠 WFH Check In' : '📍 Check In'}
           </button>
           <button
             className="check-out-btn"
             onClick={() => handleQuickCheckIn('check_out')}
           >
-            🏠 Quick Check Out
+            {todayWFH ? '🏠 WFH Check Out' : '🏠 Quick Check Out'}
           </button>
         </div>
       </div>

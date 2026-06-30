@@ -6,6 +6,7 @@ import { dialog } from '../../components/ui/CustomDialog';
 const EMPTY_FORM = {
   name: '', location_type: 'head_office',
   latitude: '', longitude: '', radius_meters: 100, address: '',
+  check_in_time: '', check_out_time: '', grace_period_minutes: 15,
 };
 
 const WorkLocations = () => {
@@ -52,6 +53,9 @@ const WorkLocations = () => {
       name: loc.name, location_type: loc.location_type,
       latitude: loc.latitude, longitude: loc.longitude,
       radius_meters: loc.radius_meters, address: loc.address || '',
+      check_in_time: loc.check_in_time ? loc.check_in_time.slice(0,5) : '',
+      check_out_time: loc.check_out_time ? loc.check_out_time.slice(0,5) : '',
+      grace_period_minutes: loc.grace_period_minutes ?? 15,
     });
     setEditingId(loc.id);
     setShowForm(true);
@@ -143,7 +147,7 @@ const WorkLocations = () => {
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
               <tr style={{ background: 'var(--table-header-bg,#f9fafb)' }}>
-                {['Name','Type','Latitude','Longitude','Radius (m)','Address','Actions'].map(h => (
+                {['Name','Type','Check In','Check Out','Grace','Radius (m)','Address','Actions'].map(h => (
                   <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontWeight: 600, color: 'var(--theme-text-strong,#374151)', borderBottom: '1px solid var(--card-border,#e5e7eb)' }}>{h}</th>
                 ))}
               </tr>
@@ -151,9 +155,16 @@ const WorkLocations = () => {
             <tbody>
               {locations.length === 0 ? (
                 <tr><td colSpan={7} style={{ padding: 32, textAlign: 'center', color: 'var(--theme-text-muted,#9ca3af)' }}>No locations configured yet</td></tr>
-              ) : locations.map(loc => (
+              ) : locations.map(loc => {
+                const fmtT = (t) => {
+                  if (!t) return '--';
+                  const [h,m] = t.split(':').map(Number);
+                  const ampm = h >= 12 ? 'PM' : 'AM';
+                  return `${h%12||12}:${String(m).padStart(2,'0')} ${ampm}`;
+                };
+                return (
                 <tr key={loc.id} style={{ borderBottom: '1px solid var(--card-border,#f3f4f6)' }}>
-                  <td style={td}>{loc.name}</td>
+                  <td style={td}><b>{loc.name}</b></td>
                   <td style={td}>
                     <span style={{
                       padding: '2px 8px', borderRadius: 12, fontSize: 11, fontWeight: 600,
@@ -163,8 +174,9 @@ const WorkLocations = () => {
                       {loc.location_type === 'head_office' ? 'Head Office' : 'Client Site'}
                     </span>
                   </td>
-                  <td style={td}>{Number(loc.latitude).toFixed(6)}</td>
-                  <td style={td}>{Number(loc.longitude).toFixed(6)}</td>
+                  <td style={{...td, color: '#15803d', fontWeight: 600}}>{fmtT(loc.check_in_time)}</td>
+                  <td style={{...td, color: '#b91c1c', fontWeight: 600}}>{fmtT(loc.check_out_time)}</td>
+                  <td style={td}>{loc.grace_period_minutes ?? 15}m</td>
                   <td style={td}>{loc.radius_meters}m</td>
                   <td style={td}>{loc.address || '--'}</td>
                   <td style={td}>
@@ -172,7 +184,8 @@ const WorkLocations = () => {
                     <button onClick={() => handleDelete(loc.id)} style={{ ...btnStyle('#ef4444'), padding: '4px 10px', fontSize: 12 }}>Delete</button>
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -243,7 +256,29 @@ const WorkLocations = () => {
             <input type="number" value={form.radius_meters} onChange={e => setForm(f => ({...f, radius_meters: Number(e.target.value)}))} style={{...inputStyle, width: '100%', marginBottom: 14}} min={50} max={2000} />
 
             <label style={labelStyle}>Address (optional)</label>
-            <textarea value={form.address} onChange={e => setForm(f => ({...f, address: e.target.value}))} style={{...inputStyle, width: '100%', height: 72, resize: 'vertical', marginBottom: 20}} placeholder="Full address of the location" />
+            <textarea value={form.address} onChange={e => setForm(f => ({...f, address: e.target.value}))} style={{...inputStyle, width: '100%', height: 72, resize: 'vertical', marginBottom: 14}} placeholder="Full address of the location" />
+
+            {/* Shift timing for this location */}
+            <div style={{ background: '#f0fdf4', border: '1px solid #86efac', borderRadius: 8, padding: '12px 14px', marginBottom: 14 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#15803d', marginBottom: 10 }}>⏰ Office Hours (optional — leave blank for flexible/WFH locations)</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+                <div>
+                  <label style={labelStyle}>Check-in Time</label>
+                  <input type="time" value={form.check_in_time} onChange={e => setForm(f => ({...f, check_in_time: e.target.value}))} style={{...inputStyle, width: '100%'}} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Check-out Time</label>
+                  <input type="time" value={form.check_out_time} onChange={e => setForm(f => ({...f, check_out_time: e.target.value}))} style={{...inputStyle, width: '100%'}} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Grace Period (min)</label>
+                  <input type="number" value={form.grace_period_minutes} min={0} max={60} onChange={e => setForm(f => ({...f, grace_period_minutes: Number(e.target.value)}))} style={{...inputStyle, width: '100%'}} />
+                </div>
+              </div>
+              <div style={{ fontSize: 11, color: '#6b7280', marginTop: 8 }}>
+                E.g. Head Office 9:30 AM → 6:30 PM, Client Site A 10:00 AM → 6:00 PM. Grace period = allowed late arrival minutes.
+              </div>
+            </div>
 
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
               <button type="button" onClick={() => setShowForm(false)} style={btnStyle('#9ca3af')}>Cancel</button>

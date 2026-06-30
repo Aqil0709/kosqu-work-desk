@@ -51,16 +51,10 @@ const validateEmployeeRows = (rows, departments, existingEmails, existingEmploye
     const rowErrors = [];
     const normalized = {};
 
-    // Validate Required Columns
-    REQUIRED_BULK_UPLOAD_COLUMNS.forEach((field) => {
-      if (field === 'full_name') {
-        if (!String(data.full_name || '').trim() && !String(data.first_name || '').trim()) {
-          rowErrors.push('Full Name (or First Name) is required');
-        }
-      } else if (!String(data[field] || '').trim()) {
-        rowErrors.push(`${field} is required`);
-      }
-    });
+    // Validate Required Columns — only full_name is truly required
+    if (!String(data.full_name || '').trim() && !String(data.first_name || '').trim()) {
+      rowErrors.push('Full Name (or First Name) is required');
+    }
 
     const nameParts = splitFullName(data.full_name);
     normalized.first_name = String(data.first_name || nameParts.first_name).trim();
@@ -121,8 +115,10 @@ const validateEmployeeRows = (rows, departments, existingEmails, existingEmploye
         normalized[field] = 0;
         return;
       }
-      const value = parseMoney(rawValue);
-      if (rawValue && (!Number.isFinite(Number(rawValue.replace(/,/g, ''))) || value < 0)) {
+      // Strip currency symbols before numeric validation
+      const strippedValue = rawValue.replace(/[₹$€£¥,\s]/g, '');
+      const value = parseMoney(strippedValue);
+      if (strippedValue && (!Number.isFinite(Number(strippedValue)) || value < 0)) {
         rowErrors.push(`${label} must be a valid positive number`);
       }
       normalized[field] = value;
@@ -175,8 +171,8 @@ const validateEmployeeRows = (rows, departments, existingEmails, existingEmploye
       departmentId = departmentByName.get(uploadedDepartmentName.toLowerCase()) || null;
     }
 
-    if (!departmentId) {
-      rowErrors.push(`Department "${uploadedDepartmentName || uploadedDepartmentId || 'N/A'}" not found. Create it first.`);
+    if (!departmentId && (uploadedDepartmentName || uploadedDepartmentId)) {
+      rowErrors.push(`Department "${uploadedDepartmentName || uploadedDepartmentId}" not found. Create it first or leave it blank.`);
     }
 
     normalized.employment_type = String(data.employment_type || '').trim() || null;

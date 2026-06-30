@@ -128,15 +128,10 @@ const validatePreviewRows = (rows) => {
   rows.forEach(({ rowNumber, data }) => {
     const rowErrors = [];
 
-    REQUIRED_BULK_UPLOAD_COLUMNS.forEach((field) => {
-      if (field === 'full_name') {
-        if (!String(data.full_name || '').trim() && !String(data.first_name || '').trim()) {
-          rowErrors.push('Full Name (or First Name) is required');
-        }
-      } else if (!String(data[field] || '').trim()) {
-        rowErrors.push(`${field} is required`);
-      }
-    });
+    // Only full_name is truly required — all other fields can be filled in later by HR
+    if (!String(data.full_name || '').trim() && !String(data.first_name || '').trim()) {
+      rowErrors.push('Full Name (or First Name) is required');
+    }
 
     const email = String(data.email || '').trim().toLowerCase();
     if (email && !emailRegex.test(email)) rowErrors.push('Invalid email');
@@ -163,8 +158,8 @@ const validatePreviewRows = (rows) => {
       ['salary_other_allowance', 'Other'],
       ['epf_fixed_amount', 'EPF Fixed Amount']
     ].forEach(([field, label]) => {
-      const value = String(data[field] || '').replace(/,/g, '').trim();
-      if (value && (!Number.isFinite(Number(value)) || Number(value) < 0)) {
+      const stripped = String(data[field] || '').replace(/[₹$€£¥,\s]/g, '').trim();
+      if (stripped && (!Number.isFinite(Number(stripped)) || Number(stripped) < 0)) {
         rowErrors.push(`${label} must be a valid positive number`);
       }
     });
@@ -369,10 +364,15 @@ const BulkUploadModal = ({ isOpen, onClose, onUploadComplete, departments = [] }
 
       setUploadProgress(100);
       setUploadResult(response.data);
-      if (Number(response.data?.insertedRows || 0) === 0 && (response.data?.failedRows > 0 || response.data?.errors?.length > 0)) {
+      const inserted = Number(response.data?.insertedRows || 0);
+      const failed = Number(response.data?.failedRows || 0);
+      const needsUpdate = (response.data?.rows || []).filter(r => r.status === 'NEEDS_UPDATE').length;
+      if (inserted === 0 && failed > 0) {
         showToast('error', response.data.message || 'Upload failed. No employees were created.');
-      } else if (response.data?.failedRows > 0 || response.data?.errors?.length > 0) {
+      } else if (failed > 0) {
         showToast('warning', response.data.message || 'Upload completed with some failed rows. Check the details below.');
+      } else if (needsUpdate > 0) {
+        showToast('success', `${inserted} employee(s) created. ${needsUpdate} need their details filled in — edit them from Employee Management.`);
       } else {
         showToast('success', response.data?.message || 'Employees uploaded successfully.');
       }
@@ -415,17 +415,20 @@ const BulkUploadModal = ({ isOpen, onClose, onUploadComplete, departments = [] }
   const canUpload = file && fileErrors.length === 0 && parsedRows.length > 0 && !uploading;
   const resultErrors = uploadResult?.errors || [];
   const resultRows = uploadResult?.rows || [];
+  const needsUpdateCount = resultRows.filter(r => r.status === 'NEEDS_UPDATE').length;
   const uploadFailed = uploadResult && (
     uploadResult.success === false ||
     Number(uploadResult.failedRows || 0) > 0 ||
     resultErrors.length > 0
   );
   const uploadTitle = uploadResult
-    ? uploadResult.insertedRows > 0 && uploadFailed
+    ? uploadFailed && uploadResult.insertedRows > 0
       ? 'Upload completed with issues'
       : uploadFailed
         ? 'Upload failed'
-        : 'Upload successful'
+        : needsUpdateCount > 0
+          ? `Upload successful — ${needsUpdateCount} employee(s) need details filled`
+          : 'Upload successful'
     : '';
 
   return (
@@ -516,8 +519,8 @@ const BulkUploadModal = ({ isOpen, onClose, onUploadComplete, departments = [] }
             <div className="bulk-preview-panel">
               <div className="bulk-preview-summary">
                 <span><strong>{parsedRows.length}</strong> total rows</span>
-                <span><strong>{validationErrors.length}</strong> rows need attention</span>
-                <span><strong>{Math.max(parsedRows.length - validationErrors.length, 0)}</strong> rows ready</span>
+                <span><strong>{validationErrors.length}</strong> rows with errors</span>
+                <span><strong>{Math.max(parsedRows.length - validationErrors.length, 0)}</strong> rows ready (incomplete details can be filled later)</span>
               </div>
 
               <div className="bulk-preview-table-wrap">
@@ -575,11 +578,13 @@ const BulkUploadModal = ({ isOpen, onClose, onUploadComplete, departments = [] }
               {resultRows.length > 0 && (
                 <div className="bulk-error-list">
                   {resultRows.slice(0, 10).map((row) => (
-                    <div key={`${row.row}-${row.status}`}>
-                      Row {row.row} | {row.employee_name || row.email || '-'} | {row.status}
+                    <div key={`${row.row}-${row.status}`} style={row.status === 'NEEDS_UPDATE' ? { color: '#d97706' } : row.status === 'SUCCESS' ? { color: '#16a34a' } : {}}>
+                      Row {row.row} | {row.employee_name || '-'} | {row.status === 'NEEDS_UPDATE' ? '✓ Created (incomplete — update details)' : row.status}
                       {row.status === 'SUCCESS'
-                        ? ` | User ID: ${row.user_id} | Employee ID: ${row.employee_id}`
-                        : ` | Reason: ${row.reason || 'Unknown error'}`}
+                        ? ` | Employee ID: ${row.employee_id}`
+                        : row.status === 'NEEDS_UPDATE'
+                          ? ` | Employee ID: ${row.employee_id} — email, department, designation etc. not set`
+                          : ` | Reason: ${row.reason || 'Unknown error'}`}
                     </div>
                   ))}
                 </div>
@@ -636,13 +641,13 @@ const BulkUploadModal = ({ isOpen, onClose, onUploadComplete, departments = [] }
               <section>
                 <h3>Validation Rules</h3>
                 <ul>
-                  <li>Email must be valid and unique.</li>
-                  <li>Employee ID, employee name, department, designation, employment type, joining date, CTC, and Basic are required.</li>
+                  <li><strong>Only Full Name is required</strong> — all other fields are optional and can be filled in later via Edit Employee.</li>
+                  <li>If email is missing, a placeholder is assigned — update it after import so the employee can log in.</li>
+                  <li>If department is provided, it must already exist in the system.</li>
+                  <li>Email must be valid and unique if provided.</li>
                   <li>Phone fields accept digits, spaces, +, -, and parentheses.</li>
-                  <li>Dates must use YYYY-MM-DD.</li>
-                  <li>Department must already exist in the system or use a valid Department ID.</li>
-                  <li>Gross, PF, ESIC, P.Tax, LWF, deductions, net salary, and employer contributions are calculated by the system.</li>
-                  <li>Duplicate columns, unsupported headers, and duplicate rows are rejected.</li>
+                  <li>Dates must use YYYY-MM-DD format.</li>
+                  <li>Employees created without complete details will show as <strong>NEEDS_UPDATE</strong> — edit them from the Employee Management page.</li>
                 </ul>
               </section>
               <section>

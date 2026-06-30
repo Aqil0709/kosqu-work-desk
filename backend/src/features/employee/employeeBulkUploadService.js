@@ -27,11 +27,24 @@ const generateSecurePassword = () => {
     .join('');
 };
 
-const hashRows = async (rows) => Promise.all(rows.map(async (row) => {
+const generatePlaceholderEmail = (row, index) => {
+  const namePart = String(row.first_name || row.full_name || 'employee')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '')
+    .slice(0, 20) || 'employee';
+  return `${namePart}.${row.employee_id || index}.noemail@workdesk.internal`;
+};
+
+const hashRows = async (rows) => Promise.all(rows.map(async (row, index) => {
   const temporaryPassword = generateSecurePassword();
+  const email = row.email || generatePlaceholderEmail(row, index + 1);
+  const isPlaceholderEmail = !row.email;
   return {
     ...row,
-    temporary_password: temporaryPassword,
+    email,
+    isPlaceholderEmail,
+    temporary_password: isPlaceholderEmail ? null : temporaryPassword,
     password_hash: await bcrypt.hash(temporaryPassword, 10)
   };
 }));
@@ -85,6 +98,8 @@ const processEmployeeBulkUpload = async (tenantId, file, actorUserId = null) => 
   }
 
   let inserted = [];
+  let passwordByEmail = new Map();
+  let placeholderEmails = new Set();
   if (validRows.length > 0) {
     console.log(`[BulkUpload] STAGE 6 — Hashing passwords for ${validRows.length} rows...`);
     const rowsWithPasswords = await hashRows(validRows);
@@ -93,12 +108,14 @@ const processEmployeeBulkUpload = async (tenantId, file, actorUserId = null) => 
     inserted = await Employee.bulkCreate(tenantId, rowsWithPasswords, { createdBy: actorUserId });
     console.log(`[BulkUpload] STAGE 7 COMPLETE — bulkCreate returned ${inserted.length} records:`, inserted.map(e => `${e.employee_id}:${e.email}`));
 
-    const passwordByEmail = new Map(rowsWithPasswords.map((row) => [row.email, row.temporary_password]));
+    passwordByEmail = new Map(rowsWithPasswords.map((row) => [row.email, row.temporary_password]));
+    placeholderEmails = new Set(rowsWithPasswords.filter(r => r.isPlaceholderEmail).map(r => r.email));
 
     const emailErrors = [];
     for (const employee of inserted) {
+      const sourceRow = rowsWithPasswords.find((row) => row.email === employee.email);
+      if (sourceRow?.isPlaceholderEmail) continue;
       try {
-        const sourceRow = rowsWithPasswords.find((row) => row.email === employee.email);
         await sendEmployeeCredentials(tenantId, {
           employeeName: `${sourceRow.first_name} ${sourceRow.last_name}`.trim(),
           email: employee.email,
@@ -138,11 +155,13 @@ const processEmployeeBulkUpload = async (tenantId, file, actorUserId = null) => 
     rows: parsedFile.rows.map(({ rowNumber, data }) => {
       const insertedRow = inserted.find((employee) => employee.rowNumber === rowNumber);
       if (insertedRow) {
+        const isIncomplete = placeholderEmails && placeholderEmails.has(insertedRow.email);
         return {
           row: rowNumber,
           employee_name: `${insertedRow.first_name || ''} ${insertedRow.last_name || ''}`.trim() || data.full_name || insertedRow.email,
-          email: insertedRow.email,
-          status: 'SUCCESS',
+          email: isIncomplete ? null : insertedRow.email,
+          status: isIncomplete ? 'NEEDS_UPDATE' : 'SUCCESS',
+          needs_update: isIncomplete,
           user_id: insertedRow.user_id,
           employee_id: insertedRow.employee_id,
           leave_balance_count: insertedRow.leave_balance_count,
@@ -150,7 +169,7 @@ const processEmployeeBulkUpload = async (tenantId, file, actorUserId = null) => 
           onboarding_process_id: insertedRow.onboarding_process_id,
           onboarding_template_id: insertedRow.onboarding_template_id,
           onboarding_task_count: insertedRow.onboarding_task_count,
-          ...(exposeTemporaryPasswords ? { temporary_password: passwordByEmail.get(insertedRow.email) } : {})
+          ...(exposeTemporaryPasswords && !isIncomplete ? { temporary_password: passwordByEmail.get(insertedRow.email) } : {})
         };
       }
 
