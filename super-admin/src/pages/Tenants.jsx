@@ -1,13 +1,13 @@
 // src/pages/Tenants.jsx
 import React, { useState, useEffect } from 'react';
-import { HiPlus, HiXMark, HiPencilSquare } from 'react-icons/hi2';
+import { HiPlus, HiXMark, HiPencilSquare, HiEye, HiEyeSlash } from 'react-icons/hi2';
 import { superAdminAPI } from '../services/api';
 import './Tenants.css';
 
 const EMPTY_FORM = {
   name: '', slug: '', email: '', phone: '', address: '',
   subscription_plan: 'free', max_employees: 10,
-  admin_first_name: '', admin_last_name: '', admin_email: '', admin_password: ''
+  admin_first_name: '', admin_last_name: '', admin_email: '', admin_password: '', admin_password_confirm: ''
 };
 
 const Tenants = () => {
@@ -20,6 +20,8 @@ const Tenants = () => {
   const [editFormData, setEditFormData] = useState({});
   const [alert, setAlert] = useState(null);
   const [formData, setFormData] = useState(EMPTY_FORM);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => { fetchTenants(); }, []);
 
@@ -56,11 +58,27 @@ const Tenants = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setAlert(null);
+    if (!formData.admin_password) {
+      showAlert('error', 'Admin password is required');
+      return;
+    }
+    if (formData.admin_password.length < 8) {
+      showAlert('error', 'Password must be at least 8 characters');
+      return;
+    }
+    if (formData.admin_password !== formData.admin_password_confirm) {
+      showAlert('error', 'Passwords do not match');
+      return;
+    }
     try {
-      await superAdminAPI.createTenant(formData);
-      showAlert('success', 'Organization created successfully!');
+      const { admin_password_confirm, ...payload } = formData;
+      const res = await superAdminAPI.createTenant(payload);
+      const creds = res.data?.admin_credentials;
+      showAlert('success', `Organization created! Admin login: ${creds?.email}`);
       setShowModal(false);
       setFormData(EMPTY_FORM);
+      setShowPassword(false);
+      setShowConfirmPassword(false);
       fetchTenants();
     } catch (error) {
       showAlert('error', error.response?.data?.message || 'Failed to create organization');
@@ -253,11 +271,11 @@ const Tenants = () => {
 
       {/* ── Create Organization Modal ── */}
       {showModal && (
-        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+        <div className="modal-overlay" onClick={() => { setShowModal(false); setFormData(EMPTY_FORM); setShowPassword(false); setShowConfirmPassword(false); }}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Create Organization</h2>
-              <button className="modal-close" onClick={() => setShowModal(false)}>
+              <button className="modal-close" onClick={() => { setShowModal(false); setFormData(EMPTY_FORM); setShowPassword(false); setShowConfirmPassword(false); }}>
                 <HiXMark />
               </button>
             </div>
@@ -373,36 +391,70 @@ const Tenants = () => {
                     </div>
                   </div>
 
+                  <div className="form-group">
+                    <label>Admin Email *</label>
+                    <input
+                      id="admin-email"
+                      type="email"
+                      className="form-input"
+                      placeholder="john@acme.com"
+                      value={formData.admin_email}
+                      onChange={(e) => setFormData(prev => ({ ...prev, admin_email: e.target.value }))}
+                      required
+                    />
+                  </div>
+
                   <div className="form-row">
                     <div className="form-group">
-                      <label>Admin Email *</label>
-                      <input
-                        id="admin-email"
-                        type="email"
-                        className="form-input"
-                        placeholder="john@acme.com"
-                        value={formData.admin_email}
-                        onChange={(e) => setFormData(prev => ({ ...prev, admin_email: e.target.value }))}
-                        required
-                      />
+                      <label>Admin Password *</label>
+                      <div className="input-password-wrap">
+                        <input
+                          id="admin-password"
+                          type={showPassword ? 'text' : 'password'}
+                          className="form-input"
+                          placeholder="Min. 8 characters"
+                          value={formData.admin_password}
+                          onChange={(e) => setFormData(prev => ({ ...prev, admin_password: e.target.value }))}
+                          required
+                        />
+                        <button
+                          type="button"
+                          className="password-toggle"
+                          onClick={() => setShowPassword(v => !v)}
+                          tabIndex={-1}
+                        >
+                          {showPassword ? <HiEyeSlash size={16} /> : <HiEye size={16} />}
+                        </button>
+                      </div>
                     </div>
                     <div className="form-group">
-                      <label>Admin Password</label>
-                      <input
-                        id="admin-password"
-                        type="password"
-                        className="form-input"
-                        placeholder="Leave empty for first-login setup"
-                        value={formData.admin_password}
-                        onChange={(e) => setFormData(prev => ({ ...prev, admin_password: e.target.value }))}
-                      />
+                      <label>Confirm Password *</label>
+                      <div className="input-password-wrap">
+                        <input
+                          id="admin-password-confirm"
+                          type={showConfirmPassword ? 'text' : 'password'}
+                          className="form-input"
+                          placeholder="Re-enter password"
+                          value={formData.admin_password_confirm}
+                          onChange={(e) => setFormData(prev => ({ ...prev, admin_password_confirm: e.target.value }))}
+                          required
+                        />
+                        <button
+                          type="button"
+                          className="password-toggle"
+                          onClick={() => setShowConfirmPassword(v => !v)}
+                          tabIndex={-1}
+                        >
+                          {showConfirmPassword ? <HiEyeSlash size={16} /> : <HiEye size={16} />}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
 
               <div className="modal-footer">
-                <button type="button" className="btn-secondary" onClick={() => setShowModal(false)}>
+                <button type="button" className="btn-secondary" onClick={() => { setShowModal(false); setFormData(EMPTY_FORM); setShowPassword(false); setShowConfirmPassword(false); }}>
                   Cancel
                 </button>
                 <button type="submit" className="btn-primary">

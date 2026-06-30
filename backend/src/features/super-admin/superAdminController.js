@@ -164,15 +164,21 @@ const superAdminController = {
 
             // Validate required fields
             if (!name || !slug || !email) {
-                return res.status(400).json({ 
+                return res.status(400).json({
                     success: false,
-                    message: 'Name, slug, and email are required' 
+                    message: 'Name, slug, and email are required'
                 });
             }
             if (!admin_first_name || !admin_last_name || !admin_email) {
-                return res.status(400).json({ 
+                return res.status(400).json({
                     success: false,
-                    message: 'Admin name and email are required' 
+                    message: 'Admin name and email are required'
+                });
+            }
+            if (!admin_password || admin_password.trim().length < 8) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Admin password is required and must be at least 8 characters'
                 });
             }
 
@@ -182,9 +188,22 @@ const superAdminController = {
             const existingTenant = await Tenant.getBySlug(slug);
             if (existingTenant) {
                 await connection.rollback();
-                return res.status(400).json({ 
+                return res.status(400).json({
                     success: false,
-                    message: 'Tenant slug already exists' 
+                    message: 'Tenant slug already exists'
+                });
+            }
+
+            // Check admin email uniqueness within this tenant scope
+            const [existingUser] = await connection.execute(
+                'SELECT id FROM users WHERE email = ? LIMIT 1',
+                [admin_email]
+            );
+            if (existingUser.length > 0) {
+                await connection.rollback();
+                return res.status(400).json({
+                    success: false,
+                    message: 'Admin email already exists in the system'
                 });
             }
 
@@ -194,11 +213,8 @@ const superAdminController = {
                 subscription_plan, max_employees
             }, connection);
 
-            // Create the first tenant user as a system admin.
-            let passwordHash = null;
-            if (admin_password) {
-                passwordHash = await bcrypt.hash(admin_password, 10);
-            }
+            // Hash password for admin user
+            const passwordHash = await bcrypt.hash(admin_password, 10);
 
             await connection.execute(
                 `INSERT INTO users (tenant_id, first_name, last_name, email, password_hash, position, is_active) 
@@ -217,6 +233,10 @@ const superAdminController = {
                     slug,
                     email,
                     subscription_plan: subscription_plan || 'free'
+                },
+                admin_credentials: {
+                    email: admin_email,
+                    name: `${admin_first_name} ${admin_last_name}`
                 }
             });
         } catch (error) {

@@ -472,3 +472,32 @@
   color: #f59e0b;
   border: 1px solid rgba(245, 158, 11, 0.3);
 }
+
+/* Password input with show/hide toggle */
+.input-password-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-password-wrap .form-input {
+  padding-right: 40px;
+  width: 100%;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  padding: 0;
+  line-height: 1;
+}
+
+.password-toggle:hover {
+  color: var(--text-primary);
+}
