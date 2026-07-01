@@ -127,6 +127,12 @@ const ensureSalarySchema = () => {
       await addColumnIfMissing('tb_salary_records', 'other_deductions DECIMAL(12,2) NOT NULL DEFAULT 0');
       await addColumnIfMissing('tb_salary_records', 'employment_category VARCHAR(20) DEFAULT NULL');
 
+      // ── Hourly/daily wage engine fields ────────────────────────────────
+      // Used by interns/consultants/contract staff — monthly-salary employees
+      // are unaffected (payment_type defaults to 'monthly').
+      await addColumnIfMissing('employee_details', `payment_type ENUM('monthly','daily','hourly') NOT NULL DEFAULT 'monthly'`);
+      await addColumnIfMissing('employee_details', 'pay_rate DECIMAL(10,2) NULL');
+
       // ── Designation-based salary rules ─────────────────────────────────
       await pool.execute(`
         CREATE TABLE IF NOT EXISTS salary_designation_rules (

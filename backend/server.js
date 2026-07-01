@@ -32,6 +32,7 @@ const experienceLetterRoutes = require('./src/features/employee/experienceLetter
 const resignationRoutes = require('./src/features/employee/resignationRoutes');
 const expenseRoutes = require('./src/features/expense/expenseRoutes');
 const attendanceRoutes = require('./src/features/attendance/attendanceRoutes');
+const locationTrackingRoutes = require('./src/features/attendance/locationTrackingRoutes');
 const leaveRoutes = require('./src/features/leave/leaveRoutes');
 const clientRoutes = require('./src/features/clients/clientRoutes');
 const serviceRoutes = require('./src/features/services/serviceRoutes');
@@ -65,6 +66,7 @@ const { ensurePasswordResetSchema } = require('./src/features/login/passwordRese
 const { ensureFirstLoginSchema } = require('./src/features/login/firstLoginSchema');
 const { ensureIncrementLetterSchema } = require('./src/features/employee/incrementLetterController');
 const { startAutoCheckoutScheduler } = require('./src/features/attendance/autoCheckoutService');
+const { ensureSchema: ensureLocationMonitorSchema, startLocationMonitorScheduler } = require('./src/features/attendance/locationMonitorService');
 const { startDailyNotificationScheduler } = require('./src/services/dailyNotificationScheduler');
 const compression = require('compression');
 const app = express();
@@ -285,6 +287,9 @@ app.use('/api/declaration-form', require('./src/features/employee/declarationFor
 app.use('/api/resignation-requests', resignationRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/attendance/face', require('./src/features/attendance/faceEnrollRoutes'));
+app.use('/api/attendance-regularization', require('./src/features/attendance/attendanceRegularizationRoutes'));
+app.use('/api/attendance-policy', require('./src/features/attendance/attendancePolicyRoutes'));
+app.use('/api/location-tracking', locationTrackingRoutes);
 app.use('/api/leaves', leaveRoutes);
 app.use('/api/module-access', moduleAccessRoutes);
 app.use('/api/clients', clientRoutes);
@@ -404,6 +409,9 @@ const startServer = async () => {
     await runSchema('aiChat', () => require('./src/features/aiChat/aiChatRoutes').ensureSchema());
     await runSchema('shiftWorkforce', () => require('./src/features/shift/shiftTemplateRoutes').ensureSchema());
     await runSchema('approvalEngine', () => require('./src/features/approval/approvalRoutes').ensureSchema());
+    await runSchema('locationTracking', () => require('./src/features/attendance/locationTrackingRoutes').ensureSchema());
+    await runSchema('attendanceRegularization', () => require('./src/features/attendance/attendanceRegularizationRoutes').ensureSchema());
+    await runSchema('attendancePolicySettings', () => require('./src/features/attendance/attendancePolicySettings').ensureSchema());
 
     try {
       const { runDbOptimizations } = require('./src/utils/dbOptimizations');
@@ -430,10 +438,18 @@ const startServer = async () => {
       console.warn('[team-lead] Non-fatal schema error:', e.message);
     }
 
+    try {
+      await ensureLocationMonitorSchema();
+      logger.info('Location monitor schema ready');
+    } catch (e) {
+      console.warn('[location-monitor] Non-fatal schema error:', e.message);
+    }
+
     httpServer.listen(PORT, () => {
       logger.info(`Server started on port ${PORT} with Socket.IO`);
       startAutoCheckoutScheduler(logger);
       startDailyNotificationScheduler(logger);
+      startLocationMonitorScheduler(logger);
 
       runHrAutomation(pool).catch(e => console.warn('[HR Automation] Startup run failed:', e.message));
       setInterval(() => {

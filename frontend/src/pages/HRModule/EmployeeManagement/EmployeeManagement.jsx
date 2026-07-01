@@ -32,6 +32,8 @@ const emptyForm = {
   position: '',
   employment_type: '',
   employment_category: 'employee', // v2: intern | consultant | employee
+  payment_type: 'monthly',          // monthly | daily | hourly
+  pay_rate: '',                     // required when payment_type is daily/hourly
   is_team_lead: false,              // Leadership flag — separate from role
   experience_years: '',             // v2: experience field
   address: '',
@@ -433,6 +435,8 @@ const EmployeeManagement = () => {
     position: data.position || null,
     employment_type: data.employment_type || null,
     employment_category: data.employment_category || 'employee',
+    payment_type: data.payment_type || 'monthly',
+    pay_rate: data.pay_rate === '' || data.pay_rate == null ? null : Number(data.pay_rate),
     is_team_lead: data.is_team_lead ? true : false,
     experience_years: data.experience_years === '' ? null : Number(data.experience_years),
     // Payroll & Reporting
@@ -550,6 +554,8 @@ const EmployeeManagement = () => {
       position: employee.position || '',
       employment_type: employee.employment_type || '',
       employment_category: employee.employment_category || 'employee',
+      payment_type: employee.payment_type || 'monthly',
+      pay_rate: employee.pay_rate ?? '',
       is_team_lead: employee.is_team_lead === true || employee.is_team_lead === 1,
       experience_years: employee.experience_years ?? '',
       // Payroll & Reporting
@@ -1099,6 +1105,28 @@ const EmployeeManagement = () => {
               <option value="consultant">Consultant</option>
             </select>
           </div>
+          <div className="form-group">
+            <label>Payment Type</label>
+            <select name="payment_type" value={data.payment_type || 'monthly'} onChange={onChange}>
+              <option value="monthly">Monthly Salary</option>
+              <option value="daily">Daily Wage</option>
+              <option value="hourly">Hourly Wage</option>
+            </select>
+          </div>
+          {data.payment_type && data.payment_type !== 'monthly' && (
+            <div className="form-group">
+              <label>{data.payment_type === 'hourly' ? 'Rate per Hour (₹)' : 'Rate per Day (₹)'}</label>
+              <input
+                type="number"
+                name="pay_rate"
+                value={data.pay_rate || ''}
+                onChange={onChange}
+                min="0"
+                step="0.01"
+                placeholder={data.payment_type === 'hourly' ? 'e.g. 250' : 'e.g. 1500'}
+              />
+            </div>
+          )}
           {/* v2: Experience Years */}
           <div className="form-group">
             <label>Experience (Years)</label>

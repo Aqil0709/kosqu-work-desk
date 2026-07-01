@@ -532,6 +532,7 @@
   flex-direction: column;
   flex-shrink: 0;
   height: 100%;
+  min-height: 0;
   overflow: hidden;
   z-index: 100;
   transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -543,8 +544,11 @@
 /* Scrollable nav area */
 .al-nav {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   padding: 12px 0;
 }
 
@@ -870,6 +874,7 @@
     top: 64px;
     left: 0;
     height: calc(100vh - 64px);
+    min-height: 0;
     z-index: 500;
     transform: translateX(-100%);
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s ease;

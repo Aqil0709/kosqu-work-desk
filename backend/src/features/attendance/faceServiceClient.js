@@ -5,11 +5,13 @@
  */
 
 const FACE_SERVICE_URL = process.env.FACE_SERVICE_URL || 'http://localhost:5002';
+const FACE_SERVICE_SECRET = process.env.FACE_SERVICE_SECRET || '';
 
 async function callFaceService(path, formData) {
   const response = await fetch(`${FACE_SERVICE_URL}${path}`, {
     method: 'POST',
     body: formData,
+    headers: FACE_SERVICE_SECRET ? { 'X-Internal-Secret': FACE_SERVICE_SECRET } : undefined,
     signal: AbortSignal.timeout(15000),
   });
   return response.json();
@@ -32,13 +34,19 @@ async function enrollFace(tenantId, employeeId, photoBuffer, filename = 'photo.j
 
 /**
  * Verify a selfie against an employee's enrolled face.
+ * extraFrameBuffers (optional): additional frames captured ~300-500ms apart,
+ * enabling the blink/head-turn liveness challenge server-side. Without them,
+ * the service falls back to single-frame quality/spoof heuristics only.
  * Returns { success, verified, confidence, message }
  */
-async function verifyFace(tenantId, employeeId, selfieBuffer, filename = 'selfie.jpg') {
+async function verifyFace(tenantId, employeeId, selfieBuffer, filename = 'selfie.jpg', extraFrameBuffers = []) {
   const form = new FormData();
   form.append('tenant_id', String(tenantId));
   form.append('employee_id', String(employeeId));
   form.append('selfie', new Blob([selfieBuffer], { type: 'image/jpeg' }), filename);
+  extraFrameBuffers.slice(0, 2).forEach((buf, i) => {
+    form.append(`selfie_${i + 2}`, new Blob([buf], { type: 'image/jpeg' }), `frame_${i + 2}.jpg`);
+  });
   return callFaceService('/verify', form);
 }
 
@@ -60,7 +68,10 @@ async function unenrollFace(tenantId, employeeId) {
   const response = await fetch(`${FACE_SERVICE_URL}/unenroll`, {
     method: 'DELETE',
     body: JSON.stringify({ tenant_id: String(tenantId), employee_id: String(employeeId) }),
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(FACE_SERVICE_SECRET ? { 'X-Internal-Secret': FACE_SERVICE_SECRET } : {}),
+    },
     signal: AbortSignal.timeout(10000),
   });
   return response.json();

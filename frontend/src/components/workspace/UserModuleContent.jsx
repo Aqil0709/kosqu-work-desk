@@ -18,6 +18,7 @@ import EmployeeOnboarding     from '../../pages/employees/EmployeeOnboarding';
 import EmployeeGrievance      from '../../pages/employees/EmployeeGrievance';
 import EmployeeProjects       from '../../pages/employees/EmployeeProjects';
 import TLWorkReports          from '../../pages/employees/TLWorkReports';
+import AttendanceApprovals    from '../../pages/HRModule/AttendanceManagement/AttendanceApprovals';
 import PTTMContainer          from '../../pages/PTTM/PTTMContainer';
 import EmployeeCalendar       from '../../pages/employees/EmployeeCalendar';
 import EmployeeNotes          from '../../pages/employees/EmployeeNotes';
@@ -53,14 +54,15 @@ const UserModuleContent = ({ activeTab, navigateToTab, DashboardComponent }) => 
   };
 
   // Conditional employee tabs
-  const canSeeTL       = user?.position === 'team_lead';
+  const canSeeTL       = user?.position === 'team_lead' || user?.is_team_lead === true || user?.is_team_lead === 1;
   const canSeePttm     = ['admin','hr','team_lead','pm'].includes(user?.position);
   const canSeeProjects = user?.position !== 'client';
 
   const content = EMPLOYEE_TABS[activeTab] ||
-    (activeTab === 'tl-work-reports'   && canSeeTL       ? <TLWorkReports /> : null) ||
-    (activeTab === 'pttm'              && canSeePttm     ? <PTTMContainer /> : null) ||
-    (activeTab === 'employee-projects' && canSeeProjects ? <EmployeeProjects /> : null);
+    (activeTab === 'tl-work-reports'        && canSeeTL       ? <TLWorkReports /> : null) ||
+    (activeTab === 'tl-attendance-approvals' && canSeeTL       ? <AttendanceApprovals isHR={false} /> : null) ||
+    (activeTab === 'pttm'                    && canSeePttm     ? <PTTMContainer /> : null) ||
+    (activeTab === 'employee-projects'       && canSeeProjects ? <EmployeeProjects /> : null);
 
   return (
     <main className={mainClass}>

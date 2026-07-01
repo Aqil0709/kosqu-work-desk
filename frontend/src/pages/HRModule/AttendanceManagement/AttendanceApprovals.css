@@ -1,0 +1,71 @@
+.aa-root { padding: 24px; font-family: 'Inter', system-ui, sans-serif; }
+
+.aa-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+.aa-title { font-size: 1.3rem; font-weight: 700; margin: 0; }
+.aa-refresh-btn {
+  background: var(--al-primary, #4f46e5);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.aa-alert {
+  background: #fee2e2;
+  color: #b91c1c;
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 13px;
+}
+
+.aa-loading, .aa-empty { color: #94a3b8; padding: 40px 0; text-align: center; }
+
+.aa-list { display: flex; flex-direction: column; gap: 14px; }
+
+.aa-card {
+  background: var(--al-surface, #fff);
+  border: 1px solid var(--al-border, #e2e8f0);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.aa-card-top { display: flex; justify-content: space-between; margin-bottom: 8px; }
+.aa-employee { font-weight: 700; font-size: 14px; }
+.aa-meta { font-size: 12.5px; color: #64748b; }
+.aa-manager-approved { color: #15803d; font-weight: 600; }
+
+.aa-reason { font-size: 13px; color: #334155; margin-bottom: 8px; }
+.aa-prior-remarks { font-size: 12.5px; color: #64748b; font-style: italic; margin-bottom: 8px; }
+
+.aa-remarks-input {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 12.5px;
+  font-family: inherit;
+  margin-bottom: 10px;
+  resize: vertical;
+}
+
+.aa-actions { display: flex; gap: 10px; }
+.aa-btn {
+  border: none;
+  border-radius: 8px;
+  padding: 8px 18px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.aa-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.aa-btn-approve { background: #dcfce7; color: #15803d; }
+.aa-btn-reject { background: #fee2e2; color: #b91c1c; }

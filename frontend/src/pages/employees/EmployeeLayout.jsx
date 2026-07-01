@@ -23,6 +23,7 @@ const PAGE_TITLES = {
   'employee-payslips':     'My Payslips',
   'employee-work-report':  'Daily Work Report',
   'tl-work-reports':       'Team Work Reports',
+  'tl-attendance-approvals': 'Attendance Approvals',
   'employee-resignation':  'My Resignation',
   'employee-leads':        'My Leads',
   'employee-documents':    'My Documents',
@@ -110,9 +111,15 @@ const EmployeeLayout = ({ initialTab } = {}) => {
     setActiveTabState(tab);
   }, [location.hash, getTabFromUrl]);
 
-  // Navigate by updating URL hash (preserves history, enables back button)
+  // Navigate by updating URL hash (preserves history, enables back button).
+  // Uses an ABSOLUTE path (/dashboard#tab) rather than a bare relative hash —
+  // a relative `#tab` resolves against whatever the current pathname happens to
+  // be, so navigating away from exactly "/dashboard" (e.g. via a standalone
+  // route like /dashboard/offer-letter, or a trailing-slash mismatch) silently
+  // breaks every subsequent menu click because the hash update lands on the
+  // wrong route and EmployeeLayout never re-renders with the new tab.
   const setActiveTab = useCallback((tab) => {
-    navigate(`#${tab}`, { replace: false });
+    navigate(`/dashboard#${tab}`, { replace: false });
     localStorage.setItem(STORAGE_KEY, tab);
   }, [navigate]);
 
@@ -147,6 +154,7 @@ const EmployeeLayout = ({ initialTab } = {}) => {
 
   const navigateToTab = (tab) => {
     setActiveTab(tab);
+    if (!location.pathname.startsWith('/dashboard')) navigate('/dashboard');
     if (window.innerWidth <= 768) setSidebarOpen(false);
   };
 
@@ -197,6 +205,7 @@ const EmployeeLayout = ({ initialTab } = {}) => {
         canAccessPttm    ? { tab: 'pttm',             icon: <ProjectsIcon />,  label: 'Project Mgmt' } : null,
         canAccessProjects ? { tab: 'employee-projects', icon: <ProjectsIcon />, label: 'My Tasks' }     : null,
         isTeamLead        ? { tab: 'tl-work-reports',  icon: <TeamReportIcon />,label: 'Team Reports' } : null,
+        isTeamLead        ? { tab: 'tl-attendance-approvals', icon: <TeamReportIcon />, label: 'Attendance Approvals' } : null,
       ].filter(Boolean),
     },
     {

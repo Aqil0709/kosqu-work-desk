@@ -73,7 +73,11 @@ router.post('/my/mark', attendanceController.markMyAttendance);
 // ==================== NEW FACE RECOGNITION ROUTE ====================
 
 // POST /api/attendance/identify-and-mark - Face detection and automatic attendance
-router.post('/verify-my-face', upload.single('faceImage'), attendanceController.verifyMyFaceAndMarkAttendance);
+router.post('/verify-my-face', upload.fields([
+  { name: 'faceImage', maxCount: 1 },
+  { name: 'faceImage_2', maxCount: 1 },
+  { name: 'faceImage_3', maxCount: 1 },
+]), attendanceController.verifyMyFaceAndMarkAttendance);
 router.post('/identify-and-mark', requireModuleAccess('attendance_management', 'write'), upload.single('faceImage'), attendanceController.identifyAndMarkAttendance);
 
 

@@ -1,5 +1,6 @@
 // backend/src/features/admin/salaryModel.js
 const { pool } = require('../../config/db');
+const { addColumnIfMissing } = require('../../utils/schemaHelpers');
 
 // Auto-create salary_slips table on first load
 (async () => {
@@ -23,6 +24,18 @@ const { pool } = require('../../config/db');
         `);
     } catch (e) {
         console.error('[salary_slips] table init error:', e.message);
+    }
+    try {
+        // Defensive fallback only — the guaranteed startup path for these columns
+        // is salarySchema.js's ensureSalarySchema(), which server.js awaits before
+        // accepting requests. This IIFE runs whenever salaryModel.js is first
+        // required, which could theoretically happen before ensureSalarySchema()
+        // in a non-standard entrypoint (e.g. a script that imports this model
+        // directly) — addColumnIfMissing is idempotent, so running it twice is safe.
+        await addColumnIfMissing('employee_details', 'payment_type', `payment_type ENUM('monthly','daily','hourly') NOT NULL DEFAULT 'monthly' AFTER employment_category`);
+        await addColumnIfMissing('employee_details', 'pay_rate', `pay_rate DECIMAL(10,2) NULL AFTER payment_type`);
+    } catch (e) {
+        console.error('[employee_details payment_type/pay_rate] init error:', e.message);
     }
 })();
 
@@ -59,8 +72,21 @@ const getPaymentStatus = (netSalary, paidAmount) => {
     return 'pending';
 };
 
+// tb_holidays for a given (tenant, month, year) is identical across every employee
+// in that tenant. A bulk payroll run for 10,000 employees was re-querying this
+// exact same result 10,000 times. Cache it in-process for the duration of a
+// payroll run (short TTL — holidays are rarely edited mid-run, and a stale cache
+// only matters for the ~1 min window, not for financial correctness since the
+// same holiday set applies tenant-wide regardless of when within the run it's read).
+const HOLIDAYS_CACHE_TTL_MS = 60 * 1000;
+const holidaysCache = new Map(); // `${tenantId}_${year}_${month}` -> { value, expiresAt }
+
 const Salary = {
     getHolidays: async (tenantId, month, year) => {
+        const cacheKey = `${tenantId}_${year}_${month}`;
+        const cached = holidaysCache.get(cacheKey);
+        if (cached && cached.expiresAt > Date.now()) return cached.value;
+
         const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
         const daysInMonth = getDaysInMonth(year, month);
         const endDate = `${year}-${String(month).padStart(2, '0')}-${daysInMonth}`;
@@ -70,6 +96,8 @@ const Salary = {
              WHERE tenant_id = ? AND date BETWEEN ? AND ? AND is_active = 1`,
             [tenantId, startDate, endDate]
         );
+
+        holidaysCache.set(cacheKey, { value: holidays, expiresAt: Date.now() + HOLIDAYS_CACHE_TTL_MS });
         return holidays;
     },
 
@@ -147,7 +175,99 @@ const Salary = {
         return [...uniqueByDate.values()].sort((a, b) => a.date.localeCompare(b.date));
     },
 
+    // Hourly/daily wage engine — used for interns, consultants and contract staff.
+    // Pay = pay_rate * (days present, for 'daily') or pay_rate * (total worked hours, for 'hourly').
+    // No PF/ESIC/TDS accrual model is applied here (statutory deductions for
+    // non-payroll contract workers are typically handled outside HRMS payroll).
+    calculateHourlyOrDailySalary: async (tenantId, employeeDetailId, month, year, paymentType, payRate) => {
+        const startDate = new Date(year, month - 1, 1);
+        const daysInMonth = getDaysInMonth(year, month);
+        const endDate = new Date(year, month - 1, daysInMonth);
+
+        const attendanceRecords = await Salary.getAttendanceForSalary(tenantId, employeeDetailId, month, year);
+        const rate = parseFloat(payRate) || 0;
+
+        let presentDays = 0;
+        let halfDays = 0;
+        let totalWorkedHours = 0;
+        let attendanceDeductions = 0;
+        const dailyBreakdown = [];
+
+        const attendanceMap = new Map();
+        attendanceRecords.forEach((record) => attendanceMap.set(formatDate(record.date), record));
+
+        let currentDate = new Date(startDate);
+        while (currentDate <= endDate) {
+            const dateKey = formatDate(currentDate);
+            const attendance = attendanceMap.get(dateKey);
+            if (attendance) {
+                const status = normalizeStatus(attendance.status);
+                const hours = parseFloat(attendance.worked_hours) || 0;
+                totalWorkedHours += hours;
+                if (status === 'present' || status === 'delayed' || status === 'late') {
+                    presentDays++;
+                } else if (status === 'half day') {
+                    halfDays++;
+                }
+                if (attendance.should_deduct_salary) {
+                    attendanceDeductions += parseFloat(attendance.deduction_amount) || 0;
+                }
+            }
+            dailyBreakdown.push({
+                date: dateKey,
+                status: attendance?.status || 'Absent',
+                check_in: attendance?.check_in || '-',
+                check_out: attendance?.check_out || '-',
+                worked_hours: attendance ? (parseFloat(attendance.worked_hours) || 0) : 0,
+            });
+            currentDate = addDays(currentDate, 1);
+        }
+
+        const grossPay = paymentType === 'hourly'
+            ? Math.round(rate * totalWorkedHours)
+            : Math.round(rate * (presentDays + halfDays * 0.5));
+
+        const totalDeduction = Math.round(attendanceDeductions);
+        const netSalary = Math.max(0, grossPay - totalDeduction);
+
+        const details = {
+            payment_type: paymentType,
+            pay_rate: rate,
+            present_days: presentDays,
+            half_days: halfDays,
+            total_worked_hours: Math.round(totalWorkedHours * 100) / 100,
+            gross_salary: grossPay,
+            attendance_deductions: totalDeduction,
+            total_deduction: totalDeduction,
+            net_salary: netSalary,
+        };
+
+        return {
+            basic_salary: grossPay,
+            gross_salary: grossPay,
+            deduction_amount: totalDeduction,
+            pf_amount: 0,
+            esic_amount: 0,
+            tds_amount: 0,
+            present_days: presentDays,
+            half_days: halfDays,
+            net_salary: netSalary,
+            daily_breakdown: dailyBreakdown,
+            details,
+        };
+    },
+
     calculateSalary: async (tenantId, employeeDetailId, month, year, annualSalary) => {
+        // Branch to the hourly/daily wage engine for non-monthly employees.
+        const [payTypeRows] = await pool.execute(
+            `SELECT payment_type, pay_rate FROM employee_details WHERE id = ? AND tenant_id = ?`,
+            [employeeDetailId, tenantId]
+        );
+        const paymentType = payTypeRows[0]?.payment_type || 'monthly';
+        if (paymentType === 'daily' || paymentType === 'hourly') {
+            return Salary.calculateHourlyOrDailySalary(tenantId, employeeDetailId, month, year, paymentType, payTypeRows[0]?.pay_rate);
+        }
+
         const startDate = new Date(year, month - 1, 1);
         const daysInMonth = getDaysInMonth(year, month);
         const endDate = new Date(year, month - 1, daysInMonth);

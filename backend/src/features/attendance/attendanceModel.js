@@ -1,6 +1,42 @@
 // backend/models/attendanceModel.js
 const { pool } = require('../../config/db');
 const { getIndiaDate, getIndiaDateTime } = require('../../utils/indiaTime');
+const { getPolicySettings } = require('./attendancePolicySettings');
+
+// Returns true if the employee has an HR-approved exception (late-arrival, half-day,
+// on-duty, regularization) for this exact attendance date — used to bypass automatic
+// late/early-exit salary deductions per company policy.
+async function hasApprovedException(connection, tenantId, employeeId, date, types) {
+    try {
+        const placeholders = types.map(() => '?').join(',');
+        const [rows] = await connection.execute(
+            `SELECT id FROM attendance_regularization
+             WHERE tenant_id = ? AND employee_id = ? AND attendance_date = ?
+               AND status = 'approved' AND request_type IN (${placeholders})
+             LIMIT 1`,
+            [tenantId, employeeId, date, ...types]
+        );
+        return rows.length > 0;
+    } catch (err) {
+        // Table not ready yet (schema init race) — fail closed to "no exception
+        // exists" rather than blocking check-in/checkout entirely with a raw DB error.
+        console.warn('[hasApprovedException] read failed, assuming no exception:', err.message);
+        return false;
+    }
+}
+
+// Counts late arrivals in the current payroll month (excluding `date`), used to enforce
+// the "block check-in after Nth late arrival" policy before an attendance row is created.
+async function countMonthLateArrivals(connection, tenantId, employeeId, date) {
+    const [y, m] = date.split('-');
+    const [rows] = await connection.execute(
+        `SELECT COUNT(*) AS cnt FROM tb_attendance
+         WHERE employee_id = ? AND tenant_id = ? AND is_late = 1
+           AND YEAR(date) = ? AND MONTH(date) = ? AND date < ?`,
+        [employeeId, tenantId, y, m, date]
+    );
+    return Number(rows[0]?.cnt) || 0;
+}
 
 async function getEmployeeShiftForDateHelper(connection, tenantId, employeeId, date) {
     try {
@@ -314,22 +350,34 @@ checkExists: async (tenantId, employeeId, date) => {
 
 create: async (tenantId, attendanceData) => {
     const connection = await pool.getConnection();
-    
+
     try {
         await connection.beginTransaction();
+
+        // Serialize concurrent check-in attempts for the SAME employee so that the
+        // late-arrival count/block check and the subsequent insert are atomic —
+        // prevents two near-simultaneous requests both reading a stale late-count
+        // and both bypassing the Nth-late block. Released automatically on commit/
+        // rollback (transaction-scoped lock).
+        const lockKey = `attendance_create_${tenantId}_${attendanceData.employee_id}`;
+        const [[lockRow]] = await connection.execute('SELECT GET_LOCK(?, 10) AS acquired', [lockKey]);
+        if (!lockRow || lockRow.acquired !== 1) {
+            throw new Error('Could not acquire attendance lock — please retry.');
+        }
 
         // Get employee details
         const [eCheck] = await connection.execute(
             'SELECT id, salary FROM employee_details WHERE id = ? AND tenant_id = ?',
             [attendanceData.employee_id, tenantId]
         );
-        
+
         if (eCheck.length === 0) {
             throw new Error("Employee not found in tenant");
         }
-        
+
         const employeeIdString = eCheck[0].id;
         const employeeSalary = eCheck[0].salary || 0;
+        const policy = await getPolicySettings(tenantId);
 
         // Get shift for the employee
         let shiftInfo = await getEmployeeShiftForDateHelper(connection, tenantId, employeeIdString, attendanceData.date);
@@ -352,7 +400,7 @@ create: async (tenantId, attendanceData) => {
         let shouldDeductSalary = false;
         let deductionAmount = 0;
         let deductionReason = null;
-        let lateWarning = false;   // true when this is the 3rd late this month (warn, no deduction)
+        let lateWarning = false;   // true when this is the Nth-1 late this month (warn, no deduction)
         let monthLateCount = 0;    // total lates this calendar month including today
 
         if (attendanceData.check_in && shiftCheckInTime) {
@@ -364,33 +412,45 @@ create: async (tenantId, attendanceData) => {
             const gracePeriod = new Date(shiftTime.getTime() + gracePeriodMinutes * 60000);
 
             if (checkInDateTime > gracePeriod) {
+                // Enforce the maximum-late-arrivals-per-payroll-cycle block BEFORE
+                // creating the attendance record, unless HR has pre-approved a
+                // late-arrival exception for this specific date.
+                const priorLateCount = await countMonthLateArrivals(connection, tenantId, employeeIdString, attendanceData.date);
+                if (priorLateCount + 1 > policy.late_arrival_block_threshold) {
+                    const exempted = await hasApprovedException(connection, tenantId, employeeIdString, attendanceData.date, ['late_arrival_exception']);
+                    if (!exempted) {
+                        const err = new Error('You have exceeded the maximum late arrival limit for this payroll cycle. Please contact HR.');
+                        err.code = 'LATE_ARRIVAL_LIMIT_EXCEEDED';
+                        err.priorLateCount = priorLateCount;
+                        throw err;
+                    }
+                }
+
                 status = 'Delayed';
                 isLate = true;
                 lateMinutes = Math.round((checkInDateTime - shiftTime) / (1000 * 60));
-
-                // Count total lates this calendar month (excluding today)
-                const dateParts = attendanceData.date.split('-');
-                const yearVal = dateParts[0];
-                const monthVal = dateParts[1];
-                const [monthLateRows] = await connection.execute(
-                    `SELECT COUNT(*) as cnt FROM tb_attendance
-                     WHERE employee_id = ? AND tenant_id = ? AND is_late = 1
-                       AND YEAR(date) = ? AND MONTH(date) = ? AND date < ?`,
-                    [employeeIdString, tenantId, yearVal, monthVal, attendanceData.date]
-                );
-                monthLateCount = (Number(monthLateRows[0].cnt) || 0) + 1;
+                monthLateCount = priorLateCount + 1;
                 lateStreak = monthLateCount;
 
-                if (monthLateCount === 3) {
-                    // 3rd late this month → warning notification only, no deduction yet
-                    lateWarning = true;
-                    deductionReason = `3 late arrivals this month — Warning: next late will result in half-day deduction`;
-                } else if (monthLateCount >= 4) {
-                    // 4th+ late this month → HALF day salary deduction (per policy)
+                // HR-approved late-arrival exception for today waives the deduction
+                // (the check-in is still recorded as late for tracking purposes).
+                const lateExempted = await hasApprovedException(connection, tenantId, employeeIdString, attendanceData.date, ['late_arrival_exception']);
+
+                if (monthLateCount === policy.late_arrival_warning_threshold && !lateExempted) {
+                    // Nth late this month (HR-configured warning threshold) → deduct 1 full
+                    // day salary + mark as a policy violation (recorded as an additional
+                    // absent day via deduction).
                     shouldDeductSalary = true;
-                    const dailySalary = employeeSalary / 26;
-                    deductionAmount = parseFloat((dailySalary * 0.5).toFixed(2));
-                    deductionReason = `${monthLateCount} late arrivals this month — Half-day salary deducted`;
+                    const dailySalary = employeeSalary / policy.working_days_per_month;
+                    deductionAmount = parseFloat(dailySalary.toFixed(2));
+                    deductionReason = `${monthLateCount} late arrivals this month — Full-day salary deducted (attendance policy violation)`;
+                } else if (monthLateCount > policy.late_arrival_warning_threshold && !lateExempted) {
+                    // Should not normally be reached (the block threshold stops check-in
+                    // above), but guards any race condition between the pre-check and insert.
+                    shouldDeductSalary = true;
+                    const dailySalary = employeeSalary / policy.working_days_per_month;
+                    deductionAmount = parseFloat(dailySalary.toFixed(2));
+                    deductionReason = `${monthLateCount} late arrivals this month — Full-day salary deducted (attendance policy violation)`;
                 }
             } else {
                 status = 'Present';
@@ -485,6 +545,12 @@ create: async (tenantId, attendanceData) => {
         console.error('Error in Attendance.create:', error);
         throw error;
     } finally {
+        // GET_LOCK is session-scoped (not released by COMMIT/ROLLBACK) — release it
+        // explicitly before returning the connection to the pool, otherwise the
+        // next borrower of this pooled connection would inherit a held lock.
+        try {
+            await connection.execute('SELECT RELEASE_LOCK(?)', [`attendance_create_${tenantId}_${attendanceData.employee_id}`]);
+        } catch (_) {}
         connection.release();
     }
 },
@@ -507,10 +573,18 @@ create: async (tenantId, attendanceData) => {
 
 updateCheckOut: async (tenantId, employeeId, date, checkOutTime, latitude = null, longitude = null, newRemarks = null) => {
     const connection = await pool.getConnection();
-    
+    const lockKey = `attendance_checkout_${tenantId}_${employeeId}_${date}`;
+
     try {
         await connection.beginTransaction();
-        
+
+        // Prevent two concurrent checkout requests (e.g. web + mobile) from both
+        // reading a pre-deduction state and double-applying/double-notifying.
+        const [[lockRow]] = await connection.execute('SELECT GET_LOCK(?, 10) AS acquired', [lockKey]);
+        if (!lockRow || lockRow.acquired !== 1) {
+            throw new Error('Could not acquire checkout lock — please retry.');
+        }
+
         // Get existing attendance record
         const [attendance] = await connection.execute(
             `SELECT a.*, s.check_out_time as old_end_time
@@ -542,8 +616,37 @@ updateCheckOut: async (tenantId, employeeId, date, checkOutTime, latitude = null
         const earlyExitMinutes = timeDiffMinutes < 0 ? Math.abs(Math.round(timeDiffMinutes)) : 0;
         const overtimeMinutes = timeDiffMinutes > 0 ? Math.round(timeDiffMinutes) : 0;
 
+        const expectedHours = shift.min_hours_for_full_day || 8;
         const isHalfDay = workedHours > 0 && workedHours < (shift.min_hours_for_half_day || 4);
-        const undertimeMinutes = Math.max(0, ((shift.min_hours_for_full_day || 8) * 60) - (workedHours * 60));
+        const undertimeMinutes = Math.max(0, (expectedHours * 60) - (workedHours * 60));
+
+        // Early check-out proportional salary deduction (spec section 7).
+        // Skipped entirely if the employee has an HR-approved exception for today
+        // (half day, early exit, on-duty, or general regularization).
+        let earlyExitShouldDeduct = false;
+        let earlyExitDeductionAmount = 0;
+        let earlyExitDeductionReason = null;
+        const shortageHours = earlyExitMinutes > 0 ? parseFloat((earlyExitMinutes / 60).toFixed(2)) : 0;
+
+        if (shortageHours > 0 && !record.should_deduct_salary) {
+            const exempted = await hasApprovedException(
+                connection, tenantId, employeeId, date,
+                ['early_exit', 'half_day', 'on_duty', 'regularization']
+            );
+            if (!exempted) {
+                const [empRow] = await connection.execute(
+                    'SELECT salary FROM employee_details WHERE id = ? AND tenant_id = ?',
+                    [employeeId, tenantId]
+                );
+                const employeeSalary = empRow[0]?.salary || 0;
+                const policy = await getPolicySettings(tenantId);
+                const dailySalary = employeeSalary / policy.working_days_per_month;
+                const hourlyRate = dailySalary / expectedHours;
+                earlyExitShouldDeduct = true;
+                earlyExitDeductionAmount = parseFloat((hourlyRate * shortageHours).toFixed(2));
+                earlyExitDeductionReason = `Early check-out — worked ${workedHours}h of expected ${expectedHours}h (shortage ${shortageHours}h). Prorated deduction applied.`;
+            }
+        }
 
         let finalRemarks = record.remarks;
         if (newRemarks) {
@@ -555,41 +658,53 @@ updateCheckOut: async (tenantId, employeeId, date, checkOutTime, latitude = null
         if (isHalfDay) {
             finalRemarks = finalRemarks ? `${finalRemarks} | Half-day` : `Half-day`;
         }
-
-        const nextRemarks = newRemarks
-            ? [record.remarks, newRemarks].filter(Boolean).join(' | ')
-            : record.remarks;
+        if (earlyExitShouldDeduct) {
+            finalRemarks = finalRemarks ? `${finalRemarks} | ${earlyExitDeductionReason}` : earlyExitDeductionReason;
+        }
 
         // Update attendance
         await connection.execute(
             `UPDATE tb_attendance
-            SET check_out = ?, 
-                worked_hours = ?, 
-                is_half_day = ?, 
-                early_exit_minutes = ?, 
-                overtime_minutes = ?, 
+            SET check_out = ?,
+                worked_hours = ?,
+                is_half_day = ?,
+                early_exit_minutes = ?,
+                overtime_minutes = ?,
                 undertime_minutes = ?,
                 remarks = ?,
-                check_out_latitude = ?, 
-                check_out_longitude = ?, 
-                updated_at = ?
+                check_out_latitude = ?,
+                check_out_longitude = ?,
+                updated_at = ?,
+                should_deduct_salary = CASE WHEN ? THEN 1 ELSE should_deduct_salary END,
+                deduction_amount = CASE WHEN ? THEN ? ELSE deduction_amount END,
+                deduction_reason = CASE WHEN ? THEN ? ELSE deduction_reason END
             WHERE employee_id = ? AND date = ? AND tenant_id = ?`,
-            [checkOutTime, workedHours, isHalfDay, earlyExitMinutes, overtimeMinutes, undertimeMinutes, finalRemarks, latitude, longitude, getIndiaDateTime(), employeeId, date, tenantId]
+            [checkOutTime, workedHours, isHalfDay, earlyExitMinutes, overtimeMinutes, undertimeMinutes, finalRemarks, latitude, longitude, getIndiaDateTime(),
+             earlyExitShouldDeduct, earlyExitShouldDeduct, earlyExitDeductionAmount, earlyExitShouldDeduct, earlyExitDeductionReason,
+             employeeId, date, tenantId]
         );
-        
+
         await connection.commit();
-        return { 
-            employee_id: employeeId, 
-            date: date, 
+        return {
+            employee_id: employeeId,
+            date: date,
             check_out: checkOutTime,
             worked_hours: workedHours,
             is_half_day: isHalfDay,
+            early_exit_minutes: earlyExitMinutes,
+            shortage_hours: shortageHours,
+            should_deduct_salary: earlyExitShouldDeduct,
+            deduction_amount: earlyExitDeductionAmount,
+            deduction_reason: earlyExitDeductionReason,
         };
     } catch (error) {
         await connection.rollback();
         console.error('Error in Attendance.updateCheckOut:', error);
         throw error;
     } finally {
+        try {
+            await connection.execute('SELECT RELEASE_LOCK(?)', [lockKey]);
+        } catch (_) {}
         connection.release();
     }
 },

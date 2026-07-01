@@ -19,7 +19,15 @@ source venv/bin/activate
 # Install / upgrade dependencies
 echo "[face_service] Installing dependencies..."
 pip install --quiet --upgrade pip
-pip install --quiet -r requirements.txt
+if ! pip install -r requirements.txt; then
+  echo ""
+  echo "============================================================"
+  echo " Dependency install FAILED. face_recognition/dlib needs cmake"
+  echo " and a C++ compiler. Try: sudo apt-get install -y cmake build-essential"
+  echo " (or the equivalent for your distro), then re-run this script."
+  echo "============================================================"
+  exit 1
+fi
 
 echo "[face_service] Starting on port ${FACE_SERVICE_PORT:-5002}..."
 exec python face_service.py

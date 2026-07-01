@@ -9,6 +9,8 @@ import Dashboard from './Dashboard.jsx';
 
 import EmployeeManagement from '../HRModule/EmployeeManagement/EmployeeManagement.jsx';
 import AttendanceManagement from '../HRModule/AttendanceManagement/AttendanceManagement.jsx';
+import LiveLocationView from '../HRModule/AttendanceManagement/LiveLocationView.jsx';
+import AttendanceApprovals from '../HRModule/AttendanceManagement/AttendanceApprovals.jsx';
 import LeaveManagement from '../HRModule/AttendanceManagement/LeaveManagement.jsx';
 import ShiftManagement from '../HRModule/AttendanceManagement/ShiftManagement.jsx';
 import HrDashboard from '../HRModule/HRDashboard/HRDashboard.jsx';
@@ -25,6 +27,7 @@ import IDCardBrandingSettings from '../Settings/IDCardBrandingSettings.jsx';
 import MasterSettings from '../Settings/MasterSettings.jsx';
 import SmtpConfig from '../Settings/SmtpConfig.jsx';
 import LeavePolicySettings from '../Settings/LeavePolicySettings.jsx';
+import AttendancePolicySettings from '../Settings/AttendancePolicySettings.jsx';
 import PTTMContainer from '../PTTM/PTTMContainer.jsx';
 import ClientManagement from '../services/ClientManagement.jsx';
 import OfferLetter from '../HRModule/EmployeeManagement/OfferLetter.jsx';
@@ -166,6 +169,8 @@ const NAV_SECTIONS = [
           { id: 'hrdashboard', label: 'HR Dashboard', moduleKey: 'hr_dashboard' },
           { id: 'employee', label: 'Employee Management', moduleKey: 'employee_management' },
           { id: 'attendance', label: 'Attendance', moduleKey: 'attendance_management' },
+          { id: 'live-location', label: 'Live Location', moduleKey: 'attendance_management' },
+          { id: 'attendance-approvals', label: 'Attendance Approvals', moduleKey: 'attendance_management' },
           { id: 'leave', label: 'Leave Management', moduleKey: 'leave_management' },
           { id: 'shift', label: 'Shift Management', moduleKey: 'shift_management' },
           { id: 'shift-workforce', label: 'Shift Workforce', moduleKey: 'shift_management' },
@@ -337,6 +342,7 @@ const NAV_SECTIONS = [
           { id: 'master', label: 'Master Settings', adminOnly: true },
           { id: 'smtpconfig', label: 'SMTP Config', adminOnly: true },
           { id: 'leavepolicysettings', label: 'Leave Policy', moduleKey: 'leave_management' },
+          { id: 'attendancepolicysettings', label: 'Attendance Policy', moduleKey: 'attendance_management' },
           { id: 'worklocations', label: 'Work Locations', adminOnly: false },
           { id: 'change-password', label: 'Change Password' },
         ]
@@ -459,7 +465,7 @@ const AdminLayout = ({ initialTab, initialState = null }) => {
       service: 'Services', clients: 'Client Management', clientAccounts: 'Client Accounts',
       pttm: 'Project Management', orgchart: 'Org Chart', auditlog: 'Audit Log',
       modulemanagement: 'Module Management', branding: 'Branding', 'idcard-branding': 'ID Card Branding', master: 'Master Settings',
-      smtpconfig: 'SMTP Config', leavepolicysettings: 'Leave Policy Settings',
+      smtpconfig: 'SMTP Config', leavepolicysettings: 'Leave Policy Settings', attendancepolicysettings: 'Attendance Policy Settings',
       offerletter: 'Offer Letters', declaration: 'Declaration Form',
       resignation: 'Resignation Requests', leads: 'Leads Management',
       recruitment: 'Recruitment / ATS', onboarding: 'Onboarding & Offboarding', grievance: 'Grievance & POSH',
@@ -641,6 +647,8 @@ const AdminLayout = ({ initialTab, initialState = null }) => {
           {activeTab === 'announcements' && isAdminOrHR && <Announcements />}
           {activeTab === 'employee' && access('employee_management') && <EmployeeManagement />}
           {activeTab === 'attendance' && access('attendance_management') && <AttendanceManagement />}
+          {activeTab === 'live-location' && access('attendance_management') && <LiveLocationView />}
+          {activeTab === 'attendance-approvals' && access('attendance_management') && <AttendanceApprovals isHR={true} />}
           {activeTab === 'leave' && access('leave_management') && <LeaveManagement />}
           {activeTab === 'shift' && access('shift_management') && <ShiftManagement />}
           {activeTab === 'shift-workforce' && access('shift_management') && <ShiftWorkforce />}
@@ -666,6 +674,7 @@ const AdminLayout = ({ initialTab, initialState = null }) => {
           {activeTab === 'worklocations' && isAdminOrHR && <WorkLocations />}
           {/* HR + Admin shared tabs */}
           {activeTab === 'leavepolicysettings' && isAdminOrHR && access('leave_management') && <LeavePolicySettings />}
+          {activeTab === 'attendancepolicysettings' && isAdminOrHR && access('attendance_management') && <AttendancePolicySettings />}
           {activeTab === 'mom' && isAdminOrHR && <MOM />}
           {activeTab === 'auditlog' && isAdmin && <AuditLog />}
           {activeTab === 'orgchart' && isAdminOrHR && <OrgChart />}

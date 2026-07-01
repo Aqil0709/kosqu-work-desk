@@ -1273,6 +1273,14 @@ select.filter-btn {
   border-top: 1px solid #1e293b;
 }
 
+.face-liveness-hint {
+  text-align: center;
+  color: #facc15;
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0 0 4px;
+}
+
 .face-capture-btn {
   width: 100%;
   padding: 14px;
@@ -1316,4 +1324,124 @@ select.filter-btn {
   .face-modal-body { padding: 14px 18px; gap: 12px; }
   .face-modal-footer { padding: 14px 18px 20px; }
   .face-guide-ring { width: 140px; height: 180px; }
+}
+
+/* ── Attendance banners ─────────────────────────────────── */
+.att-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 14px;
+  font-size: 13px;
+}
+.att-banner span { font-size: 20px; flex-shrink: 0; }
+.att-banner strong { display: block; font-size: 14px; font-weight: 700; margin-bottom: 2px; }
+.att-banner p { margin: 0; }
+.att-banner-wfh { background: #dbeafe; border: 1.5px solid #93c5fd; color: #1d4ed8; }
+.att-banner-loc { background: #f0fdf4; border: 1.5px solid #86efac; color: #15803d; }
+
+/* ── Done badge ─────────────────────────────────────────── */
+.att-done-badge {
+  background: #dcfce7;
+  color: #166534;
+  border: 1.5px solid #86efac;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+/* ── Step indicator ─────────────────────────────────────── */
+.att-steps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  padding: 14px 24px 0;
+}
+.att-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #64748b;
+  min-width: 60px;
+}
+.att-step.done { color: #22c55e; }
+.att-step-dot {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #1e293b;
+  border: 2px solid #334155;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  transition: border-color 0.2s;
+}
+.att-step.done .att-step-dot { border-color: #22c55e; }
+.att-step-line {
+  flex: 1;
+  height: 2px;
+  background: #334155;
+  margin: 0 4px;
+  margin-bottom: 20px;
+}
+
+/* ── Step content wrapper ─────────────────────────────── */
+.att-step-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+/* ── Locating spinner block ──────────────────────────── */
+.att-locating {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 32px 0;
+  color: #94a3b8;
+  font-size: 14px;
+}
+.att-locating p { margin: 0; font-weight: 600; color: #e2e8f0; }
+.att-locating small { margin: 0; font-size: 12px; }
+
+/* ── GPS badge ───────────────────────────────────────── */
+.att-gps-badge {
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  color: #4ade80;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  width: 100%;
+  text-align: center;
+}
+.att-gps-badge.wfh {
+  background: rgba(59, 130, 246, 0.12);
+  border-color: rgba(59, 130, 246, 0.35);
+  color: #60a5fa;
+}
+
+/* ── Camera hint ─────────────────────────────────────── */
+.face-camera-hint {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.55);
+  color: #fff;
+  font-size: 12px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  white-space: nowrap;
 }

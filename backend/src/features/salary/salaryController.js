@@ -243,30 +243,55 @@ const salaryController = {
             const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
             const monthName = MONTH_NAMES[parseInt(month) - 1] || month;
 
+            // Bulk payroll runs must scale to 10,000+ employees. Processing strictly
+            // sequentially (one DB round-trip chain per employee) would take many
+            // minutes and risk the request timing out. Process in bounded-concurrency
+            // batches instead — fast enough to stay responsive, but capped so we don't
+            // overwhelm the DB connection pool with thousands of simultaneous queries.
+            // Kept below the DB pool's connectionLimit (see backend/src/config/db.js)
+            // so a payroll run doesn't starve the pool for other concurrent requests.
+            const BATCH_CONCURRENCY = Number(process.env.PAYROLL_BATCH_CONCURRENCY || 5);
             let generated = 0;
+            const failures = [];
 
-            for (const employee of employees) {
-                const salaryRecord = await Salary.getOrCreateSalaryRecord(
-                    tenantId, employee.id, parseInt(month), parseInt(year), parseFloat(employee.salary)
-                );
-                generated++;
-                try {
-                    await sendNotification(tenantId, employee.user_id, {
-                        title: '📄 Salary Slip Generated',
-                        message: `Your salary slip for ${monthName} ${year} has been generated. View your payslip for details.`,
-                        type: 'salary',
-                        related_id: salaryRecord.id || null,
-                    });
-                } catch (_) {}
+            for (let i = 0; i < employees.length; i += BATCH_CONCURRENCY) {
+                const batch = employees.slice(i, i + BATCH_CONCURRENCY);
+                const results = await Promise.allSettled(batch.map(async (employee) => {
+                    const salaryRecord = await Salary.getOrCreateSalaryRecord(
+                        tenantId, employee.id, parseInt(month), parseInt(year), parseFloat(employee.salary)
+                    );
+                    try {
+                        await sendNotification(tenantId, employee.user_id, {
+                            title: '📄 Salary Slip Generated',
+                            message: `Your salary slip for ${monthName} ${year} has been generated. View your payslip for details.`,
+                            type: 'salary',
+                            related_id: salaryRecord.id || null,
+                        });
+                    } catch (_) {}
+                    return salaryRecord;
+                }));
+
+                results.forEach((r, idx) => {
+                    if (r.status === 'fulfilled') {
+                        generated++;
+                    } else {
+                        failures.push({ employee_id: batch[idx].id, error: r.reason?.message || 'Unknown error' });
+                    }
+                });
             }
-            
+
+            if (failures.length) {
+                console.warn(`[generateAllSalaries] ${failures.length} employee(s) failed:`, failures.slice(0, 10));
+            }
+
             const records = await Salary.getAllSalaryRecords(tenantId, parseInt(month), parseInt(year));
-            
-            res.json({ 
-                success: true, 
-                message: `Generated salaries for ${generated} employees`,
+
+            res.json({
+                success: true,
+                message: `Generated salaries for ${generated} employees${failures.length ? `, ${failures.length} failed` : ''}`,
                 generated,
                 total: employees.length,
+                failed: failures.length,
                 salaries: records.map(salaryRecordAdminDto)
             });
         } catch (error) {

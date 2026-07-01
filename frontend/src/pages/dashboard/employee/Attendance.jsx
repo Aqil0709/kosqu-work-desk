@@ -1,765 +1,556 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './Attendance.css';
 import { attendanceAPI, getIndiaDate } from '../../../services/attendanceAPI';
 import { getCurrentPosition, locationAPI } from '../../../services/locationAPI';
+import api from '../../../services/api';
+import { startLocationTracking, stopLocationTracking } from '../../../services/locationTracking';
+import AttendanceExceptionRequest from './AttendanceExceptionRequest';
 
+/* ─── helpers ─────────────────────────────────────────────── */
+const fmtLocTime = (t) => {
+  if (!t) return null;
+  const [h, m] = t.split(':').map(Number);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${ampm}`;
+};
+
+const getStatusBadge = (status) => {
+  const display = status === 'Half Day' ? 'Delayed' : status;
+  const map = {
+    Present: 'status-approved', Delayed: 'status-pending',
+    Late: 'status-pending', Absent: 'status-rejected',
+    'On Leave': 'status-rejected', Pending: 'status-pending',
+    'Not Checked In': 'status-pending',
+  };
+  return <span className={`status-badge ${map[display] || 'status-pending'}`}>{display}</span>;
+};
+
+/* ─── Step constants ───────────────────────────────────────── */
+// STEP 1: acquire GPS  →  STEP 2: open camera  →  STEP 3: capture & verify
+const STEP = { IDLE: 'idle', LOCATION: 'location', CAMERA: 'camera', VERIFYING: 'verifying', DONE: 'done', ERROR: 'error' };
+
+/* ═══════════════════════════════════════════════════════════ */
 const AttendanceTable = () => {
-  const [attendance, setAttendance] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  /* ── data state ── */
+  const [attendance, setAttendance]     = useState([]);
+  const [loading, setLoading]           = useState(true);
+  const [error, setError]               = useState(null);
   const [filterStatus, setFilterStatus] = useState('All');
-  const [formData, setFormData] = useState({
-    date: getIndiaDate(),
-    checkIn: '',
-    checkOut: '',
-  });
+  const [todayWFH, setTodayWFH]         = useState(null);
+  const [myLocation, setMyLocation]     = useState(null);
 
-  // Face recognition states
-  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  /* ── check-in modal state ── */
+  const [modal, setModal]               = useState(false);          // modal open?
+  const [step, setStep]                 = useState(STEP.IDLE);      // current step
+  const [attendanceType, setAttType]    = useState('check_in');     // check_in | check_out
+  const [gps, setGps]                   = useState(null);           // { lat, lon, accuracy }
+  const [gpsError, setGpsError]         = useState(null);
   const [cameraStream, setCameraStream] = useState(null);
-  const [faceRecognitionLoading, setFaceRecognitionLoading] = useState(false);
-  const [faceVerificationStep, setFaceVerificationStep] = useState('ready');
-  const [pin, setPin] = useState('');
-  const [verificationResult, setVerificationResult] = useState(null);
+  const [capturedBlob, setCapturedBlob] = useState(null);
+  const [extraFrameBlobs, setExtraFrameBlobs] = useState([]);       // liveness challenge frames
+  const [capturedPreview, setCapturedPreview] = useState(null);
+  const [verifyResult, setVerifyResult] = useState(null);           // { success, message }
+  const [verifying, setVerifying]       = useState(false);
+  const [capturing, setCapturing]       = useState(false);          // true during the multi-frame burst
 
-  // Upload states
-  const [uploadedImage, setUploadedImage] = useState(null);
-  const [uploadImagePreview, setUploadImagePreview] = useState(null);
-  const [isUploadMode, setIsUploadMode] = useState(false);
-
-  const videoRef = useRef(null);
+  const videoRef  = useRef(null);
   const canvasRef = useRef(null);
-  const fileInputRef = useRef(null);
 
-  // Fetch attendance history from backend
-  const fetchAttendanceHistory = async () => {
+  /* ── fetch helpers ── */
+  const fetchAttendanceHistory = useCallback(async () => {
     try {
       setLoading(true);
-
-
-      const response = await attendanceAPI.getMyHistory();
-
-
-      if (response.data.success) {
-        const transformedData = response.data.history.map(record => ({
-          id: record.history_id,
-          date: record.date,
-          checkIn: record.check_in_time || '--',
-          checkOut: record.check_out_time || '--',
-          status: record.status === 'Half Day' ? 'Delayed' : record.status, // Convert Half Day to Delayed
-          employee: record.employee_name || 'Current User',
-          remarks: record.remarks || ''
-        }));
-
-
-        setAttendance(transformedData);
+      const res = await attendanceAPI.getMyHistory();
+      if (res.data.success) {
+        setAttendance(res.data.history.map(r => ({
+          id: r.history_id,
+          date: r.date,
+          checkIn: r.check_in_time || '--',
+          checkOut: r.check_out_time || '--',
+          status: r.status === 'Half Day' ? 'Delayed' : r.status,
+          employee: r.employee_name || 'Current User',
+          remarks: r.remarks || '',
+        })));
       } else {
-        setError(response.data.message || 'Failed to fetch attendance data');
+        setError(res.data.message || 'Failed to fetch attendance data');
       }
     } catch (err) {
-      console.error('❌ Error fetching attendance:', err);
       setError(err.response?.data?.message || 'Error loading attendance data');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const [todayWFH, setTodayWFH] = useState(null);     // approved WFH for today
-  const [myLocation, setMyLocation] = useState(null); // assigned work location
-
-  // Fetch today's attendance status
-  const fetchTodayAttendance = async () => {
-    try {
-      const response = await attendanceAPI.getMyTodayAttendance();
-    } catch (err) {
-      console.error('Error fetching today attendance:', err);
-    }
-  };
-
-  const fetchContextInfo = async () => {
+  const fetchContextInfo = useCallback(async () => {
     try {
       const today = getIndiaDate();
       const [wfhRes, locRes] = await Promise.allSettled([
-        import('../../../services/api').then(m => m.default.get('/wfh/my')),
+        api.get('/wfh/my'),
         locationAPI.getMy(),
       ]);
       if (wfhRes.status === 'fulfilled') {
         const list = wfhRes.value.data?.data || [];
-        const activeWFH = list.find(w => w.status === 'approved' && w.from_date <= today && w.to_date >= today);
-        setTodayWFH(activeWFH || null);
+        const active = list.find(w => w.status === 'approved' && w.from_date <= today && w.to_date >= today);
+        setTodayWFH(active || null);
       }
       if (locRes.status === 'fulfilled') {
         setMyLocation(locRes.value.data?.location || null);
       }
     } catch (_) {}
-  };
+  }, []);
 
   useEffect(() => {
     fetchAttendanceHistory();
-    fetchTodayAttendance();
     fetchContextInfo();
-  }, []);
+  }, [fetchAttendanceHistory, fetchContextInfo]);
 
-  // Handle image selection for upload
-  const handleImageSelect = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  /* ── derive today's check-in state ── */
+  const todayRecs  = attendance.filter(r => r.date === getIndiaDate());
+  const checkedIn  = todayRecs.some(r => r.checkIn && r.checkIn !== '--');
+  const checkedOut = todayRecs.some(r => r.checkOut && r.checkOut !== '--');
 
-    if (!file.type.startsWith('image/')) {
-      alert('Please select an image file (JPEG, PNG, etc.)');
-      return;
+  // Start/stop live location tracking based on check-in state
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (checkedIn && !checkedOut) {
+      startLocationTracking();
+    } else {
+      stopLocationTracking();
     }
+    return () => stopLocationTracking();
+  }, [checkedIn, checkedOut]);
 
-    if (file.size > 5 * 1024 * 1024) {
-      alert('File size too large. Please select an image less than 5MB.');
-      return;
-    }
-
-    setUploadedImage(file);
-
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setUploadImagePreview(reader.result);
-    };
-    reader.readAsDataURL(file);
+  /* ─────────────────────────────────────────────────────────
+     OPEN MODAL — starts the step-by-step flow
+  ───────────────────────────────────────────────────────── */
+  const openCheckin = () => {
+    const type = checkedIn && !checkedOut ? 'check_out' : 'check_in';
+    setAttType(type);
+    setGps(null);
+    setGpsError(null);
+    setCapturedBlob(null);
+    setCapturedPreview(null);
+    setVerifyResult(null);
+    setVerifying(false);
+    setModal(true);
+    setStep(STEP.LOCATION);
+    acquireGPS();
   };
 
-  // Upload and verify face from image
-  const handleUploadAndVerify = async () => {
-    if (!uploadedImage) {
-      alert('Please select an image first');
-      return;
-    }
+  const closeModal = () => {
+    stopStream();
+    setModal(false);
+    setStep(STEP.IDLE);
+  };
 
-    setFaceRecognitionLoading(true);
-    setVerificationResult(null);
-
+  /* ─────────────────────────────────────────────────────────
+     STEP 1 — acquire GPS
+  ───────────────────────────────────────────────────────── */
+  const acquireGPS = async () => {
+    setGpsError(null);
     try {
-      let lat = null, lon = null;
-      try { const pos = await getCurrentPosition(); lat = pos.coords.latitude; lon = pos.coords.longitude; } catch (_) {}
-
-      const todayRecords = attendance.filter(r => r.date === getIndiaDate());
-      const alreadyCheckedIn = todayRecords.some(r => r.checkIn && r.checkIn !== '--');
-      const alreadyCheckedOut = todayRecords.some(r => r.checkOut && r.checkOut !== '--');
-      const attendanceType = alreadyCheckedIn && !alreadyCheckedOut ? 'check_out' : 'check_in';
-
-      const formData = new FormData();
-      formData.append('faceImage', uploadedImage, 'uploaded-face.jpg');
-      formData.append('type', attendanceType);
-      if (lat) formData.append('latitude', lat);
-      if (lon) formData.append('longitude', lon);
-
-      const response = await attendanceAPI.verifyMyFaceAndMarkAttendance(formData);
-
-      if (response.data.success) {
-        setVerificationResult({
-          success: true,
-          message: `✅ ${response.data.message || 'Attendance marked successfully!'} (Confidence: ${response.data.confidence}%)`,
-          details: {
-            status: response.data.attendance?.status,
-            confidence: response.data.confidence,
-          }
-        });
-        await fetchAttendanceHistory();
-        setTimeout(() => { stopCamera(); }, 2500);
-      } else {
-        setVerificationResult({
-          success: false,
-          message: response.data.message || 'Face verification failed. Please try again.',
-          confidence: response.data.confidence,
-        });
-        setTimeout(() => { setVerificationResult(null); }, 3500);
-      }
+      const pos = await getCurrentPosition();
+      setGps({ lat: pos.coords.latitude, lon: pos.coords.longitude, accuracy: Math.round(pos.coords.accuracy) });
+      // auto-advance to camera step
+      setStep(STEP.CAMERA);
+      startStream();
     } catch (err) {
-      console.error('Upload verification error:', err);
-      setVerificationResult({
-        success: false,
-        message: err.response?.data?.message || 'Error during face verification',
-      });
-    } finally {
-      setFaceRecognitionLoading(false);
+      if (todayWFH) {
+        // WFH: GPS not mandatory — still proceed
+        setGps(null);
+        setStep(STEP.CAMERA);
+        startStream();
+      } else {
+        setGpsError('Location permission denied. Please allow location access and try again.');
+      }
     }
   };
 
-  // Clear uploaded image
-  const clearUploadedImage = () => {
-    setUploadedImage(null);
-    setUploadImagePreview(null);
-    setIsUploadMode(false);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+  /* ─────────────────────────────────────────────────────────
+     STEP 2 — camera
+  ───────────────────────────────────────────────────────── */
+  const startStream = async () => {
+    if (!window.isSecureContext) {
+      setStep(STEP.ERROR);
+      setVerifyResult({ success: false, message: 'Camera access requires a secure (HTTPS) connection. Please contact your administrator.' });
+      return;
     }
-    if (!cameraStream && isCameraOpen) {
-      startCamera();
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setStep(STEP.ERROR);
+      setVerifyResult({ success: false, message: 'Camera is not supported in this browser. Please use Chrome, Edge, Firefox or Safari.' });
+      return;
     }
-  };
-
-  // Switch to upload mode
-  const switchToUploadMode = () => {
-    setIsUploadMode(true);
-    if (cameraStream) {
-      cameraStream.getTracks().forEach(track => track.stop());
-      setCameraStream(null);
-    }
-  };
-
-  // Camera functions
-  const startCamera = async () => {
     try {
-      setIsCameraOpen(true);
-      setFaceVerificationStep('camera');
-      setIsUploadMode(false);
-      clearUploadedImage();
-
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          width: 640,
-          height: 480,
-          facingMode: 'user'
-        }
+        video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
       });
-
       setCameraStream(stream);
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
+    } catch (err) {
+      let message = 'Unable to access camera. Please try again.';
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        message = 'Camera permission denied. Please allow camera access in your browser settings and try again.';
+      } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+        message = 'No camera found on this device.';
+      } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+        message = 'Camera is already in use by another application.';
       }
-    } catch (error) {
-      console.error('Error accessing camera:', error);
-      alert('Unable to access camera. Please check permissions.');
-      setIsCameraOpen(false);
-      setFaceVerificationStep('ready');
+      setStep(STEP.ERROR);
+      setVerifyResult({ success: false, message });
     }
   };
 
-  const stopCamera = () => {
+  // Attach stream to video element once both are ready
+  useEffect(() => {
+    if (cameraStream && videoRef.current) {
+      videoRef.current.srcObject = cameraStream;
+    }
+  }, [cameraStream, step]);
+
+  const stopStream = () => {
     if (cameraStream) {
-      cameraStream.getTracks().forEach(track => track.stop());
+      cameraStream.getTracks().forEach(t => t.stop());
       setCameraStream(null);
     }
-    setIsCameraOpen(false);
-    setFaceVerificationStep('ready');
-    setPin('');
-    setVerificationResult(null);
-    setUploadedImage(null);
-    setUploadImagePreview(null);
-    setIsUploadMode(false);
   };
 
-  const captureAndVerify = async () => {
-    if (!videoRef.current) return;
+  /* ─────────────────────────────────────────────────────────
+     STEP 3 — capture selfie
+     Grabs 3 frames ~350ms apart (asking the user to blink/turn their head
+     naturally during the burst) so the backend can run a liveness challenge
+     that a static printed photo or paused video frame cannot pass.
+  ───────────────────────────────────────────────────────── */
+  const grabFrame = (video, canvas) => new Promise((resolve) => {
+    canvas.width  = video.videoWidth  || 640;
+    canvas.height = video.videoHeight || 480;
+    canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+    canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.85);
+  });
 
-    setFaceRecognitionLoading(true);
+  const captureSelfie = async () => {
+    const video  = videoRef.current;
+    const canvas = canvasRef.current;
+    if (!video || !canvas) return;
 
+    setCapturing(true);
     try {
-      const video = videoRef.current;
-      const canvas = canvasRef.current;
-      const context = canvas.getContext('2d');
+      const frame1 = await grabFrame(video, canvas);
+      await new Promise((r) => setTimeout(r, 350));
+      const frame2 = await grabFrame(video, canvas);
+      await new Promise((r) => setTimeout(r, 350));
+      const frame3 = await grabFrame(video, canvas);
 
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-      const blob = await new Promise((resolve) => {
-        canvas.toBlob(resolve, 'image/jpeg', 0.8);
-      });
-
-      if (!blob) {
-        throw new Error('Failed to capture image');
-      }
-
-      let lat = null, lon = null;
-      try { const pos = await getCurrentPosition(); lat = pos.coords.latitude; lon = pos.coords.longitude; } catch (_) {}
-
-      const todayRecords = attendance.filter(r => r.date === getIndiaDate());
-      const alreadyCheckedIn = todayRecords.some(r => r.checkIn && r.checkIn !== '--');
-      const alreadyCheckedOut = todayRecords.some(r => r.checkOut && r.checkOut !== '--');
-      const attendanceType = alreadyCheckedIn && !alreadyCheckedOut ? 'check_out' : 'check_in';
-
-      const formData = new FormData();
-      formData.append('faceImage', blob, 'face-capture.jpg');
-      formData.append('type', attendanceType);
-      if (lat) formData.append('latitude', lat);
-      if (lon) formData.append('longitude', lon);
-
-      const response = await attendanceAPI.verifyMyFaceAndMarkAttendance(formData);
-
-      if (response.data.success) {
-        setVerificationResult({
-          success: true,
-          message: `✅ ${response.data.message || 'Attendance marked successfully!'} (Confidence: ${response.data.confidence}%)`,
-          details: {
-            status: response.data.attendance?.status,
-            confidence: response.data.confidence,
-          }
-        });
-        await fetchAttendanceHistory();
-        setTimeout(() => { stopCamera(); }, 2500);
-      } else {
-        setVerificationResult({
-          success: false,
-          message: response.data.message || 'Face verification failed. Please try again.',
-          confidence: response.data.confidence,
-        });
-        setTimeout(() => { setVerificationResult(null); }, 3500);
-      }
-    } catch (err) {
-      console.error('Face verification error:', err);
-      setVerificationResult({
-        success: false,
-        message: err.response?.data?.message || 'Error during face verification',
-      });
+      if (!frame1) return;
+      setCapturedBlob(frame1);
+      setExtraFrameBlobs([frame2, frame3].filter(Boolean));
+      setCapturedPreview(canvas.toDataURL('image/jpeg', 0.85));
+      stopStream();
     } finally {
-      setFaceRecognitionLoading(false);
+      setCapturing(false);
     }
   };
 
-  const handlePINVerification = async () => {
-    if (!pin) {
-      alert('Please enter your PIN');
-      return;
-    }
+  const retake = () => {
+    setCapturedBlob(null);
+    setExtraFrameBlobs([]);
+    setCapturedPreview(null);
+    setVerifyResult(null);
+    startStream();
+  };
+
+  /* ─────────────────────────────────────────────────────────
+     STEP 3b — submit face + location to backend
+  ───────────────────────────────────────────────────────── */
+  const submitAttendance = async () => {
+    if (!capturedBlob) return;
+    setVerifying(true);
+    setStep(STEP.VERIFYING);
 
     try {
-      setFaceRecognitionLoading(true);
+      const form = new FormData();
+      form.append('faceImage', capturedBlob, 'selfie.jpg');
+      extraFrameBlobs.forEach((blob, i) => form.append(`faceImage_${i + 2}`, blob, `frame_${i + 2}.jpg`));
+      form.append('type', attendanceType);
+      if (gps?.lat) form.append('latitude',  gps.lat);
+      if (gps?.lon) form.append('longitude', gps.lon);
 
-      let pinLat = null, pinLon = null;
-      try {
-        const pos = await getCurrentPosition();
-        pinLat = pos.coords.latitude;
-        pinLon = pos.coords.longitude;
-      } catch (_) {}
+      const res = await attendanceAPI.verifyMyFaceAndMarkAttendance(form);
 
-      const attendanceData = {
-        type: 'check_in',
-        date: getIndiaDate(),
-        pin: pin,
-        latitude: pinLat,
-        longitude: pinLon,
-      };
-
-      const response = await attendanceAPI.markMyAttendance(attendanceData);
-
-      if (response.data.success) {
-        setVerificationResult({
-          success: true,
-          message: `✅ Attendance marked with PIN verification!`,
-          details: {
-            status: response.data.attendance.status,
-            checkIn: new Date().toLocaleTimeString()
-          }
-        });
-
+      if (res.data.success) {
+        setVerifyResult({ success: true, message: `✅ ${res.data.message || 'Attendance marked!'} (${res.data.confidence}% confidence)` });
+        setStep(STEP.DONE);
         await fetchAttendanceHistory();
-
-        setTimeout(() => {
-          stopCamera();
-          alert('Attendance marked successfully with PIN verification!');
-        }, 3000);
       } else {
-        alert(response.data.message || 'PIN verification failed');
-        setPin('');
+        setVerifyResult({ success: false, message: res.data.message || 'Face verification failed. Please retake.' });
+        setCapturedBlob(null);
+        setExtraFrameBlobs([]);
+        setCapturedPreview(null);
+        setStep(STEP.CAMERA);
+        await startStream(); // camera was stopped on capture — must restart for retake
       }
-
     } catch (err) {
-      console.error('PIN verification error:', err);
-      alert(err.response?.data?.message || 'Error during PIN verification');
+      const msg = err.response?.data?.message || 'Verification error. Please try again.';
+      setVerifyResult({ success: false, message: msg });
+      setCapturedBlob(null);
+      setExtraFrameBlobs([]);
+      setCapturedPreview(null);
+      setStep(STEP.CAMERA);
+      await startStream();
     } finally {
-      setFaceRecognitionLoading(false);
+      setVerifying(false);
     }
   };
 
-  const handleFaceRecognitionAttendance = async () => {
+  /* ─────────────────────────────────────────────────────────
+     TABLE helpers
+  ───────────────────────────────────────────────────────── */
+  const filtered = (filterStatus === 'All' ? attendance : attendance.filter(r => {
+    const s = r.status === 'Half Day' ? 'Delayed' : r.status;
+    return s === filterStatus;
+  }));
 
-    startCamera();
-  };
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    if (!formData.date) {
-      alert('Please select a date');
-      return;
-    }
-
-    try {
-      let type = 'check_in';
-      if (formData.checkOut) {
-        type = 'check_out';
-      }
-
-      // Get GPS location
-      let latitude = null;
-      let longitude = null;
-      try {
-        const pos = await getCurrentPosition();
-        latitude = pos.coords.latitude;
-        longitude = pos.coords.longitude;
-      } catch (_) {
-        // Location not available -- backend will block if geofence is configured
-      }
-
-      const attendanceData = {
-        type: type,
-        date: formData.date,
-        check_in_time: formData.checkIn || undefined,
-        check_out_time: formData.checkOut || undefined,
-        latitude,
-        longitude,
-      };
-
-      const response = await attendanceAPI.markMyAttendance(attendanceData);
-
-      setIsModalOpen(false);
-
-      setFormData({
-        date: getIndiaDate(),
-        checkIn: '',
-        checkOut: '',
-      });
-
-      if (response.data && response.data.success) {
-        await fetchAttendanceHistory();
-        alert(`${type === 'check_in' ? 'Check-in' : 'Check-out'} successful!`);
-      } else {
-        alert(response.data?.message || 'Failed to mark attendance');
-      }
-    } catch (err) {
-      console.error('❌ Error marking attendance:', err);
-      setIsModalOpen(false);
-      setFormData({
-        date: getIndiaDate(),
-        checkIn: '',
-        checkOut: '',
-      });
-      alert(err.response?.data?.message || 'Error marking attendance');
-    }
-  };
-
-  // Updated status badge - removed Half Day
-  const getStatusBadge = (status) => {
-    // Convert any "Half Day" to "Delayed"
-    let displayStatus = status === 'Half Day' ? 'Delayed' : status;
-
-    const statusClasses = {
-      'Present': 'status-approved',
-      'Delayed': 'status-pending',
-      'Late': 'status-pending',
-      'Absent': 'status-rejected',
-      'On Leave': 'status-rejected',
-      'Pending': 'status-pending',
-      'Not Checked In': 'status-pending'
-    };
-
-    return (
-      <span className={`status-badge ${statusClasses[displayStatus] || 'status-pending'}`}>
-        {displayStatus}
-      </span>
-    );
-  };
-
-  const filteredAttendance = filterStatus === 'All'
-    ? attendance
-    : attendance.filter(record => {
-      let recordStatus = record.status === 'Half Day' ? 'Delayed' : record.status;
-      return recordStatus === filterStatus;
-    });
-
-  // Get unique records (keep ones with check-in)
-  const uniqueAttendance = Array.from(
-    filteredAttendance.reduce((map, record) => {
-      const dateKey = new Date(record.date).toDateString();
-      if (!map.has(dateKey) || (record.checkIn && record.checkIn !== '--')) {
-        map.set(dateKey, record);
-      }
+  const uniqueRows = Array.from(
+    filtered.reduce((map, r) => {
+      const key = new Date(r.date).toDateString();
+      if (!map.has(key) || (r.checkIn && r.checkIn !== '--')) map.set(key, r);
       return map;
     }, new Map())
-  ).map(([_, record]) => record);
+  ).map(([, r]) => r);
 
-  // Manual check-in/check-out
-  const handleQuickCheckIn = async (type) => {
-    try {
-      // Always attempt to get GPS; backend only blocks if a geofence is configured
-      // and the coordinates fall outside its radius.
-      let latitude = null;
-      let longitude = null;
-      try {
-        const pos = await getCurrentPosition();
-        latitude  = pos.coords.latitude;
-        longitude = pos.coords.longitude;
-      } catch (_) {
-        // GPS unavailable — backend allows attendance if no work_location is assigned
-      }
+  /* ─────────────────────────────────────────────────────────
+     RENDER
+  ───────────────────────────────────────────────────────── */
+  if (loading) return (
+    <div className="attendance-section">
+      <div className="loading-container"><div className="loading-spinner" /><p>Loading attendance data...</p></div>
+    </div>
+  );
 
-      const attendanceData = {
-        type,
-        date: getIndiaDate(),
-        latitude,
-        longitude,
-      };
-
-      const response = await attendanceAPI.markMyAttendance(attendanceData);
-
-      if (response.data.success) {
-        await fetchAttendanceHistory();
-        const label = type === 'check_in' ? 'Check-in' : 'Check-out';
-        const rec   = response.data.attendance;
-        const timeStr = rec?.check_in_time || rec?.check_out_time || '';
-        alert(`${label} successful!${timeStr ? ` (${timeStr})` : ''}`);
-      } else {
-        alert(response.data.message || `Failed to ${type.replace('_', '-')}`);
-      }
-    } catch (err) {
-      console.error(`❌ Error during ${type}:`, err);
-      alert(err.response?.data?.message || `Error during ${type.replace('_', '-')}`);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="attendance-section">
-        <div className="loading-container">
-          <div className="loading-spinner"></div>
-          <p>Loading attendance data...</p>
-        </div>
+  if (error) return (
+    <div className="attendance-section">
+      <div className="error-container">
+        <p className="error-message">{error}</p>
+        <button onClick={fetchAttendanceHistory} className="retry-btn">Retry</button>
       </div>
-    );
-  }
+    </div>
+  );
 
-  if (error) {
-    return (
-      <div className="attendance-section">
-        <div className="error-container">
-          <p className="error-message">{error}</p>
-          <button onClick={fetchAttendanceHistory} className="retry-btn">
-            Retry
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  const fmtLocTime = (t) => {
-    if (!t) return null;
-    const [h, m] = t.split(':').map(Number);
-    const ampm = h >= 12 ? 'PM' : 'AM';
-    return `${h % 12 || 12}:${String(m).padStart(2,'0')} ${ampm}`;
-  };
+  const typeLabel = attendanceType === 'check_in' ? 'Check In' : 'Check Out';
 
   return (
     <div className="attendance-section">
-      {/* WFH approved banner */}
+
+      {/* WFH banner */}
       {todayWFH && (
-        <div style={{ background: '#dbeafe', border: '1.5px solid #93c5fd', borderRadius: 10, padding: '10px 16px', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ fontSize: 20 }}>🏠</span>
+        <div className="att-banner att-banner-wfh">
+          <span>🏠</span>
           <div>
-            <div style={{ fontWeight: 700, color: '#1d4ed8', fontSize: 14 }}>WFH Approved Today</div>
-            <div style={{ color: '#3b82f6', fontSize: 13 }}>Your Work From Home is approved. You can check in from any location — GPS is not required today.</div>
+            <strong>WFH Approved Today</strong>
+            <p>You can check in from any location — GPS is not required today.</p>
           </div>
         </div>
       )}
 
-      {/* Location timing info */}
+      {/* Location timing banner */}
       {!todayWFH && myLocation && (myLocation.check_in_time || myLocation.check_out_time) && (
-        <div style={{ background: '#f0fdf4', border: '1.5px solid #86efac', borderRadius: 10, padding: '10px 16px', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ fontSize: 20 }}>📍</span>
+        <div className="att-banner att-banner-loc">
+          <span>📍</span>
           <div>
-            <div style={{ fontWeight: 700, color: '#15803d', fontSize: 14 }}>{myLocation.name}</div>
-            <div style={{ color: '#166534', fontSize: 13 }}>
+            <strong>{myLocation.name}</strong>
+            <p>
               Office Hours: <b>{fmtLocTime(myLocation.check_in_time)}</b> → <b>{fmtLocTime(myLocation.check_out_time)}</b>
-              {myLocation.grace_period_minutes > 0 && <span style={{ color: '#6b7280', marginLeft: 8 }}>({myLocation.grace_period_minutes} min grace period)</span>}
-            </div>
+              {myLocation.grace_period_minutes > 0 && <span style={{ color: '#6b7280', marginLeft: 8 }}>({myLocation.grace_period_minutes} min grace)</span>}
+            </p>
           </div>
         </div>
       )}
 
+      {/* Header + action buttons */}
       <div className="attendance-header">
         <h2>Attendance Management</h2>
         <div className="attendance-actions">
-          <button
-            className="check-in-btn"
-            onClick={handleFaceRecognitionAttendance}
-          >
-            {todayWFH ? '🏠 WFH Check In' : '📷 Face Check In'}
-          </button>
-          <button
-            className="check-out-btn"
-            onClick={handleFaceRecognitionAttendance}
-          >
-            {todayWFH ? '🏠 WFH Check Out' : '📷 Face Check Out'}
-          </button>
+          {!checkedIn && (
+            <button className="check-in-btn" onClick={openCheckin}>
+              📷 {todayWFH ? 'WFH Check In' : 'Face Check In'}
+            </button>
+          )}
+          {checkedIn && !checkedOut && (
+            <button className="check-out-btn" onClick={openCheckin}>
+              📷 {todayWFH ? 'WFH Check Out' : 'Face Check Out'}
+            </button>
+          )}
+          {checkedIn && checkedOut && (
+            <span className="att-done-badge">✅ Attendance complete for today</span>
+          )}
         </div>
       </div>
 
-      {/* Attendance Statistics */}
+      {/* Stats */}
       <div className="attendance-stats">
-        <div className="stat-card">
-          <h3>Total Records</h3>
-          <p className="stat-number">{attendance.length}</p>
-        </div>
-        <div className="stat-card">
-          <h3>Present</h3>
-          <p className="stat-number present">
-            {attendance.filter(record => record.status === 'Present').length}
-          </p>
-        </div>
-        <div className="stat-card">
-          <h3>Absent</h3>
-          <p className="stat-number absent">
-            {attendance.filter(record => record.status === 'Absent').length}
-          </p>
-        </div>
-        <div className="stat-card">
-          <h3>Late Arrivals</h3>
-          <p className="stat-number" style={{ color: '#f59e0b' }}>
-            {attendance.filter(record => record.status === 'Late').length}
-          </p>
-        </div>
+        <div className="stat-card"><h3>Total Records</h3><p className="stat-number">{attendance.length}</p></div>
+        <div className="stat-card"><h3>Present</h3><p className="stat-number present">{attendance.filter(r => r.status === 'Present').length}</p></div>
+        <div className="stat-card"><h3>Absent</h3><p className="stat-number absent">{attendance.filter(r => r.status === 'Absent').length}</p></div>
+        <div className="stat-card"><h3>Late Arrivals</h3><p className="stat-number" style={{ color: '#f59e0b' }}>{attendance.filter(r => r.status === 'Late').length}</p></div>
       </div>
 
-
-      {/* ── Face Recognition Modal ─────────────────────────────────── */}
-      {isCameraOpen && (
-        <div className="face-modal-overlay" onClick={(e) => e.target === e.currentTarget && stopCamera()}>
+      {/* ══════════ FACE + LOCATION MODAL ══════════ */}
+      {modal && (
+        <div className="face-modal-overlay" onClick={e => e.target === e.currentTarget && closeModal()}>
           <div className="face-modal">
+
+            {/* Header */}
             <div className="face-modal-header">
-              <h3>📷 Face Recognition Attendance</h3>
-              <button className="face-modal-close" onClick={stopCamera}>✕</button>
+              <h3>📷 {typeLabel} — Face & Location</h3>
+              <button className="face-modal-close" onClick={closeModal}>✕</button>
+            </div>
+
+            {/* Step indicator */}
+            <div className="att-steps">
+              <div className={`att-step ${[STEP.LOCATION, STEP.CAMERA, STEP.VERIFYING, STEP.DONE].includes(step) ? 'done' : ''}`}>
+                <span className="att-step-dot">📍</span>
+                <span>Location</span>
+              </div>
+              <div className="att-step-line" />
+              <div className={`att-step ${[STEP.CAMERA, STEP.VERIFYING, STEP.DONE].includes(step) ? 'done' : ''}`}>
+                <span className="att-step-dot">📸</span>
+                <span>Selfie</span>
+              </div>
+              <div className="att-step-line" />
+              <div className={`att-step ${step === STEP.DONE ? 'done' : ''}`}>
+                <span className="att-step-dot">✅</span>
+                <span>Done</span>
+              </div>
             </div>
 
             <div className="face-modal-body">
-              {/* Auto-detect type */}
-              {(() => {
-                const todayRecs = attendance.filter(r => r.date === getIndiaDate());
-                const checkedIn = todayRecs.some(r => r.checkIn && r.checkIn !== '--');
-                const checkedOut = todayRecs.some(r => r.checkOut && r.checkOut !== '--');
-                const type = checkedIn && !checkedOut ? 'Check Out' : 'Check In';
-                return (
-                  <div className="face-type-badge">
-                    {type === 'Check In' ? '🟢' : '🔴'} <strong>{type}</strong>
-                    <span style={{ color: '#94a3b8', marginLeft: 8, fontSize: 13 }}>
-                      (auto-detected from today's records)
-                    </span>
+
+              {/* ── STEP 1: acquiring GPS ── */}
+              {step === STEP.LOCATION && !gpsError && (
+                <div className="att-step-content">
+                  <div className="att-locating">
+                    <div className="face-spinner" />
+                    <p>Acquiring your location…</p>
+                    <small>Please allow location permission when prompted.</small>
                   </div>
-                );
-              })()}
-
-              {/* Camera / Upload toggle */}
-              <div className="face-mode-tabs">
-                <button
-                  className={`face-mode-tab ${!isUploadMode ? 'active' : ''}`}
-                  onClick={() => { setIsUploadMode(false); if (!cameraStream) startCamera(); }}
-                >
-                  📸 Camera
-                </button>
-                <button
-                  className={`face-mode-tab ${isUploadMode ? 'active' : ''}`}
-                  onClick={switchToUploadMode}
-                >
-                  📁 Upload Photo
-                </button>
-              </div>
-
-              {/* Camera view */}
-              {!isUploadMode && (
-                <div className="face-camera-wrap">
-                  <video
-                    ref={videoRef}
-                    autoPlay
-                    playsInline
-                    muted
-                    className="face-video"
-                  />
-                  <canvas ref={canvasRef} style={{ display: 'none' }} />
-                  <div className="face-guide-ring" />
                 </div>
               )}
 
-              {/* Upload view */}
-              {isUploadMode && (
-                <div className="face-upload-wrap">
-                  {uploadImagePreview ? (
-                    <div className="face-preview-wrap">
-                      <img src={uploadImagePreview} alt="Preview" className="face-preview-img" />
-                      <button className="face-clear-btn" onClick={clearUploadedImage}>✕ Clear</button>
+              {/* ── STEP 1: GPS error ── */}
+              {step === STEP.LOCATION && gpsError && (
+                <div className="att-step-content">
+                  <div className="face-result error">{gpsError}</div>
+                  <button className="face-capture-btn" onClick={acquireGPS} style={{ marginTop: 12 }}>
+                    🔄 Retry Location
+                  </button>
+                </div>
+              )}
+
+              {/* ── STEP 2: Camera ── */}
+              {step === STEP.CAMERA && (
+                <div className="att-step-content">
+                  {/* GPS confirmed badge */}
+                  {gps && (
+                    <div className="att-gps-badge">
+                      📍 Location acquired &nbsp;·&nbsp; Accuracy ±{gps.accuracy}m
+                    </div>
+                  )}
+                  {todayWFH && !gps && (
+                    <div className="att-gps-badge wfh">🏠 WFH mode — location not required</div>
+                  )}
+
+                  {/* Live camera or captured preview */}
+                  {!capturedPreview ? (
+                    <div className="face-camera-wrap">
+                      <video ref={videoRef} autoPlay playsInline muted className="face-video" />
+                      <canvas ref={canvasRef} style={{ display: 'none' }} />
+                      <div className="face-guide-ring" />
+                      <div className="face-camera-hint">Align your face in the oval</div>
                     </div>
                   ) : (
-                    <label className="face-upload-label">
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/*"
-                        capture="user"
-                        onChange={handleImageSelect}
-                        style={{ display: 'none' }}
-                      />
-                      <div className="face-upload-placeholder">
-                        <span style={{ fontSize: 48 }}>🤳</span>
-                        <p>Tap to take photo or upload selfie</p>
-                        <span style={{ fontSize: 13, color: '#64748b' }}>Max 5MB · JPEG, PNG</span>
-                      </div>
-                    </label>
+                    <div className="face-camera-wrap">
+                      <img src={capturedPreview} alt="Captured selfie" className="face-video" style={{ objectFit: 'cover' }} />
+                      <canvas ref={canvasRef} style={{ display: 'none' }} />
+                    </div>
+                  )}
+
+                  {/* Result message after failed verify */}
+                  {verifyResult && !verifyResult.success && (
+                    <div className="face-result error">{verifyResult.message}</div>
                   )}
                 </div>
               )}
 
-              {/* Result */}
-              {verificationResult && (
-                <div className={`face-result ${verificationResult.success ? 'success' : 'error'}`}>
-                  {verificationResult.message}
+              {/* ── STEP 3: verifying ── */}
+              {step === STEP.VERIFYING && (
+                <div className="att-step-content">
+                  {capturedPreview && (
+                    <div className="face-camera-wrap">
+                      <img src={capturedPreview} alt="Verifying" className="face-video" style={{ objectFit: 'cover', opacity: 0.7 }} />
+                    </div>
+                  )}
+                  <div className="face-loading">
+                    <div className="face-spinner" />
+                    <span>Verifying face… please wait</span>
+                  </div>
                 </div>
               )}
 
-              {/* Loading */}
-              {faceRecognitionLoading && (
-                <div className="face-loading">
-                  <div className="face-spinner" />
-                  <span>Analysing face...</span>
+              {/* ── DONE ── */}
+              {step === STEP.DONE && (
+                <div className="att-step-content" style={{ textAlign: 'center', padding: '24px 0' }}>
+                  <div style={{ fontSize: 56, marginBottom: 12 }}>✅</div>
+                  <div className="face-result success">{verifyResult?.message}</div>
+                  <button className="face-cancel-btn" onClick={closeModal} style={{ marginTop: 16 }}>Close</button>
                 </div>
               )}
+
+              {/* ── ERROR (camera denied) ── */}
+              {step === STEP.ERROR && (
+                <div className="att-step-content">
+                  <div className="face-result error">{verifyResult?.message}</div>
+                  <button className="face-cancel-btn" onClick={closeModal} style={{ marginTop: 12 }}>Close</button>
+                </div>
+              )}
+
             </div>
 
-            <div className="face-modal-footer">
-              {!isUploadMode ? (
-                <button
-                  className="face-capture-btn"
-                  onClick={captureAndVerify}
-                  disabled={faceRecognitionLoading || !cameraStream}
-                >
-                  {faceRecognitionLoading ? '⏳ Verifying...' : '📸 Capture & Verify'}
-                </button>
-              ) : (
-                <button
-                  className="face-capture-btn"
-                  onClick={handleUploadAndVerify}
-                  disabled={faceRecognitionLoading || !uploadedImage}
-                >
-                  {faceRecognitionLoading ? '⏳ Verifying...' : '✅ Verify & Mark Attendance'}
-                </button>
-              )}
-              <button className="face-cancel-btn" onClick={stopCamera}>Cancel</button>
-            </div>
+            {/* Footer buttons */}
+            {step === STEP.CAMERA && (
+              <div className="face-modal-footer">
+                {!capturedPreview ? (
+                  <>
+                    {capturing && (
+                      <p className="face-liveness-hint">Please blink or turn your head slightly…</p>
+                    )}
+                    <button
+                      className="face-capture-btn"
+                      onClick={captureSelfie}
+                      disabled={!cameraStream || capturing}
+                    >
+                      {capturing ? '📸 Capturing…' : '📸 Capture Selfie'}
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button className="face-cancel-btn" onClick={retake}>🔄 Retake</button>
+                    <button className="face-capture-btn" onClick={submitAttendance} disabled={verifying}>
+                      ✅ Submit {typeLabel}
+                    </button>
+                  </>
+                )}
+                <button className="face-cancel-btn" onClick={closeModal}>Cancel</button>
+              </div>
+            )}
+
           </div>
         </div>
       )}
 
+      {/* Attendance table */}
       <div className="attendance-table-container">
         <div className="table-header">
           <h3>Attendance History</h3>
           <div className="table-actions">
-            <select
-              className="filter-btn"
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-            >
+            <select className="filter-btn" value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
               <option value="All">All Status</option>
               <option value="Present">Present</option>
               <option value="Delayed">Delayed</option>
@@ -771,12 +562,10 @@ const AttendanceTable = () => {
           </div>
         </div>
 
-        {uniqueAttendance.length === 0 ? (
+        {uniqueRows.length === 0 ? (
           <div className="no-data">
             <p>No attendance records found</p>
-            <button onClick={fetchAttendanceHistory} className="retry-btn">
-              Refresh Data
-            </button>
+            <button onClick={fetchAttendanceHistory} className="retry-btn">Refresh</button>
           </div>
         ) : (
           <table className="attendance-table">
@@ -790,40 +579,17 @@ const AttendanceTable = () => {
               </tr>
             </thead>
             <tbody>
-              {uniqueAttendance.map(record => (
-                <tr key={record.id}>
-                  <td>
-                    <div className="date-cell">
-                      {new Date(record.date).toLocaleDateString('en-US', {
-                        weekday: 'short',
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric'
-                      })}
-                    </div>
-                  </td>
-                  <td>
-                    <div className="time-cell">
-                      {record.checkIn}
-                    </div>
-                  </td>
-                  <td>
-                    <div className="time-cell">
-                      {record.checkOut}
-                    </div>
-                  </td>
-                  <td>
-                    {getStatusBadge(record.status)}
-                  </td>
+              {uniqueRows.map(r => (
+                <tr key={r.id}>
+                  <td><div className="date-cell">{new Date(r.date).toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}</div></td>
+                  <td><div className="time-cell">{r.checkIn}</div></td>
+                  <td><div className="time-cell">{r.checkOut}</div></td>
+                  <td>{getStatusBadge(r.status)}</td>
                   <td>
                     <div className="method-cell">
-                      {record.remarks && record.remarks.includes('Face') ? (
-                        <span className="method-badge face-method">👤 Face</span>
-                      ) : record.remarks && record.remarks.includes('PIN') ? (
-                        <span className="method-badge pin-method">🔒 PIN</span>
-                      ) : (
-                        <span className="method-badge manual-method">✏️ Manual</span>
-                      )}
+                      {r.remarks?.includes('Face') ? <span className="method-badge face-method">👤 Face</span>
+                        : r.remarks?.includes('PIN') ? <span className="method-badge pin-method">🔒 PIN</span>
+                        : <span className="method-badge manual-method">✏️ Manual</span>}
                     </div>
                   </td>
                 </tr>
@@ -832,6 +598,8 @@ const AttendanceTable = () => {
           </table>
         )}
       </div>
+
+      <AttendanceExceptionRequest />
     </div>
   );
 };

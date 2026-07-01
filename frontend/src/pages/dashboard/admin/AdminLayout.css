@@ -44,6 +44,7 @@ body {
   display: flex;
   flex-direction: column;
   height: 100%;
+  min-height: 0;
   overflow: hidden;
   z-index: 100;
   flex-shrink: 0;
@@ -138,9 +139,12 @@ body {
 /* ── Nav List ───────────────────────────────────────────────── */
 .sidebar-nav {
   flex: 1;
+  min-height: 0;
   padding: 6px 0;
   overflow-y: auto;
   overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   scrollbar-width: none;
 }
 .sidebar-nav::-webkit-scrollbar { display: none; }

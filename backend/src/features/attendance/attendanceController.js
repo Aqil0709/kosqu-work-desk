@@ -8,6 +8,7 @@ const { getIndiaDate, getIndiaDateTime } = require('../../utils/indiaTime');
 const { runAutoCheckout } = require('./autoCheckoutService');
 const { sendToMany, getNotificationRecipients, getHRAndAdmins } = require('../notifications/notificationHelper');
 const { parsePagination, paginatedResponse } = require('../../utils/pagination');
+const { writeAuditLog } = require('../auditLog/auditLogRoutes');
 
 // Haversine distance in metres between two lat/lng points
 function haversineMeters(lat1, lon1, lat2, lon2) {
@@ -385,9 +386,15 @@ const attendanceController = {
     },
 
     // Mark my attendance
+    // NOTE: This endpoint is ONLY for check-out (face verification is not re-required to
+    // leave) and for check-in when the employee has no face enrolled yet (first-time /
+    // exempted users). Any employee with an enrolled face MUST use verify-my-face for
+    // check-in — this is enforced below so face verification cannot be bypassed by
+    // calling this route directly. Client-supplied timestamps are never trusted; the
+    // server clock is always used to prevent timestamp tampering.
     markMyAttendance: async (req, res) => {
         try {
-            const { type, date, check_in_time, check_out_time, latitude, longitude } = req.body;
+            const { type, date, latitude, longitude } = req.body;
             const userId = req.user.id;
 
             if (!type) {
@@ -410,6 +417,20 @@ const attendanceController = {
             }
 
             const employeeId = employees[0].id;
+
+            if (type === 'check_in') {
+                const [faceRows] = await pool.execute(
+                    'SELECT face_enrolled FROM employee_details WHERE id = ? AND tenant_id = ?',
+                    [employeeId, req.tenantId]
+                );
+                if (faceRows.length && faceRows[0].face_enrolled) {
+                    return res.status(403).json({
+                        success: false,
+                        message: 'Face verification is required for check-in. Please use the Face Check-In option.',
+                    });
+                }
+            }
+
             const today = date || getIndiaDate();
             const currentDateTime = getIndiaDateTime();
             const attendanceExists = await Attendance.checkExists(req.tenantId, employeeId, today);
@@ -419,8 +440,7 @@ const attendanceController = {
 
             if (attendanceExists) {
                 if (type === 'check_out') {
-                    const checkOutTime = check_out_time || currentDateTime;
-                    result = await Attendance.updateCheckOut(req.tenantId, employeeId, today, checkOutTime, latitude, longitude);
+                    result = await Attendance.updateCheckOut(req.tenantId, employeeId, today, currentDateTime, latitude, longitude);
 
                     const { userIds, employeeName } = await getNotificationRecipients(req.tenantId, userId, { includeClient: false });
                     // Notify on half day (worked < 4 hours)
@@ -429,6 +449,18 @@ const attendanceController = {
                             title: 'Half Day Recorded',
                             message: `${employeeName} worked only ${result.worked_hours}h today and has been marked as Half Day.`,
                             type: 'attendance',
+                        });
+                    } else if (result?.should_deduct_salary) {
+                        const hrIds = await getHRAndAdmins(req.tenantId);
+                        await sendToMany(req.tenantId, [...new Set([...userIds, ...hrIds])], {
+                            title: '🔴 Early Check-Out Salary Deduction',
+                            message: `${employeeName} checked out early (shortage ${result.shortage_hours}h). A prorated deduction of ₹${result.deduction_amount} has been applied.`,
+                            type: 'salary_deduction',
+                        });
+                        await writeAuditLog({
+                            tenantId: req.tenantId, userId, userName: employeeName,
+                            action: 'EARLY_CHECKOUT_DEDUCTION', entityType: 'attendance', entityId: employeeId,
+                            description: result.deduction_reason,
                         });
                     } else {
                         // Regular checkout notification
@@ -443,31 +475,52 @@ const attendanceController = {
                 }
             } else {
                 if (type === 'check_in') {
-                    const checkInTime = check_in_time || currentDateTime;
-                    result = await Attendance.create(req.tenantId, {
-                        employee_id: employeeId,
-                        date: today,
-                        check_in: checkInTime,
-                        status: 'Present',
-                        latitude: isWFHDay ? null : latitude,
-                        longitude: isWFHDay ? null : longitude,
-                        remarks: isWFHDay ? 'WFH' : null,
-                    });
+                    const checkInTime = currentDateTime;
+                    try {
+                        result = await Attendance.create(req.tenantId, {
+                            employee_id: employeeId,
+                            date: today,
+                            check_in: checkInTime,
+                            status: 'Present',
+                            latitude: isWFHDay ? null : latitude,
+                            longitude: isWFHDay ? null : longitude,
+                            remarks: isWFHDay ? 'WFH' : null,
+                        });
+                    } catch (createErr) {
+                        if (createErr.code === 'LATE_ARRIVAL_LIMIT_EXCEEDED') {
+                            const hrIds = await getHRAndAdmins(req.tenantId);
+                            const [empRow] = await pool.execute('SELECT CONCAT(first_name," ",last_name) AS name FROM users WHERE id = ?', [userId]);
+                            const empName = empRow[0]?.name || `Employee #${userId}`;
+                            await sendToMany(req.tenantId, hrIds, {
+                                title: '🚫 Check-In Blocked — Late Arrival Limit Exceeded',
+                                message: `${empName} attempted to check in but has exceeded the maximum late arrivals (${createErr.priorLateCount}) for this payroll cycle. Check-in was blocked.`,
+                                type: 'attendance_warning',
+                            });
+                            await writeAuditLog({
+                                tenantId: req.tenantId, userId, userName: empName,
+                                action: 'CHECK_IN_BLOCKED_LATE_LIMIT', entityType: 'attendance', entityId: employeeId,
+                                description: `Check-in blocked — ${createErr.priorLateCount} prior late arrivals this month.`,
+                                status: 'failed',
+                            });
+                            return res.status(403).json({ success: false, message: createErr.message });
+                        }
+                        throw createErr;
+                    }
 
                     const { userIds, employeeName } = await getNotificationRecipients(req.tenantId, userId, { includeClient: false });
                     // Notify on late check-in
                     if (result && result.is_late) {
-                        if (result.late_warning) {
-                            await sendToMany(req.tenantId, userIds, {
-                                title: '⚠️ Late Arrival Warning',
-                                message: `${employeeName} is late for the 3rd time this month. One more late arrival will result in a half-day salary deduction.`,
-                                type: 'attendance_warning',
-                            });
-                        } else if (result.should_deduct_salary) {
-                            await sendToMany(req.tenantId, userIds, {
-                                title: '🔴 Half-Day Salary Deduction Applied',
-                                message: `${employeeName} has been late ${result.month_late_count} times this month. A half-day salary deduction (₹${result.deduction_amount}) has been applied per company policy.`,
+                        if (result.should_deduct_salary) {
+                            const hrIds = await getHRAndAdmins(req.tenantId);
+                            await sendToMany(req.tenantId, [...new Set([...userIds, ...hrIds])], {
+                                title: '🔴 Attendance Policy Violation — Full-Day Salary Deducted',
+                                message: `${employeeName} has been late ${result.month_late_count} times this month. A full-day salary deduction (₹${result.deduction_amount}) has been applied and an absent day recorded per company policy.`,
                                 type: 'salary_deduction',
+                            });
+                            await writeAuditLog({
+                                tenantId: req.tenantId, userId, userName: employeeName,
+                                action: 'ATTENDANCE_POLICY_VIOLATION', entityType: 'attendance', entityId: employeeId,
+                                description: `${result.month_late_count} late arrivals this month — full-day deduction of ₹${result.deduction_amount} applied.`,
                             });
                         } else {
                             await sendToMany(req.tenantId, userIds, {
@@ -499,9 +552,15 @@ const attendanceController = {
     // Verify face via selfie and mark attendance for the logged-in employee
     verifyMyFaceAndMarkAttendance: async (req, res) => {
         try {
-            if (!req.file) {
+            const primaryFile = req.files?.faceImage?.[0];
+            if (!primaryFile) {
                 return res.status(400).json({ success: false, message: 'Selfie image is required.' });
             }
+            // Extra frames (captured a few hundred ms apart) enable the blink/head-turn
+            // liveness challenge — optional for backward compatibility with older clients.
+            const extraFrames = [req.files?.faceImage_2?.[0], req.files?.faceImage_3?.[0]]
+                .filter(Boolean)
+                .map((f) => f.buffer);
 
             const userId    = req.user.id;
             const tenantId  = req.tenantId;
@@ -520,13 +579,41 @@ const attendanceController = {
             // Call Python face service
             let faceResult;
             try {
-                faceResult = await verifyFace(tenantId, employeeId, req.file.buffer, req.file.originalname || 'selfie.jpg');
+                faceResult = await verifyFace(tenantId, employeeId, primaryFile.buffer, primaryFile.originalname || 'selfie.jpg', extraFrames);
             } catch (svcErr) {
                 console.error('[FaceService] unreachable:', svcErr.message);
-                return res.status(503).json({ success: false, message: 'Face recognition service is currently unavailable. Please use regular check-in.' });
+                // Face verification is mandatory — do NOT allow a silent bypass to regular
+                // check-in. The employee must retry once the face service is back up.
+                return res.status(503).json({
+                    success: false,
+                    message: 'Face recognition service is currently unavailable. Please try again in a few minutes or contact your administrator.',
+                });
+            }
+
+            if (faceResult.success === false) {
+                // Includes: no face detected, multiple faces detected, blurred image,
+                // liveness/spoof check failed, or employee not enrolled yet.
+                await writeAuditLog({
+                    tenantId, userId, action: 'FACE_VERIFICATION_REJECTED',
+                    entityType: 'attendance', entityId: employeeId,
+                    description: `Face check (${type}) rejected: ${faceResult.reason || 'unknown'} — ${faceResult.message || ''}`,
+                    ipAddress: req.ip, status: 'failed',
+                });
+                return res.status(422).json({
+                    success: false,
+                    face_verified: false,
+                    reason: faceResult.reason || null,
+                    message: faceResult.message || 'Face check failed. Please try again with a clear, live front-facing photo.',
+                });
             }
 
             if (!faceResult.verified) {
+                await writeAuditLog({
+                    tenantId, userId, action: 'FACE_VERIFICATION_FAILED',
+                    entityType: 'attendance', entityId: employeeId,
+                    description: `Face verification (${type}) failed — confidence ${faceResult.confidence}%.`,
+                    ipAddress: req.ip, status: 'failed',
+                });
                 return res.status(401).json({
                     success: false,
                     face_verified: false,
@@ -534,6 +621,13 @@ const attendanceController = {
                     message: faceResult.message || 'Face verification failed.',
                 });
             }
+
+            await writeAuditLog({
+                tenantId, userId, action: 'FACE_VERIFICATION_SUCCESS',
+                entityType: 'attendance', entityId: employeeId,
+                description: `Face verified (${type}) — confidence ${faceResult.confidence}%.`,
+                ipAddress: req.ip, status: 'success',
+            });
 
             // Face verified — now mark attendance (reuse markMyAttendance logic)
             const geo = await validateGeofence(tenantId, userId, latitude, longitude);
@@ -556,30 +650,62 @@ const attendanceController = {
                 if (type !== 'check_in') {
                     return res.status(400).json({ success: false, message: 'Cannot check out without checking in first.' });
                 }
-                result = await Attendance.create(tenantId, {
-                    employee_id: employeeId,
-                    date: today,
-                    check_in: nowDT,
-                    status: 'Present',
-                    latitude: isWFHDay ? null : latitude,
-                    longitude: isWFHDay ? null : longitude,
-                    remarks: `Face Verified${isWFHDay ? ' | WFH' : ''}`,
-                });
+                try {
+                    result = await Attendance.create(tenantId, {
+                        employee_id: employeeId,
+                        date: today,
+                        check_in: nowDT,
+                        status: 'Present',
+                        latitude: isWFHDay ? null : latitude,
+                        longitude: isWFHDay ? null : longitude,
+                        remarks: `Face Verified${isWFHDay ? ' | WFH' : ''}`,
+                    });
+                } catch (createErr) {
+                    if (createErr.code === 'LATE_ARRIVAL_LIMIT_EXCEEDED') {
+                        const hrIds = await getHRAndAdmins(tenantId);
+                        const [empRow] = await pool.execute('SELECT CONCAT(first_name," ",last_name) AS name FROM users WHERE id = ?', [userId]);
+                        const empName = empRow[0]?.name || `Employee #${userId}`;
+                        await sendToMany(tenantId, hrIds, {
+                            title: '🚫 Check-In Blocked — Late Arrival Limit Exceeded',
+                            message: `${empName} attempted to check in but has exceeded the maximum late arrivals (${createErr.priorLateCount}) for this payroll cycle. Check-in was blocked.`,
+                            type: 'attendance_warning',
+                        });
+                        await writeAuditLog({
+                            tenantId, userId, userName: empName, action: 'CHECK_IN_BLOCKED_LATE_LIMIT', entityType: 'attendance', entityId: employeeId,
+                            description: `Check-in blocked — ${createErr.priorLateCount} prior late arrivals this month.`,
+                            status: 'failed',
+                        });
+                        return res.status(403).json({ success: false, message: createErr.message });
+                    }
+                    throw createErr;
+                }
             }
 
             const { userIds, employeeName } = await getNotificationRecipients(tenantId, userId, { includeClient: false });
-            if (result?.is_late) {
-                if (result.late_warning) {
-                    await sendToMany(tenantId, userIds, {
-                        title: '⚠️ Late Warning',
-                        message: `${employeeName} is late for the 3rd time this month. Next late arrival will result in a half-day salary deduction.`,
-                        type: 'attendance_warning',
-                    });
-                } else if (result.should_deduct_salary) {
-                    await sendToMany(tenantId, userIds, {
-                        title: '🔴 Half-Day Salary Deduction',
-                        message: `${employeeName} has been late ${result.month_late_count} times this month. A half-day salary deduction has been applied.`,
+            if (type === 'check_out' && result?.should_deduct_salary) {
+                const hrIds = await getHRAndAdmins(tenantId);
+                await sendToMany(tenantId, [...new Set([...userIds, ...hrIds])], {
+                    title: '🔴 Early Check-Out Salary Deduction',
+                    message: `${employeeName} checked out early (shortage ${result.shortage_hours}h). A prorated deduction of ₹${result.deduction_amount} has been applied.`,
+                    type: 'salary_deduction',
+                });
+                await writeAuditLog({
+                    tenantId, userId, userName: employeeName,
+                    action: 'EARLY_CHECKOUT_DEDUCTION', entityType: 'attendance', entityId: employeeId,
+                    description: result.deduction_reason,
+                });
+            } else if (result?.is_late) {
+                if (result.should_deduct_salary) {
+                    const hrIds = await getHRAndAdmins(tenantId);
+                    await sendToMany(tenantId, [...new Set([...userIds, ...hrIds])], {
+                        title: '🔴 Attendance Policy Violation — Full-Day Salary Deducted',
+                        message: `${employeeName} has been late ${result.month_late_count} times this month. A full-day salary deduction (₹${result.deduction_amount}) has been applied and an absent day recorded per company policy.`,
                         type: 'salary_deduction',
+                    });
+                    await writeAuditLog({
+                        tenantId, userId, userName: employeeName,
+                        action: 'ATTENDANCE_POLICY_VIOLATION', entityType: 'attendance', entityId: employeeId,
+                        description: `${result.month_late_count} late arrivals this month — full-day deduction of ₹${result.deduction_amount} applied.`,
                     });
                 } else {
                     await sendToMany(tenantId, userIds, {

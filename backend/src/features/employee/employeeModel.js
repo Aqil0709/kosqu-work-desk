@@ -70,6 +70,8 @@ const employeeDetailSelectColumns = `
           ed.pan_number,
           ed.aadhar_number,
           ed.status,
+          ed.payment_type,
+          ed.pay_rate,
           u.gender`;
 
 const generateNextEmployeeId = async (connection, tenantId) => {
@@ -211,7 +213,7 @@ ${employeeDetailSelectColumns},
           joining_date, last_working_date, date_of_birth,
           address, emergency_contact,
           bank_account_number, ifsc_code, pan_number, aadhar_number,
-          probation_end_date, status
+          probation_end_date, status, payment_type, pay_rate
         ) VALUES (
           ?,?,?,
           ?,?,?, ?,
@@ -236,7 +238,7 @@ ${employeeDetailSelectColumns},
           ?, ?,
           ?, ?,
           ?, ?, ?, ?,
-          ?,?
+          ?,?, ?,?
         )`,
         [
           employeeId, tenantId, userId,
@@ -301,6 +303,8 @@ ${employeeDetailSelectColumns},
           employeeData.aadhar_number || null,
           employeeData.probation_end_date || null,
           employeeData.status || 'active',
+          employeeData.payment_type || 'monthly',
+          employeeData.pay_rate != null ? Number(employeeData.pay_rate) : null,
         ]
       );
 
@@ -447,7 +451,7 @@ ${employeeDetailSelectColumns},
           joining_date=?, last_working_date=?, date_of_birth=?,
           address=?, emergency_contact=?,
           bank_account_number=?, ifsc_code=?, pan_number=?, aadhar_number=?,
-          probation_end_date=?, status=?
+          probation_end_date=?, status=?, payment_type=?, pay_rate=?
         WHERE id=? AND tenant_id=?`,
         [
           requestedId,
@@ -504,6 +508,8 @@ ${employeeDetailSelectColumns},
           employeeData.aadhar_number || null,
           employeeData.probation_end_date || null,
           employeeData.status || 'active',
+          employeeData.payment_type || 'monthly',
+          employeeData.pay_rate != null ? Number(employeeData.pay_rate) : null,
           id, tenantId,
         ]
       );

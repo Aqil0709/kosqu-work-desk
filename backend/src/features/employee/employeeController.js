@@ -214,7 +214,7 @@ const employeeController = {
         probation_end_date, status,
         gst_number, consultant_type, contract_duration, contract_start_date, contract_end_date,
         stipend_amount, college_name, internship_duration, internship_start_date, internship_end_date, mentor_id,
-        is_team_lead
+        is_team_lead, payment_type, pay_rate
       } = req.body;
 
       // Validate required fields
@@ -307,6 +307,8 @@ const employeeController = {
         internship_start_date: internship_start_date || null,
         internship_end_date: internship_end_date || null,
         mentor_id: mentor_id || null,
+        payment_type: ['monthly', 'daily', 'hourly'].includes(payment_type) ? payment_type : 'monthly',
+        pay_rate: pay_rate != null && pay_rate !== '' ? Number(pay_rate) : null,
         created_by: req.user?.id || null,
       };
 
@@ -548,7 +550,7 @@ const employeeController = {
         probation_end_date,
         gst_number, consultant_type, contract_duration, contract_start_date, contract_end_date,
         stipend_amount, college_name, internship_duration, internship_start_date, internship_end_date, mentor_id,
-        is_team_lead
+        is_team_lead, payment_type, pay_rate
       } = req.body;
 
       const missingFields = validateRequiredEmployeeFields(req.body);
@@ -628,6 +630,8 @@ const employeeController = {
         internship_start_date: internship_start_date || null,
         internship_end_date: internship_end_date || null,
         mentor_id: mentor_id || null,
+        payment_type: ['monthly', 'daily', 'hourly'].includes(payment_type) ? payment_type : 'monthly',
+        pay_rate: pay_rate != null && pay_rate !== '' ? Number(pay_rate) : null,
       };
 
       // Enforce: reporting_manager_id never set from frontend; only reports_to_user_id/team_lead_id
