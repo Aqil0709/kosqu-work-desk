@@ -75,7 +75,7 @@ const CLIENT_NOTIF_TAB = {
 const ClientLayout = ({ activeTab, onNavigate, children }) => {
   const { user, logout } = useAuth();
   const { isDarkMode, toggleTheme } = useTheme();
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(window.innerWidth > 768);
   const [notifications, setNotifications] = useState([]);
   const [notifCount, setNotifCount] = useState(0);
 
@@ -155,6 +155,10 @@ const ClientLayout = ({ activeTab, onNavigate, children }) => {
       />
 
       <div className="cl-body">
+        {/* Mobile overlay */}
+        {open && (
+          <div className="cl-mobile-overlay" onClick={() => setOpen(false)} />
+        )}
         <aside className={`cl-sidebar ${open ? 'open' : 'closed'}`}>
           <nav className="cl-nav">
             {open && <span className="cl-section-label">Navigation</span>}
@@ -162,7 +166,7 @@ const ClientLayout = ({ activeTab, onNavigate, children }) => {
               <button
                 key={tab}
                 className={`cl-nav-btn${activeTab === tab ? ' active' : ''}`}
-                onClick={() => onNavigate(tab)}
+                onClick={() => { onNavigate(tab); if (window.innerWidth <= 768) setOpen(false); }}
                 title={title}
               >
                 <span className="cl-nav-icon"><Icon /></span>

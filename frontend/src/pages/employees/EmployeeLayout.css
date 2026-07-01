@@ -60,6 +60,8 @@
   display: flex;
   flex-direction: column;
   height: 100vh;
+  height: 100dvh; /* fix iOS PWA bottom bar */
+  min-height: -webkit-fill-available;
   overflow: hidden;
   font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background: var(--emp-bg);
@@ -77,6 +79,7 @@
   display: flex;
   width: 100%;
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
 }
 
@@ -933,10 +936,18 @@
   /* Safe area padding for installed PWA */
   .employee-portal {
     padding-top: env(safe-area-inset-top);
+    height: 100dvh; /* dynamic viewport height — fixes iOS installed PWA */
+    height: -webkit-fill-available;
   }
   .emp-scroll-area,
   .main-scroll-area {
-    padding-bottom: max(16px, env(safe-area-inset-bottom)) !important;
+    padding-bottom: max(24px, env(safe-area-inset-bottom)) !important;
+  }
+
+  /* Sidebar top must clear safe area */
+  .dashboard-sidebar {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
   }
 
   /* Reduce hero padding */
@@ -965,13 +976,40 @@
     padding: 0 !important;
   }
 
+  /* Scroll area must fill and scroll on mobile */
+  .employee-portal .dashboard-main {
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+
+  .emp-scroll-area,
+  .main-scroll-area {
+    flex: 1;
+    overflow-y: auto !important;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    height: 0; /* force flex child to scroll */
+  }
+
+  /* Page content padding on mobile */
+  .employee-dashboard,
+  .emp-page {
+    padding: 16px !important;
+    min-height: unset;
+  }
+
   /* Tables: horizontal scroll */
   .attendance-table-container,
   .leave-table-container,
   .expense-table-container,
-  .ep-table-wrap {
+  .ep-table-wrap,
+  .employee-portal table {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+    max-width: 100%;
+    display: block;
   }
 
   /* Header flex wrap */
@@ -987,15 +1025,37 @@
   .attendance-actions,
   .table-header {
     flex-wrap: wrap;
+    gap: 8px;
   }
 
   /* Modal full width */
   .modal-content,
   .leave-modal-content,
-  .ep-modal {
+  .ep-modal,
+  .face-modal {
     width: 95vw !important;
     max-width: 95vw !important;
     margin: 0 auto !important;
+  }
+
+  /* Cards stacked on mobile */
+  .employee-portal [style*="grid-template-columns"],
+  .employee-portal [style*="gridTemplateColumns"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Buttons wrap */
+  .employee-portal .btn-group,
+  .employee-portal [style*="display: flex"][style*="gap"] {
+    flex-wrap: wrap;
+  }
+
+  /* Input full width */
+  .employee-portal input,
+  .employee-portal select,
+  .employee-portal textarea {
+    max-width: 100%;
+    box-sizing: border-box;
   }
 }
 

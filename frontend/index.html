@@ -32,6 +32,15 @@
       /* Inline critical style to prevent white flash */
       html[data-theme='dark'] body { background: #0B1120; color: #CBD5E1; }
       html[data-theme='light'] body, html:not([data-theme]) body { background: #F8FAFC; color: #1E293B; }
+      /* PWA full-height fix — iOS Safari installed app */
+      html, body, #root {
+        height: 100%;
+        height: 100dvh;
+        min-height: -webkit-fill-available;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
     </style>
   </head>
   <body>

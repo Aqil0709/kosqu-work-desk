@@ -573,6 +573,11 @@ const AdminLayout = ({ initialTab, initialState = null }) => {
       {/* ── Body ─────────────────────────────────────────────────── */}
       <div className="al-body">
 
+        {/* Mobile overlay — tap to close sidebar */}
+        {sidebarOpen && (
+          <div className="al-mobile-overlay" onClick={() => setSidebarOpen(false)} />
+        )}
+
         {/* ── Sidebar ──────────────────────────────────────────── */}
         <aside className={`al-sidebar ${sidebarOpen ? 'open' : 'collapsed'}`}>
           <nav className="al-nav" aria-label="Main navigation">
